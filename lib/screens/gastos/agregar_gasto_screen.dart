@@ -15,7 +15,7 @@ class AgregarGastoScreen extends StatefulWidget {
 
 class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
   final TextEditingController _montoController = TextEditingController();
-  final TextEditingController _descripcionController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
 
   DateTime _fecha = DateTime.now();
   String? _categoria;
@@ -29,7 +29,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
       _montoController.text = g.monto % 1 == 0 
           ? g.monto.toStringAsFixed(0) 
           : g.monto.toStringAsFixed(2).replaceAll('.', ',');
-      _descripcionController.text = g.descripcion == 'Sin descripción' ? '' : g.descripcion;
+      _descriptionController.text = g.description == 'Sin descripción' ? '' : g.description;
       _fecha = g.fecha;
       _categoria = g.categoriaNombre;
       _dependiente = g.responsableNombre;
@@ -44,37 +44,37 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
   final List<Map<String, dynamic>> _categorias = [
     {
       'nombre': 'Alimentación',
-      'descripcion': 'Comidas, restaurantes y productos alimenticios',
+      'description': 'Comidas, restaurantes y productos alimenticios',
       'icono': Icons.restaurant,
       'color': const Color(0xFFA8A2FF),
     },
     {
       'nombre': 'Ropa',
-      'descripcion': 'Prendas de vestir y accesorios',
+      'description': 'Prendas de vestir y accesorios',
       'icono': Icons.checkroom,
       'color': const Color(0xFF4ADE80),
     },
     {
       'nombre': 'Hogar',
-      'descripcion': 'Gastos relacionados con vivienda y mantenimiento',
+      'description': 'Gastos relacionados con vivienda y mantenimiento',
       'icono': Icons.home,
       'color': const Color(0xFFFF8C4A),
     },
     {
       'nombre': 'Transporte',
-      'descripcion': 'Movilidad, transporte público y combustible',
+      'description': 'Movilidad, transporte público y combustible',
       'icono': Icons.directions_bus,
       'color': const Color(0xFF60A5FA),
     },
     {
       'nombre': 'Salud',
-      'descripcion': 'Medicamentos, consultas y salud en general',
+      'description': 'Medicamentos, consultas y salud en general',
       'icono': Icons.medical_services,
       'color': const Color(0xFFFF6B6B),
     },
     {
       'nombre': 'Entretenimiento',
-      'descripcion': 'Ocio, streaming y actividades recreativas',
+      'description': 'Ocio, streaming y actividades recreativas',
       'icono': Icons.movie,
       'color': const Color(0xFFC084FC),
     },
@@ -83,13 +83,13 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
   final List<Map<String, dynamic>> _dependientes = [
     {
       'nombre': 'Gasto propio',
-      'descripcion': 'Gastos personales',
+      'description': 'Gastos personales',
       'icono': Icons.person,
       'color': const Color(0xFF60A5FA),
     },
     {
       'nombre': 'Sofía • Hija',
-      'descripcion': 'Hija',
+      'description': 'Hija',
       'icono': Icons.child_care,
       'color': const Color(0xFF60A5FA),
     },
@@ -98,7 +98,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
   @override
   void dispose() {
     _montoController.dispose();
-    _descripcionController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
@@ -119,7 +119,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
   String _formatFecha(DateTime date) {
     final dd = date.day.toString().padLeft(2, '0');
     final mm = date.month.toString().padLeft(2, '0');
-    return '$dd/${mm}/${date.year}';
+    return '$dd/$mm/${date.year}';
   }
 
   // ---------- HOJA MODAL CON FONDO DIFUMINADO ----------
@@ -141,7 +141,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
                 GestureDetector(
                   onTap: () => Navigator.of(context).pop(),
                   child: Container(
-                    color: Colors.black.withOpacity(0.4 * t),
+                    color: Colors.black.withValues(alpha: 0.4 * t),
                   ),
                 ),
                 // Difumina el fondo
@@ -204,7 +204,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
     final nuevoGasto = GastoModel(
       titulo: cat != null ? cat['nombre'] as String : 'General',
       subtitulo: '${dep['nombre']} • ${_formatFecha(_fecha)}',
-      descripcion: _descripcionController.text.isEmpty ? 'Sin descripción' : _descripcionController.text,
+      description: _descriptionController.text.isEmpty ? 'Sin descripción' : _descriptionController.text,
       monto: monto,
       icono: cat != null ? cat['icono'] as IconData : Icons.shopping_cart,
       color: cat != null ? cat['color'] as Color : kAccentColor,
@@ -304,7 +304,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
           _buildLabel('Descripción'),
           const SizedBox(height: 8),
           _buildTextField(
-            controller: _descripcionController,
+            controller: _descriptionController,
             hint: 'Ej: Almuerzo de trabajo',
           ),
           const SizedBox(height: 18),
@@ -355,7 +355,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
       decoration: BoxDecoration(
         color: kInsetBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.black.withOpacity(0.35)),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.35)),
       ),
       child: child,
     );
@@ -589,7 +589,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: kAccentColor.withOpacity(0.4),
+                      color: kAccentColor.withValues(alpha: 0.4),
                       blurRadius: 8,
                       spreadRadius: 1,
                     ),
@@ -668,7 +668,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
                 shrinkWrap: true,
                 padding: EdgeInsets.zero,
                 itemCount: _categorias.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                separatorBuilder: (_, _) => const SizedBox(height: 12),
                 itemBuilder: (context, index) =>
                     _buildCategoryCard(_categorias[index]),
               ),
@@ -693,7 +693,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
           borderRadius: BorderRadius.circular(18),
           border: isSelected
               ? Border.all(
-              color: kAccentColor.withOpacity(0.6), width: 1.5)
+                  color: kAccentColor.withValues(alpha: 0.6), width: 1.5)
               : null,
           boxShadow: [
             BoxShadow(
@@ -714,7 +714,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: (cat['color'] as Color).withOpacity(0.15),
+                color: (cat['color'] as Color).withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -738,7 +738,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    cat['descripcion'] as String,
+                    cat['description'] as String,
                     style: TextStyle(color: kTextSecondary, fontSize: 11),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -791,7 +791,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
               physics: const NeverScrollableScrollPhysics(),
               padding: EdgeInsets.zero,
               itemCount: _dependientes.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
               itemBuilder: (context, index) =>
                   _buildDependentCard(_dependientes[index]),
             ),
@@ -815,7 +815,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
           borderRadius: BorderRadius.circular(18),
           border: isSelected
               ? Border.all(
-              color: kAccentColor.withOpacity(0.6), width: 1.5)
+                  color: kAccentColor.withValues(alpha: 0.6), width: 1.5)
               : null,
           boxShadow: [
             BoxShadow(
@@ -836,7 +836,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: (dep['color'] as Color).withOpacity(0.15),
+                color: (dep['color'] as Color).withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -860,7 +860,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    dep['descripcion'] as String,
+                    dep['description'] as String,
                     style: TextStyle(color: kTextSecondary, fontSize: 11),
                   ),
                 ],
@@ -886,12 +886,12 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: kAccentColor.withOpacity(0.4),
+              color: kAccentColor.withValues(alpha: 0.4),
               blurRadius: 20,
               spreadRadius: 1,
             ),
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),

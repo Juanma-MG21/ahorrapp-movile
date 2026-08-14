@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class GastoModel {
   final String titulo;
   final String subtitulo;
-  final String descripcion;
+  final String description;
   final double monto;
   final IconData icono;
   final Color color;
@@ -14,7 +14,7 @@ class GastoModel {
   GastoModel({
     required this.titulo,
     required this.subtitulo,
-    required this.descripcion,
+    required this.description,
     required this.monto,
     required this.icono,
     required this.color,

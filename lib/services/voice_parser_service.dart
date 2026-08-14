@@ -102,22 +102,22 @@ class VoiceParserService {
       }
     }
 
-    String descripcionFinal = cleanWords.join(' ').trim();
+    String descriptionFinal = cleanWords.join(' ').trim();
     
     // Si la descripción quedó vacía o solo contiene ruido, usamos el nombre de la categoría
-    if (descripcionFinal.isEmpty || descripcionFinal.length < 2) {
-      descripcionFinal = (categoria != 'General') ? categoria : 'Gasto manual';
+    if (descriptionFinal.isEmpty || descriptionFinal.length < 2) {
+      descriptionFinal = (categoria != 'General') ? categoria : 'Gasto manual';
     }
 
     // Capitalizar
-    if (descripcionFinal.isNotEmpty) {
-      descripcionFinal = descripcionFinal[0].toUpperCase() + descripcionFinal.substring(1);
+    if (descriptionFinal.isNotEmpty) {
+      descriptionFinal = descriptionFinal[0].toUpperCase() + descriptionFinal.substring(1);
     }
 
     return GastoModel(
       titulo: categoria,
       subtitulo: 'Gasto propio • Hoy',
-      descripcion: descripcionFinal,
+      description: descriptionFinal,
       monto: monto,
       icono: _getIconForCategory(categoria),
       color: _getColorForCategory(categoria),

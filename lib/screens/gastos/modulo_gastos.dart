@@ -39,7 +39,7 @@ class _ModuloGastosState extends State<ModuloGastos>
     return _gastos.where((g) {
       final matchesDate = g.fecha.month == _selectedDate.month && g.fecha.year == _selectedDate.year;
       final matchesSearch = _searchQuery.isEmpty || 
-          g.descripcion.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          g.description.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           g.categoriaNombre.toLowerCase().contains(_searchQuery.toLowerCase());
       return matchesDate && matchesSearch;
     }).toList();
@@ -144,6 +144,8 @@ class _ModuloGastosState extends State<ModuloGastos>
       },
     );
 
+    if (!mounted) return;
+
     if (available) {
       setState(() {
         _isListening = true;
@@ -155,12 +157,14 @@ class _ModuloGastosState extends State<ModuloGastos>
         onResult: (val) => setState(() {
           _lastWords = val.recognizedWords;
         }),
-        localeId: 'es_CO',
-        listenFor: const Duration(seconds: 30),
-        pauseFor: const Duration(seconds: 3), // Reducido para mayor velocidad
-        partialResults: true,
-        cancelOnError: true,
-        listenMode: stt.ListenMode.confirmation,
+        listenOptions: stt.SpeechListenOptions(
+          localeId: 'es_CO',
+          listenFor: const Duration(seconds: 30),
+          pauseFor: const Duration(seconds: 3), // Reducido para mayor velocidad
+          partialResults: true,
+          cancelOnError: true,
+          listenMode: stt.ListenMode.confirmation,
+        ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -235,7 +239,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                     _closeVoiceModal();
                   },
                   child: Container(
-                    color: Colors.black.withOpacity(0.45 * t),
+                    color: Colors.black.withValues(alpha: 0.45 * t),
                   ),
                 ),
                 // Difumina el fondo
@@ -283,7 +287,7 @@ class _ModuloGastosState extends State<ModuloGastos>
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black.withValues(alpha: 0.5),
             blurRadius: 24,
             offset: const Offset(0, 10),
           ),
@@ -310,7 +314,7 @@ class _ModuloGastosState extends State<ModuloGastos>
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: kBgColor.withOpacity(0.5),
+                color: kBgColor.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
@@ -435,7 +439,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                       child: GestureDetector(
                         onTap: _toggleMenu, // tocar el fondo cierra el menú
                         child: Container(
-                          color: Colors.black.withOpacity(0.45 * t),
+                          color: Colors.black.withValues(alpha: 0.45 * t),
                         ),
                       ),
                     );
@@ -514,7 +518,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.4),
+                    color: Colors.black.withValues(alpha: 0.4),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -572,17 +576,17 @@ class _ModuloGastosState extends State<ModuloGastos>
           colors: [Color(0xFFFFD700), kAccentColor],
         ),
         border: Border.all(
-          color: Colors.white.withOpacity(_isMenuOpen ? 0.9 : 0),
+          color: Colors.white.withValues(alpha: _isMenuOpen ? 0.9 : 0),
           width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: kAccentColor.withOpacity(0.4),
+            color: kAccentColor.withValues(alpha: 0.4),
             blurRadius: 20,
             spreadRadius: 2,
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -685,7 +689,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: kAccentColor.withOpacity(0.3),
+                      color: kAccentColor.withValues(alpha: 0.3),
                       blurRadius: 8,
                       spreadRadius: 1,
                     ),
@@ -713,7 +717,7 @@ class _ModuloGastosState extends State<ModuloGastos>
         style: const TextStyle(color: kTextPrimary, fontSize: 14),
         decoration: InputDecoration(
           hintText: 'Buscar gasto o categoría...',
-          hintStyle: TextStyle(color: kTextSecondary.withOpacity(0.5)),
+          hintStyle: TextStyle(color: kTextSecondary.withValues(alpha: 0.5)),
           border: InputBorder.none,
           icon: Icon(Icons.search, color: kAccentColor, size: 20),
         ),
@@ -883,7 +887,7 @@ class _ModuloGastosState extends State<ModuloGastos>
         color: kInsetBg,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: Colors.black.withOpacity(0.3),
+          color: Colors.black.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -899,7 +903,7 @@ class _ModuloGastosState extends State<ModuloGastos>
               borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
-                  color: kAccentColor.withOpacity(0.5),
+                  color: kAccentColor.withValues(alpha: 0.5),
                   blurRadius: 4,
                 ),
               ],
@@ -942,7 +946,7 @@ class _ModuloGastosState extends State<ModuloGastos>
           padding: const EdgeInsets.only(top: 40),
           child: Column(
             children: [
-              Icon(Icons.receipt_long, color: kTextSecondary.withOpacity(0.3), size: 64),
+              Icon(Icons.receipt_long, color: kTextSecondary.withValues(alpha: 0.3), size: 64),
               const SizedBox(height: 16),
               Text(
                 'No hay gastos en ${_mesesNom[_selectedDate.month - 1]}',
@@ -987,7 +991,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: expense.color.withOpacity(0.1),
+                      color: expense.color.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
@@ -1056,7 +1060,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                     const SizedBox(height: 18),
                     Row(
                       children: [
-                        _buildDetailItem('DESCRIPCIÓN', expense.descripcion),
+                        _buildDetailItem('DESCRIPCIÓN', expense.description),
                         _buildDetailItem('MONTO', '-${_formatCurrency(expense.monto)}', color: kNegativeColor),
                       ],
                     ),
@@ -1151,7 +1155,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: kNegativeColor.withOpacity(0.2),
+                backgroundColor: kNegativeColor.withValues(alpha: 0.2),
                 foregroundColor: kNegativeColor,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
@@ -1210,7 +1214,7 @@ class _ModuloGastosState extends State<ModuloGastos>
         decoration: BoxDecoration(
           color: kBgColor,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withOpacity(0.4), width: 1),
+          border: Border.all(color: color.withValues(alpha: 0.4), width: 1),
           boxShadow: [
             BoxShadow(
               color: const Color(0xFF05060D),
@@ -1251,7 +1255,7 @@ class _ModuloGastosState extends State<ModuloGastos>
         color: kBgColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.6),
+            color: Colors.black.withValues(alpha: 0.6),
             blurRadius: 10,
             offset: const Offset(0, -4),
           ),
@@ -1381,7 +1385,7 @@ class _VoicePulseButtonState extends State<_VoicePulseButton>
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: kAccentColor.withOpacity(opacity),
+                            color: kAccentColor.withValues(alpha: opacity),
                             width: 2,
                           ),
                         ),
@@ -1405,12 +1409,12 @@ class _VoicePulseButtonState extends State<_VoicePulseButton>
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: kAccentColor.withOpacity(widget.isListening ? 0.6 : 0.4),
+                    color: kAccentColor.withValues(alpha: widget.isListening ? 0.6 : 0.4),
                     blurRadius: widget.isListening ? 35 : 25,
                     spreadRadius: widget.isListening ? 4 : 2,
                   ),
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
+                    color: Colors.black.withValues(alpha: 0.3),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
