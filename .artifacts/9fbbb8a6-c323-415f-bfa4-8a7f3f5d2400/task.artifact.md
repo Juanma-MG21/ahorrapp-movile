@@ -1,0 +1,8 @@
+- [x] Crear modelo `lib/models/gasto_model.dart`
+- [x] Refactorizar `lib/screens/gastos/agregar_gasto_screen.dart` (Corrección subrayado y retorno)
+- [x] Corregir Layout y Presupuesto en `lib/screens/gastos/modulo_gastos.dart`
+- [x] Implementar Navegación Mensual en `lib/screens/gastos/modulo_gastos.dart`
+- [x] Detalle Expandible de Gastos Neumórfico
+- [x] Implementar Edición y Confirmación de Eliminación
+- [x] Ajustar posición del botón flotante (FAB)
+- [x] Verificar funcionamiento y sintaxis.
