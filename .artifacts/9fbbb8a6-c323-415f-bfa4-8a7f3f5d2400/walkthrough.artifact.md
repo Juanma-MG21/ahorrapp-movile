@@ -1,26 +1,27 @@
-# Walkthrough - Ajustes de Diseño y Navegación
+# Walkthrough - Corrección del Motor de Voz y Filtrado de Símbolos
 
-Se han realizado ajustes finales en la interfaz de usuario para mejorar la ergonomía y la coherencia visual de la aplicación.
+Se han aplicado correcciones críticas al servicio de voz para eliminar el ruido visual ($12.000, comas) y asegurar que los montos se detecten correctamente sin ensuciar la descripción.
 
 ## Cambios Realizados
 
-### 1. Reposicionamiento del Botón Flotante (FAB)
-- **Archivo:** [modulo_gastos.dart](file:///C:/ahorrappmovil/ahorrapp-movile/lib/screens/gastos/modulo_gastos.dart).
-- **Acción:** Se ajustó la posición vertical del menú del botón de agregar gasto, bajándolo de `bottom: 90` a `bottom: 20`.
-- **Beneficio:** Ahora el botón se encuentra en una posición mucho más natural, justo encima de la barra de navegación, facilitando el acceso con una sola mano y mejorando la composición visual de la pantalla.
+### 1. Limpieza Agresiva de Símbolos
+- **Acción:** Se implementó una pre-limpieza que elimina los signos de pesos (`$`) y las comas (usadas a menudo como separadores de miles) antes de procesar el texto.
+- **Resultado:** Si el sistema de voz transcribe "$12,000", el motor ahora lo ve como "12000" puro, permitiendo que el cálculo matemático sea exacto.
 
-### 2. Edición y Confirmación de Eliminación
-- **Edición:** Implementada la funcionalidad para modificar gastos existentes, reutilizando el formulario de creación.
-- **Eliminación Segura:** Añadida una alerta de confirmación con estilo neumórfico y fondo difuminado para evitar borrados accidentales.
+### 2. Prioridad Numérica y Filtrado de Descripción
+- **Mejora:** Se refinó el algoritmo para que cualquier palabra que parezca un número (ya sea en dígitos como "20000" o en palabras como "diezmil") sea identificada primero y excluida totalmente de la descripción.
+- **Fallback Inteligente:** Si después de quitar el monto y las palabras de ruido la descripción queda vacía, la app ahora coloca automáticamente el nombre de la categoría (ej: "Alimentación") en lugar de dejar el campo en blanco o con texto sucio.
 
-### 3. Navegación y Fechas Dinámicas
-- **Límite Temporal:** La navegación mensual ahora está restringida al mes actual, ocultando automáticamente la opción de avanzar hacia el futuro.
-- **Fecha Real:** Se configuró el sistema para utilizar la fecha actual del dispositivo (`DateTime.now()`) como punto de partida.
+### 3. Soporte de Palabras Compuestas
+- **Ajuste:** Se mejoró la separación de términos como "diezmil" o "veintemil", asegurando que el multiplicador de miles siempre se aplique correctamente.
 
 ## Verificación
 
-- **Interfaz:** Se comprobó visualmente (mediante el código) que el FAB no se solape con otros elementos y mantenga su funcionalidad animada.
-- **Flujo de Datos:** La lista de gastos y los cálculos de presupuesto se mantienen sincronizados tras las operaciones de edición y eliminación.
+- **Estabilidad:** El código fue analizado y está libre de errores de sintaxis.
+- **Integridad:** Se mantiene la compatibilidad con versiones estables de Flutter para evitar fallos de renderizado.
+
+> [!IMPORTANT]
+> El sistema ahora es más robusto ante los símbolos que el motor de voz del teléfono inserta por su cuenta. Esto garantiza que el campo "Monto" reciba números limpios y el campo "Descripción" reciba solo palabras descriptivas.
 
 > [!TIP]
-> El nuevo posicionamiento del botón (+) permite una interacción más fluida con el pulgar, siguiendo las mejores prácticas de diseño móvil.
+> Prueba decir simplemente: *"Cincuenta mil pesos en el mercado"* o *"Doce mil de una empanada"*. Verás que los símbolos ya no aparecen en el texto final.

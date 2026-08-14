@@ -1,8 +1,10 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../core/design_tokens.dart';
 import '../../models/gasto_model.dart';
+import '../../services/voice_parser_service.dart';
 import 'agregar_gasto_screen.dart';
 
 class ModuloGastos extends StatefulWidget {
@@ -18,6 +20,12 @@ class _ModuloGastosState extends State<ModuloGastos>
   int? _expandedIndex;
   final List<GastoModel> _gastos = [];
   DateTime _selectedDate = DateTime.now();
+  String _searchQuery = '';
+  late stt.SpeechToText _speech;
+  bool _isListening = false;
+  bool _isProcessing = false;
+  bool _isModalShowing = false;
+  String _lastWords = '';
 
   static const List<String> _mesesNom = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -28,10 +36,13 @@ class _ModuloGastosState extends State<ModuloGastos>
   late List<Animation<double>> _itemAnimations;
 
   List<GastoModel> get _filteredGastos {
-    return _gastos.where((g) =>
-      g.fecha.month == _selectedDate.month &&
-      g.fecha.year == _selectedDate.year
-    ).toList();
+    return _gastos.where((g) {
+      final matchesDate = g.fecha.month == _selectedDate.month && g.fecha.year == _selectedDate.year;
+      final matchesSearch = _searchQuery.isEmpty || 
+          g.descripcion.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          g.categoriaNombre.toLowerCase().contains(_searchQuery.toLowerCase());
+      return matchesDate && matchesSearch;
+    }).toList();
   }
 
   void _changeMonth(int delta) {
@@ -57,6 +68,7 @@ class _ModuloGastosState extends State<ModuloGastos>
   @override
   void initState() {
     super.initState();
+    _speech = stt.SpeechToText();
     _menuController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 350),
@@ -102,6 +114,282 @@ class _ModuloGastosState extends State<ModuloGastos>
         });
       }
     }
+    if (metodo == 'Registro por voz') {
+      _startListening();
+    }
+  }
+
+  void _startListening() async {
+    bool available = await _speech.initialize(
+      onStatus: (val) {
+        debugPrint('Speech Status: $val');
+        if (val == 'notListening' || val == 'done') {
+          if (mounted && _isListening) {
+            _stopListeningAndProcess();
+          } else if (mounted && _isModalShowing && _lastWords.isEmpty) {
+            // Si el motor se detiene por timeout y no hay palabras, cerramos el modal
+            _closeVoiceModal();
+          }
+        }
+      },
+      onError: (val) {
+        debugPrint('Speech Error: $val');
+        if (mounted) {
+          setState(() {
+            _isListening = false;
+            _isProcessing = false;
+          });
+          _closeVoiceModal();
+        }
+      },
+    );
+
+    if (available) {
+      setState(() {
+        _isListening = true;
+        _isProcessing = false;
+        _lastWords = '';
+      });
+      _showVoiceModal();
+      _speech.listen(
+        onResult: (val) => setState(() {
+          _lastWords = val.recognizedWords;
+        }),
+        localeId: 'es_CO',
+        listenFor: const Duration(seconds: 30),
+        pauseFor: const Duration(seconds: 3), // Reducido para mayor velocidad
+        partialResults: true,
+        cancelOnError: true,
+        listenMode: stt.ListenMode.confirmation,
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('El reconocimiento de voz no está disponible')),
+      );
+    }
+  }
+
+  void _closeVoiceModal() {
+    if (mounted && _isModalShowing) {
+      _isModalShowing = false;
+      Navigator.of(context).pop();
+    }
+  }
+
+  void _stopListeningAndProcess() {
+    setState(() {
+      _isListening = false;
+    });
+
+    if (_lastWords.isNotEmpty) {
+      setState(() => _isProcessing = true);
+      Future.delayed(const Duration(milliseconds: 400), () {
+        if (mounted) {
+          _closeVoiceModal();
+          _processVoiceResult(_lastWords);
+          setState(() => _isProcessing = false);
+        }
+      });
+    } else {
+      _closeVoiceModal();
+    }
+  }
+
+  void _processVoiceResult(String text) async {
+    final GastoModel parsedGasto = VoiceParserService.parse(text);
+    
+    // Abrir formulario con los datos pre-llenados
+    final resultado = await Navigator.push<GastoModel>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AgregarGastoScreen(gastoParaEditar: parsedGasto),
+      ),
+    );
+
+    if (resultado != null) {
+      setState(() {
+        _gastos.add(resultado);
+      });
+    }
+  }
+
+  void _showVoiceModal() {
+    _isModalShowing = true;
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Cerrar',
+      barrierColor: Colors.transparent,
+      transitionDuration: const Duration(milliseconds: 250),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return AnimatedBuilder(
+          animation: animation,
+          builder: (context, _) {
+            final t = Curves.easeOut.transform(animation.value);
+            return Stack(
+              children: [
+                // Oscurece y cierra al tocar fuera
+                GestureDetector(
+                  onTap: () {
+                    _speech.stop();
+                    _closeVoiceModal();
+                  },
+                  child: Container(
+                    color: Colors.black.withOpacity(0.45 * t),
+                  ),
+                ),
+                // Difumina el fondo
+                Positioned.fill(
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10 * t, sigmaY: 10 * t),
+                    child: const SizedBox.expand(),
+                  ),
+                ),
+                // Tarjeta centrada con efecto de escala
+                Center(
+                  child: Opacity(
+                    opacity: t,
+                    child: Transform.scale(
+                      scale: 0.9 + 0.1 * t,
+                      child: Material(
+                        type: MaterialType.transparency,
+                        child: StatefulBuilder(
+                          builder: (context, setModalState) {
+                            return _buildVoiceCard(setModalState);
+                          }
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildVoiceCard(StateSetter setModalState) {
+    String mainText = 'Escuchando tu voz...';
+    if (_isProcessing) mainText = 'Detectando audio…';
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 40),
+      padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+      decoration: BoxDecoration(
+        color: kSecondaryBgColor,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.5),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _VoicePulseButton(
+            isListening: _isListening,
+            isProcessing: _isProcessing,
+          ),
+          const SizedBox(height: 22),
+          Text(
+            mainText,
+            style: const TextStyle(
+              color: kTextPrimary,
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (_lastWords.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: kBgColor.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                _lastWords,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: kTextPrimary, fontSize: 14, fontStyle: FontStyle.italic),
+              ),
+            )
+          else if (!_isProcessing)
+            RichText(
+              textAlign: TextAlign.center,
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: 'Di algo como: ',
+                    style: TextStyle(color: kTextSecondary, fontSize: 12),
+                  ),
+                  const TextSpan(
+                    text: '"Diez mil pesos en una empanada"',
+                    style: TextStyle(
+                      color: kTextPrimary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          const SizedBox(height: 18),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 10),
+            child: Text(
+              'Ahorrapp puede cometer errores. Verifica siempre la información antes de guardar.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: kNegativeColor, fontSize: 10, fontWeight: FontWeight.w600),
+            ),
+          ),
+          const SizedBox(height: 20),
+          // Botón Cancelar
+          if (!_isProcessing)
+            GestureDetector(
+              onTap: () {
+                _speech.stop();
+                _closeVoiceModal();
+              },
+              child: Container(
+                width: double.infinity,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: kBgColor,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0xFF05060D),
+                      offset: Offset(3, 3),
+                      blurRadius: 8,
+                    ),
+                    BoxShadow(
+                      color: Color(0xFF1A1D3A),
+                      offset: Offset(-3, -3),
+                      blurRadius: 8,
+                    ),
+                  ],
+                ),
+                child: const Center(
+                  child: Text(
+                    'Cancelar',
+                    style: TextStyle(
+                      color: kTextSecondary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -121,6 +409,8 @@ class _ModuloGastosState extends State<ModuloGastos>
                   _buildHeader(),
                   const SizedBox(height: 30),
                   _buildSummaryCard(),
+                  const SizedBox(height: 20),
+                  _buildSearchBar(),
                   const SizedBox(height: 30),
                   _buildExpensesListHeader(),
                   const SizedBox(height: 20),
@@ -394,12 +684,12 @@ class _ModuloGastosState extends State<ModuloGastos>
                     colors: [kAccentColor, Color(0xFFFF8C00)],
                   ),
                   boxShadow: [
-                  BoxShadow(
-                    color: kAccentColor.withOpacity(0.3),
-                    blurRadius: 8,
-                    spreadRadius: 1,
-                  ),
-                ],
+                    BoxShadow(
+                      color: kAccentColor.withOpacity(0.3),
+                      blurRadius: 8,
+                      spreadRadius: 1,
+                    ),
+                  ],
                 ),
                 child: const Icon(Icons.person, color: Colors.white, size: 20),
               ),
@@ -410,8 +700,39 @@ class _ModuloGastosState extends State<ModuloGastos>
     );
   }
 
+  Widget _buildSearchBar() {
+    return _NeumorphicContainer(
+      borderRadius: 16,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: TextField(
+        onChanged: (value) {
+          setState(() {
+            _searchQuery = value;
+          });
+        },
+        style: const TextStyle(color: kTextPrimary, fontSize: 14),
+        decoration: InputDecoration(
+          hintText: 'Buscar gasto o categoría...',
+          hintStyle: TextStyle(color: kTextSecondary.withOpacity(0.5)),
+          border: InputBorder.none,
+          icon: Icon(Icons.search, color: kAccentColor, size: 20),
+        ),
+      ),
+    );
+  }
+
   String _formatCurrency(double amount) {
-    return '\$${amount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}';
+    if (amount % 1 == 0) {
+      String integerPart = amount.toStringAsFixed(0).replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
+      return '\$$integerPart';
+    } else {
+      String formatted = amount.toStringAsFixed(2);
+      List<String> parts = formatted.split('.');
+      String integerPart = parts[0].replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
+      return '\$$integerPart,${parts[1]}';
+    }
   }
 
   // ---------- TARJETA RESUMEN (DINÁMICA) ----------
@@ -700,7 +1021,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                     ),
                   ),
                   Text(
-                    '-\$${expense.monto.toStringAsFixed(0)}',
+                    '-${_formatCurrency(expense.monto)}',
                     style: const TextStyle(
                       color: kNegativeColor,
                       fontSize: 16,
@@ -736,7 +1057,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                     Row(
                       children: [
                         _buildDetailItem('DESCRIPCIÓN', expense.descripcion),
-                        _buildDetailItem('MONTO', '-\$${expense.monto.toStringAsFixed(0)}', color: kNegativeColor),
+                        _buildDetailItem('MONTO', '-${_formatCurrency(expense.monto)}', color: kNegativeColor),
                       ],
                     ),
                     const SizedBox(height: 18),
@@ -968,6 +1289,142 @@ class _ModuloGastosState extends State<ModuloGastos>
           ),
         ),
       ],
+    );
+  }
+}
+
+// ---------- BOTÓN DE MICRÓFONO CON ANILLOS PULSANTES ----------
+
+class _VoicePulseButton extends StatefulWidget {
+  final bool isListening;
+  final bool isProcessing;
+  const _VoicePulseButton({required this.isListening, required this.isProcessing});
+
+  @override
+  State<_VoicePulseButton> createState() => _VoicePulseButtonState();
+}
+
+class _VoicePulseButtonState extends State<_VoicePulseButton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _pulseController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Si está procesando, mostramos un estado de carga circular neumórfico
+    if (widget.isProcessing) {
+      return SizedBox(
+        width: 150,
+        height: 150,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            const SizedBox(
+              width: 80,
+              height: 80,
+              child: CircularProgressIndicator(
+                color: kAccentColor,
+                strokeWidth: 3,
+              ),
+            ),
+            Container(
+              width: 60,
+              height: 60,
+              decoration: const BoxDecoration(
+                color: kSecondaryBgColor,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.auto_awesome, color: kAccentColor, size: 28),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return AnimatedScale(
+      scale: widget.isListening ? 0.9 : 1.0,
+      duration: const Duration(milliseconds: 150),
+      child: SizedBox(
+        width: 150,
+        height: 150,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // Anillos que pulsan hacia afuera (solo cuando escucha)
+            if (widget.isListening)
+              ...List.generate(3, (i) {
+                return AnimatedBuilder(
+                  animation: _pulseController,
+                  builder: (context, child) {
+                    final t = (_pulseController.value + i * 0.33) % 1.0;
+                    final scale = 1.0 + 0.8 * t;
+                    final opacity = (1 - t) * 0.5;
+                    return Transform.scale(
+                      scale: scale,
+                      child: Container(
+                        width: 96,
+                        height: 96,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: kAccentColor.withOpacity(opacity),
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              }),
+            
+            // Botón central con el micrófono
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 96,
+              height: 96,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: widget.isListening 
+                    ? [const Color(0xFFFFE082), kAccentColor]
+                    : [const Color(0xFFFFD700), kAccentColor],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: kAccentColor.withOpacity(widget.isListening ? 0.6 : 0.4),
+                    blurRadius: widget.isListening ? 35 : 25,
+                    spreadRadius: widget.isListening ? 4 : 2,
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Icon(
+                widget.isListening ? Icons.mic : Icons.mic_none, 
+                color: Colors.black, 
+                size: 40
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

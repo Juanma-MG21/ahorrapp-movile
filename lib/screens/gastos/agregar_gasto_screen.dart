@@ -26,7 +26,9 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
     super.initState();
     if (widget.gastoParaEditar != null) {
       final g = widget.gastoParaEditar!;
-      _montoController.text = g.monto.toStringAsFixed(0);
+      _montoController.text = g.monto % 1 == 0 
+          ? g.monto.toStringAsFixed(0) 
+          : g.monto.toStringAsFixed(2).replaceAll('.', ',');
       _descripcionController.text = g.descripcion == 'Sin descripción' ? '' : g.descripcion;
       _fecha = g.fecha;
       _categoria = g.categoriaNombre;
@@ -177,7 +179,16 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
   void _showDependentSheet() => _showNeumorphicSheet(_buildDependentSheet());
 
   void _crearGasto() {
-    final montoStr = _montoController.text.replaceAll('\$', '').replaceAll(',', '').replaceAll('.', '');
+    // Normalizar entrada de monto: eliminar miles (.) y convertir decimal (,) a (.)
+    String montoStr = _montoController.text.replaceAll('\$', '');
+    // Si contiene coma, asumimos que es el separador decimal y los puntos son de miles
+    if (montoStr.contains(',')) {
+      montoStr = montoStr.replaceAll('.', '').replaceAll(',', '.');
+    } else {
+      // Si no tiene coma, quitamos puntos por si son miles
+      montoStr = montoStr.replaceAll('.', '');
+    }
+    
     final monto = double.tryParse(montoStr) ?? 0.0;
 
     if (monto <= 0) {
@@ -221,7 +232,18 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
               _buildFormCard(),
               const SizedBox(height: 28),
               _buildCrearButton(),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    'Ahorrapp puede cometer errores. Verifica siempre la información antes de guardar.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: kNegativeColor, fontSize: 10, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
               _buildCancelarButton(),
               const SizedBox(height: 30),
             ],
@@ -276,7 +298,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
           _buildTextField(
             controller: _montoController,
             hint: '\$0',
-            keyboardType: TextInputType.numberWithOptions(decimal: true),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
           ),
           const SizedBox(height: 18),
           _buildLabel('Descripción'),
@@ -333,7 +355,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
       decoration: BoxDecoration(
         color: kInsetBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.35)),
+        border: Border.all(color: Colors.black.withOpacity(0.35)),
       ),
       child: child,
     );
@@ -541,53 +563,62 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
   }
 
   Widget _buildDayButton(int day) {
+    final now = DateTime.now();
+    final dayDate = DateTime(_fecha.year, _fecha.month, day);
     final isSelected = day == _fecha.day;
+    final isFuture = dayDate.isAfter(DateTime(now.year, now.month, now.day));
+
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _fecha = DateTime(_fecha.year, _fecha.month, day);
-        });
-        Navigator.of(context).pop();
-      },
-      child: Container(
-        margin: const EdgeInsets.all(3),
-        decoration: isSelected
-            ? BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: const RadialGradient(
-            colors: [Color(0xFFFFD700), kAccentColor],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: kAccentColor.withValues(alpha: 0.4),
-              blurRadius: 8,
-              spreadRadius: 1,
-            ),
-          ],
-        )
-            : BoxDecoration(
-          color: kBgColor,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF05060D),
-              offset: Offset(2, 2),
-              blurRadius: 5,
-            ),
-            BoxShadow(
-              color: const Color(0xFF1A1D3A),
-              offset: Offset(-2, -2),
-              blurRadius: 5,
-            ),
-          ],
-        ),
-        child: Center(
-          child: Text(
-            '$day',
-            style: TextStyle(
-              color: isSelected ? Colors.black : kTextPrimary,
-              fontSize: 12,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+      onTap: isFuture
+          ? null
+          : () {
+              setState(() {
+                _fecha = dayDate;
+              });
+              Navigator.of(context).pop();
+            },
+      child: Opacity(
+        opacity: isFuture ? 0.25 : 1.0,
+        child: Container(
+          margin: const EdgeInsets.all(3),
+          decoration: isSelected
+              ? BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const RadialGradient(
+                    colors: [Color(0xFFFFD700), kAccentColor],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: kAccentColor.withOpacity(0.4),
+                      blurRadius: 8,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                )
+              : BoxDecoration(
+                  color: kBgColor,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF05060D),
+                      offset: const Offset(2, 2),
+                      blurRadius: 5,
+                    ),
+                    BoxShadow(
+                      color: const Color(0xFF1A1D3A),
+                      offset: const Offset(-2, -2),
+                      blurRadius: 5,
+                    ),
+                  ],
+                ),
+          child: Center(
+            child: Text(
+              '$day',
+              style: TextStyle(
+                color: isSelected ? Colors.black : kTextPrimary,
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              ),
             ),
           ),
         ),
@@ -662,7 +693,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
           borderRadius: BorderRadius.circular(18),
           border: isSelected
               ? Border.all(
-              color: kAccentColor.withValues(alpha: 0.6), width: 1.5)
+              color: kAccentColor.withOpacity(0.6), width: 1.5)
               : null,
           boxShadow: [
             BoxShadow(
@@ -683,7 +714,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: (cat['color'] as Color).withValues(alpha: 0.15),
+                color: (cat['color'] as Color).withOpacity(0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -784,7 +815,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
           borderRadius: BorderRadius.circular(18),
           border: isSelected
               ? Border.all(
-              color: kAccentColor.withValues(alpha: 0.6), width: 1.5)
+              color: kAccentColor.withOpacity(0.6), width: 1.5)
               : null,
           boxShadow: [
             BoxShadow(
@@ -805,7 +836,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: (dep['color'] as Color).withValues(alpha: 0.15),
+                color: (dep['color'] as Color).withOpacity(0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
