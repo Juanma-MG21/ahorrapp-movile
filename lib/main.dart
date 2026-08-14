@@ -1,21 +1,56 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:home_widget/home_widget.dart';
 import 'screens/gastos/modulo_gastos.dart';
+import 'screens/gastos/agregar_gasto_screen.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _handleWidgetLaunch();
+  }
+
+  void _handleWidgetLaunch() {
+    HomeWidget.setAppGroupId('com.example.ahorrapp'); // Opcional en Android pero buena práctica
+    HomeWidget.initiallyLaunchedFromHomeWidget().then(_handleUri);
+    HomeWidget.widgetClicked.listen(_handleUri);
+  }
+
+  void _handleUri(Uri? uri) {
+    if (uri != null && uri.scheme == 'ahorrapp') {
+      if (uri.host == 'gasto') {
+        navigatorKey.currentState?.push(
+          MaterialPageRoute(builder: (context) => const AgregarGastoScreen()),
+        );
+      }
+      // Se puede añadir lógica para 'ingreso' cuando esté disponible el módulo
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Finance App',
+      navigatorKey: navigatorKey,
+      title: 'AhorrApp',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: Color(0xFF0E1124),
+        scaffoldBackgroundColor: const Color(0xFF0E1124),
       ),
       home: const ModuloGastos(),
     );

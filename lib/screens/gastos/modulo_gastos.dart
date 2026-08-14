@@ -5,6 +5,7 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../core/design_tokens.dart';
 import '../../models/gasto_model.dart';
 import '../../services/voice_parser_service.dart';
+import '../../services/widget_service.dart';
 import 'agregar_gasto_screen.dart';
 
 class ModuloGastos extends StatefulWidget {
@@ -81,6 +82,35 @@ class _ModuloGastosState extends State<ModuloGastos>
         curve: Interval(0.3 + i * 0.2, 1.0, curve: Curves.easeOutCubic),
       );
     });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateWidget();
+    });
+  }
+
+  void _updateWidget() {
+    double totalGastos = 0;
+    final now = DateTime.now();
+    final gastosMes = _gastos
+        .where((g) => g.fecha.month == now.month && g.fecha.year == now.year)
+        .toList();
+
+    for (var g in gastosMes) {
+      totalGastos += g.monto;
+    }
+
+    const double presupuesto = 0;
+    final double balance = presupuesto - totalGastos;
+    final double porcentaje =
+        presupuesto > 0 ? (totalGastos / presupuesto * 100).clamp(0, 100) : 0;
+
+    WidgetService.updateWidgetData(
+      balance: _formatCurrency(balance),
+      gastos: _formatCurrency(totalGastos),
+      ingresos: _formatCurrency(0),
+      porcentaje: porcentaje.toInt(),
+      fecha: '${_mesesNom[now.month - 1]} ${now.year}',
+    );
   }
 
   @override
@@ -112,6 +142,7 @@ class _ModuloGastosState extends State<ModuloGastos>
         setState(() {
           _gastos.add(resultado);
         });
+        _updateWidget();
       }
     }
     if (metodo == 'Registro por voz') {
@@ -214,6 +245,7 @@ class _ModuloGastosState extends State<ModuloGastos>
       setState(() {
         _gastos.add(resultado);
       });
+      _updateWidget();
     }
   }
 
@@ -1094,6 +1126,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                                   }
                                   _expandedIndex = null;
                                 });
+                                _updateWidget();
                               }
                             },
                           ),
@@ -1152,6 +1185,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                   _gastos.remove(expense);
                   _expandedIndex = null;
                 });
+                _updateWidget();
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
