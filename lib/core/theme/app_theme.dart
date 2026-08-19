@@ -8,16 +8,16 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Fondo general (el negro azulado casi puro que se ve en tus capturas)
+  // Fondo general
   static const Color background = Color(0xFF0B0E14);
 
   // Tarjetas / superficies "elevadas"
   static const Color surface = Color(0xFF171A24);
   static const Color surfaceAlt = Color(0xFF1E2230);
 
-  // Acento principal (amarillo/dorado del botón "Crear meta", nav activo, etc.)
+  // Acento principal
   static const Color accent = Color(0xFFFFB800);
-  static const Color accentSoft = Color(0x33FFB800); // accent con 20% opacidad
+  static const Color accentSoft = Color(0x33FFB800);
 
   // Verde usado en el marco del escáner y accesos de progreso positivo
   static const Color success = Color(0xFF34D399);
@@ -65,8 +65,7 @@ BoxDecoration clayRaised({
   );
 }
 
-/// Decoración "hundida" (neumorphism): para inputs, como si estuvieran
-/// presionados hacia adentro del fondo.
+
 BoxDecoration claySunken({
   Color color = const Color(0xFF10131B),
   double radius = AppRadius.sm,
@@ -86,8 +85,7 @@ BoxDecoration claySunken({
   );
 }
 
-/// El botón/círculo amarillo con "glow" difuso alrededor, como el botón
-/// flotante "+" de tu pantalla de Ahorros.
+
 BoxDecoration clayGlow({
   Color color = AppColors.accent,
   double radius = AppRadius.pill,
@@ -106,8 +104,7 @@ BoxDecoration clayGlow({
   );
 }
 
-/// Tema global de MaterialApp, para que inputs/botones por defecto también
-/// respeten la paleta sin tener que estilarlos uno por uno.
+
 ThemeData buildAppTheme() {
   return ThemeData(
     useMaterial3: true,

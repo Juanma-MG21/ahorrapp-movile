@@ -1,12 +1,3 @@
-// lib/screens/agregar_ingreso_screen.dart
-//
-// Formulario "Agregar ingreso", estilo calcado de tus imágenes 3 y 5:
-// inputs hundidos (neumorphism), selector de categoría tipo lista,
-// selector de fecha con calendario, y botón principal amarillo con glow.
-//
-// Si viene de la pantalla de QR, el campo "Descripción" se prellena con
-// el texto detectado (el usuario lo puede editar libremente).
-
 import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
 import '../models/ingreso_model.dart';

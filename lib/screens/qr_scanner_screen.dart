@@ -1,21 +1,3 @@
-// lib/screens/qr_scanner_screen.dart
-//
-// Pantalla de escaneo de QR, calcada del diseño que mostraste:
-// - Header con flecha atrás + título "Escanear QR"
-// - Marco de escaneo con esquinas verdes ("corner brackets")
-// - Texto instructivo debajo
-// - Dos botones circulares abajo: Galería y Linterna
-//
-// Cuando detecta un QR (o el usuario elige una imagen de la galería con
-// un QR), extrae el TEXTO CRUDO y navega al formulario de "Agregar
-// ingreso" pasándoselo como sugerencia inicial (el usuario lo edita).
-//
-// Paquete usado: mobile_scanner (lee cámara + puede analizar imágenes
-// de archivo, y expone el control de linterna/torch de forma nativa).
-// Agrega a pubspec.yaml:
-//   mobile_scanner: ^5.2.3
-//   image_picker: ^1.1.2
-
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:image_picker/image_picker.dart';
@@ -257,8 +239,8 @@ class _IconCircleButton extends StatelessWidget {
   }
 }
 
-/// Botón circular grande con etiqueta debajo, usado para Galería/Linterna.
-/// Cuando `activo` es true (linterna encendida) se pinta con el acento.
+/// Botón circular grande para Galería/Linterna.
+
 class _AccionRedonda extends StatelessWidget {
   final IconData icono;
   final String etiqueta;
@@ -307,7 +289,6 @@ class _AccionRedonda extends StatelessWidget {
 }
 
 /// Dibuja las 4 esquinas verdes tipo "marco de escaneo" sobre el preview
-/// de la cámara, igual al diseño de referencia.
 class _CornerBracketsPainter extends CustomPainter {
   final Color color;
   const _CornerBracketsPainter({required this.color});

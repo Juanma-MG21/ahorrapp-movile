@@ -1,8 +1,3 @@
-// lib/models/ingreso_model.dart
-//
-// Representa un "Ingreso" tal como lo espera tu backend (movimientosController.js).
-// OJO: esto NO es la tabla completa de la BD, es solo lo que el formulario
-// necesita capturar y lo que se manda en el body del POST /movimientos.
 
 class IngresoModel {
   final double monto;
@@ -19,8 +14,7 @@ class IngresoModel {
     this.idCategoria,
   });
 
-  /// Convierte el modelo al formato exacto que espera el endpoint:
-  /// { tipo_flujo, subtipo_modulo, datos: {...} }
+
   Map<String, dynamic> toRequestBody() {
     return {
       'tipo_flujo': 'Entrada',
@@ -40,9 +34,7 @@ class IngresoModel {
   }
 }
 
-/// Modelo simple para las categorías que vienen de GET /categorias.
-/// Lo dejamos aquí para no crear un archivo aparte todavía; si tu app
-/// crece puedes moverlo a su propio models/categoria_model.dart.
+
 class CategoriaModel {
   final int id;
   final String nombre;

@@ -1,18 +1,10 @@
-// lib/services/ingresos_service.dart
-//
-// Toda la comunicación HTTP relacionada a "ingresos" vive aquí.
-// La pantalla del formulario NO llama a http directamente: llama a
-// IngresosService.crearIngreso(...), así si el backend cambia solo
-// se edita este archivo.
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'api_config.dart';
 import '../models/ingreso_model.dart';
 
 class IngresosService {
-  /// Envía el ingreso al backend. Lanza una excepción con un mensaje
-  /// legible si algo falla, para que la UI la muestre directo.
+
   static Future<void> crearIngreso(IngresoModel ingreso) async {
     final uri = Uri.parse('${ApiConfig.baseUrl}/movimientos');
 
@@ -40,9 +32,7 @@ class IngresosService {
     }
   }
 
-  /// Trae las categorías disponibles (GET /categorias), para el selector
-  /// del formulario. Si tu endpoint real tiene otro nombre/ruta, ajústalo
-  /// aquí únicamente.
+  /// Trae las categorías disponibles (GET /categorias),
   static Future<List<CategoriaModel>> obtenerCategorias() async {
     final uri = Uri.parse('${ApiConfig.baseUrl}/categorias');
     try {
