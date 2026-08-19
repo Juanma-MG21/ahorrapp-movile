@@ -6,6 +6,7 @@ import '../../core/design_tokens.dart';
 import '../../models/gasto_model.dart';
 import '../../services/voice_parser_service.dart';
 import '../../services/widget_service.dart';
+import '../../services/supabase_service.dart';
 import 'agregar_gasto_screen.dart';
 
 class ModuloGastos extends StatefulWidget {
@@ -19,7 +20,8 @@ class _ModuloGastosState extends State<ModuloGastos>
     with SingleTickerProviderStateMixin {
   bool _isMenuOpen = false;
   int? _expandedIndex;
-  final List<GastoModel> _gastos = [];
+  List<GastoModel> _gastos = [];
+  bool _isLoading = true;
   DateTime _selectedDate = DateTime.now();
   String _searchQuery = '';
   late stt.SpeechToText _speech;
@@ -83,9 +85,21 @@ class _ModuloGastosState extends State<ModuloGastos>
       );
     });
 
+    _loadGastos();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _updateWidget();
     });
+  }
+
+  void _loadGastos() async {
+    setState(() => _isLoading = true);
+    final list = await SupabaseService.fetchGastos();
+    setState(() {
+      _gastos = list;
+      _isLoading = false;
+    });
+    _updateWidget();
   }
 
   void _updateWidget() {
@@ -971,6 +985,15 @@ class _ModuloGastosState extends State<ModuloGastos>
   }
 
   Widget _buildExpensesList() {
+    if (_isLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.only(top: 40),
+          child: CircularProgressIndicator(color: kAccentColor),
+        ),
+      );
+    }
+
     final filtered = _filteredGastos.reversed.toList();
     if (filtered.isEmpty) {
       return Center(
@@ -1120,7 +1143,7 @@ class _ModuloGastosState extends State<ModuloGastos>
 
                               if (resultado != null) {
                                 setState(() {
-                                  final indexOriginal = _gastos.indexOf(expense);
+                                  final indexOriginal = _gastos.indexWhere((g) => g.id == expense.id);
                                   if (indexOriginal != -1) {
                                     _gastos[indexOriginal] = resultado;
                                   }
@@ -1180,13 +1203,18 @@ class _ModuloGastosState extends State<ModuloGastos>
             ),
             const SizedBox(width: 8),
             ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _gastos.remove(expense);
-                  _expandedIndex = null;
-                });
-                _updateWidget();
-                Navigator.pop(context);
+              onPressed: () async {
+                if (expense.id != null) {
+                  final success = await SupabaseService.deleteGasto(expense.id!);
+                  if (success) {
+                    setState(() {
+                      _gastos.removeWhere((g) => g.id == expense.id);
+                      _expandedIndex = null;
+                    });
+                    _updateWidget();
+                  }
+                }
+                if (context.mounted) Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: kNegativeColor.withValues(alpha: 0.2),

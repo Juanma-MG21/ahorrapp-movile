@@ -115,15 +115,13 @@ class VoiceParserService {
     }
 
     return GastoModel(
-      titulo: categoria,
-      subtitulo: 'Gasto propio • Hoy',
       description: descriptionFinal,
       monto: monto,
-      icono: _getIconForCategory(categoria),
-      color: _getColorForCategory(categoria),
       fecha: DateTime.now(),
       categoriaNombre: categoria,
       responsableNombre: 'Gasto propio',
+      icono: _getIconForCategory(categoria),
+      color: _getColorForCategory(categoria),
     );
   }
 
