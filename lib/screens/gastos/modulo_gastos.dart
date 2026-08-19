@@ -9,6 +9,9 @@ import '../../services/widget_service.dart';
 import '../../services/supabase_service.dart';
 import 'agregar_gasto_screen.dart';
 
+import '../../services/qr_parser_service.dart';
+import '../qr_scanner_screen.dart';
+
 class ModuloGastos extends StatefulWidget {
   const ModuloGastos({super.key});
 
@@ -162,6 +165,18 @@ class _ModuloGastosState extends State<ModuloGastos>
     if (metodo == 'Registro por voz') {
       _startListening();
     }
+
+    if (metodo == 'Escanear QR') {
+      final String? textoQr = await Navigator.push<String>(
+        context,
+        MaterialPageRoute(builder: (context) => const QrScannerScreen()),
+      );
+
+      if (textoQr != null && textoQr.trim().isNotEmpty) {
+        _processQrResult(textoQr);
+      }
+    }
+
   }
 
   void _startListening() async {
@@ -248,6 +263,25 @@ class _ModuloGastosState extends State<ModuloGastos>
     final GastoModel parsedGasto = VoiceParserService.parse(text);
     
     // Abrir formulario con los datos pre-llenados
+    final resultado = await Navigator.push<GastoModel>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AgregarGastoScreen(gastoParaEditar: parsedGasto),
+      ),
+    );
+
+    if (resultado != null) {
+      setState(() {
+        _gastos.add(resultado);
+      });
+      _updateWidget();
+    }
+  }
+
+  void _processQrResult(String textoQr) async {
+    final GastoModel parsedGasto = QrParserService.parse(textoQr);
+
+    // Abrir formulario con los datos pre-llenados, igual que en voz
     final resultado = await Navigator.push<GastoModel>(
       context,
       MaterialPageRoute(

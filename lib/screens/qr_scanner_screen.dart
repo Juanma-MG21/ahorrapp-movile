@@ -1,9 +1,21 @@
+// lib/screens/qr_scanner_screen.dart
+//
+// Pantalla de escaneo de QR. A propósito NO sabe nada de "Gasto" ni de
+// Supabase: su única responsabilidad es mostrar la cámara y, al
+// detectar un código, devolver el texto crudo con Navigator.pop().
+// Quien la llama (ModuloGastos) decide qué hacer con ese texto — hoy
+// lo manda a QrParserService, pero mañana podría usarse para Ingresos
+// u otro módulo sin tocar esta pantalla.
+//
+// Dependencias nuevas en pubspec.yaml:
+//   mobile_scanner: ^5.2.3
+//   image_picker: ^1.1.2
+
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../core/theme/app_theme.dart';
-import 'agregar_ingreso_screen.dart';
+import '../core/design_tokens.dart';
 
 class QrScannerScreen extends StatefulWidget {
   const QrScannerScreen({super.key});
@@ -18,7 +30,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
   );
 
   bool _linternaEncendida = false;
-  bool _yaNavego = false; // evita abrir el formulario dos veces
+  bool _yaDevolvioResultado = false; // evita hacer pop() dos veces
 
   @override
   void dispose() {
@@ -26,22 +38,21 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
     super.dispose();
   }
 
-  // Se llama cada vez que la cámara detecta algo parecido a un QR.
   void _onDetect(BarcodeCapture captura) {
-    if (_yaNavego) return;
+    if (_yaDevolvioResultado) return;
     final codigos = captura.barcodes;
     if (codigos.isEmpty) return;
 
     final valor = codigos.first.rawValue;
     if (valor == null || valor.trim().isEmpty) return;
 
-    _yaNavego = true;
-    _irAlFormulario(valor);
+    _yaDevolvioResultado = true;
+    Navigator.of(context).pop(valor);
   }
 
   Future<void> _alternarLinterna() async {
     await _controller.toggleTorch();
-    setState(() => _linternaEncendida = !_linternaEncendida);
+    if (mounted) setState(() => _linternaEncendida = !_linternaEncendida);
   }
 
   Future<void> _elegirDeGaleria() async {
@@ -49,7 +60,6 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
     final XFile? archivo = await picker.pickImage(source: ImageSource.gallery);
     if (archivo == null) return;
 
-    // mobile_scanner puede analizar una imagen ya tomada/elegida
     final BarcodeCapture? resultado = await _controller.analyzeImage(archivo.path);
     final codigos = resultado?.barcodes ?? [];
 
@@ -61,23 +71,15 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
       return;
     }
 
-    if (_yaNavego) return;
-    _yaNavego = true;
-    _irAlFormulario(codigos.first.rawValue!);
-  }
-
-  void _irAlFormulario(String textoQr) {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => AgregarIngresoScreen(textoDetectadoQr: textoQr),
-      ),
-    );
+    if (_yaDevolvioResultado) return;
+    _yaDevolvioResultado = true;
+    Navigator.of(context).pop(codigos.first.rawValue!);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: kBgColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -100,35 +102,34 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          _IconCircleButton(
+          _NeumorphicIcon(
             icon: Icons.arrow_back,
+            size: 20,
             onTap: () => Navigator.of(context).maybePop(),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'ESCANEAR QR',
-                  style: TextStyle(
-                    color: AppColors.accent,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.2,
-                  ),
+          const SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'ESCANEAR QR',
+                style: TextStyle(
+                  color: kAccentColor,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.2,
                 ),
-                const SizedBox(height: 2),
-                const Text(
-                  'Escanear QR',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                  ),
+              ),
+              const SizedBox(height: 2),
+              const Text(
+                'Escanear QR',
+                style: TextStyle(
+                  color: kTextPrimary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
@@ -142,7 +143,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
         textAlign: TextAlign.center,
         text: TextSpan(
           style: const TextStyle(
-            color: AppColors.textSecondary,
+            color: kTextSecondary,
             fontSize: 13,
             height: 1.5,
           ),
@@ -150,12 +151,9 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
             const TextSpan(text: 'Apunta la cámara al código QR del '),
             TextSpan(
               text: 'recibo o comprobante',
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w700,
-              ),
+              style: TextStyle(color: kTextPrimary, fontWeight: FontWeight.w700),
             ),
-            const TextSpan(text: ' para registrar el ingreso automáticamente.'),
+            const TextSpan(text: ' para registrar el gasto automáticamente.'),
           ],
         ),
       ),
@@ -167,9 +165,9 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 28),
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderRadius: BorderRadius.circular(24),
           boxShadow: const [
-            BoxShadow(color: Colors.black54, blurRadius: 24, offset: Offset(0, 12)),
+            BoxShadow(color: Color(0xFF05060D), blurRadius: 24, offset: Offset(0, 12)),
           ],
         ),
         clipBehavior: Clip.antiAlias,
@@ -178,17 +176,9 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Vista de la cámara en vivo
-              MobileScanner(
-                controller: _controller,
-                onDetect: _onDetect,
-              ),
-              // Oscurecemos un poco para que resalten las esquinas verdes
-              Container(color: Colors.black.withOpacity(0.05)),
-              // Esquinas tipo "corner brackets"
-              CustomPaint(
-                painter: _CornerBracketsPainter(color: AppColors.success),
-              ),
+              MobileScanner(controller: _controller, onDetect: _onDetect),
+              Container(color: Colors.black.withValues(alpha: 0.05)),
+              CustomPaint(painter: _CornerBracketsPainter(color: const Color(0xFF4ADE80))),
             ],
           ),
         ),
@@ -217,30 +207,9 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
   }
 }
 
-/// Botón circular pequeño para el header (flecha atrás).
-class _IconCircleButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _IconCircleButton({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(AppRadius.pill),
-      onTap: onTap,
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: clayRaised(radius: AppRadius.pill),
-        child: Icon(icon, color: AppColors.textPrimary, size: 20),
-      ),
-    );
-  }
-}
-
-/// Botón circular grande para Galería/Linterna.
-
+/// Botón circular grande con etiqueta debajo (Galería / Linterna).
+/// Al estar "activo" (linterna encendida) se pinta con el acento
+/// dorado, igual al resto de estados activos en la app.
 class _AccionRedonda extends StatelessWidget {
   final IconData icono;
   final String etiqueta;
@@ -258,18 +227,30 @@ class _AccionRedonda extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.pill),
+        GestureDetector(
           onTap: onTap,
           child: Container(
             width: 60,
             height: 60,
-            decoration: activo
-                ? clayGlow(color: AppColors.accent)
-                : clayRaised(radius: AppRadius.pill, color: AppColors.surfaceAlt),
+            decoration: BoxDecoration(
+              color: activo ? kAccentColor : kSecondaryBgColor,
+              shape: BoxShape.circle,
+              boxShadow: activo
+                  ? [
+                BoxShadow(
+                  color: kAccentColor.withValues(alpha: 0.45),
+                  blurRadius: 24,
+                  spreadRadius: 1,
+                ),
+              ]
+                  : const [
+                BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 8),
+                BoxShadow(color: Color(0xFF1A1D3A), offset: Offset(-3, -3), blurRadius: 8),
+              ],
+            ),
             child: Icon(
               icono,
-              color: activo ? Colors.black87 : AppColors.textPrimary,
+              color: activo ? Colors.black87 : kTextPrimary,
               size: 26,
             ),
           ),
@@ -277,18 +258,48 @@ class _AccionRedonda extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           etiqueta,
-          style: const TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
+          style: const TextStyle(color: kTextSecondary, fontSize: 12, fontWeight: FontWeight.w600),
         ),
       ],
     );
   }
 }
 
-/// Dibuja las 4 esquinas verdes tipo "marco de escaneo" sobre el preview
+/// Copia local del mismo botón circular con sombra neumórfica que ya
+/// existe (duplicado) en modulo_gastos.dart y agregar_gasto_screen.dart.
+/// Se repite aquí siguiendo la misma convención del proyecto (cada
+/// pantalla trae su propia copia privada en vez de importar una
+/// compartida). Si más adelante quieres, se puede extraer a un solo
+/// widget reutilizable en lib/widgets/.
+class _NeumorphicIcon extends StatelessWidget {
+  final IconData icon;
+  final double size;
+  final VoidCallback onTap;
+
+  const _NeumorphicIcon({required this.icon, required this.size, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: const BoxDecoration(
+          color: kBgColor,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 8),
+            BoxShadow(color: Color(0xFF1A1D3A), offset: Offset(-3, -3), blurRadius: 8),
+          ],
+        ),
+        child: Icon(icon, color: kTextSecondary, size: size),
+      ),
+    );
+  }
+}
+
+/// Esquinas verdes tipo "marco de escaneo" sobre el preview de cámara.
 class _CornerBracketsPainter extends CustomPainter {
   final Color color;
   const _CornerBracketsPainter({required this.color});
@@ -304,19 +315,15 @@ class _CornerBracketsPainter extends CustomPainter {
     const double margen = 24;
     const double largo = 32;
 
-    // Esquina superior-izquierda
     canvas.drawLine(const Offset(margen, margen + largo), const Offset(margen, margen), paint);
     canvas.drawLine(const Offset(margen, margen), const Offset(margen + largo, margen), paint);
 
-    // Esquina superior-derecha
     canvas.drawLine(Offset(size.width - margen - largo, margen), Offset(size.width - margen, margen), paint);
     canvas.drawLine(Offset(size.width - margen, margen), Offset(size.width - margen, margen + largo), paint);
 
-    // Esquina inferior-izquierda
     canvas.drawLine(Offset(margen, size.height - margen - largo), Offset(margen, size.height - margen), paint);
     canvas.drawLine(Offset(margen, size.height - margen), Offset(margen + largo, size.height - margen), paint);
 
-    // Esquina inferior-derecha
     canvas.drawLine(
       Offset(size.width - margen - largo, size.height - margen),
       Offset(size.width - margen, size.height - margen),
