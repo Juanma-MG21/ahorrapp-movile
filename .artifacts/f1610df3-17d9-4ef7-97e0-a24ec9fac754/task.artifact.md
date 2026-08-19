@@ -1,0 +1,6 @@
+- [x] Renombrar `NeumorphicFinanceScreen` a `ModuloGastos` en `modulo_gastos.dart`
+- [x] Actualizar la referencia de `NeumorphicFinanceScreen` a `ModuloGastos` en `main.dart`
+- [x] Verificar que no existan más referencias a `NeumorphicFinanceScreen`
+- [x] Mover `modulo_gastos.dart` a `lib/screens/gastos/`
+- [x] Actualizar import en `main.dart`
+- [x] Conectar menú de Gastos con `AgregarGastoScreen`
