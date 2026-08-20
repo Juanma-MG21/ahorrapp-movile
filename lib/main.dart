@@ -104,15 +104,6 @@ class _MyHomePageState extends State<MyHomePage> {
     return _movimientosPorDia[_fechaSinHora(dia)] ?? [];
   }
 
-  final List<MetaAhorro> metas = [
-    MetaAhorro(nombre: 'Viaje a Cartagena', montoActual: 850000, montoObjetivo: 2000000),
-    MetaAhorro(nombre: 'Fondo de emergencia', montoActual: 1500000, montoObjetivo: 3000000),
-    MetaAhorro(nombre: 'Nuevo portátil', montoActual: 400000, montoObjetivo: 4500000),
-  ];
-
-  double get totalAhorrado {
-    return metas.fold(0, (suma, meta) => suma + meta.montoActual);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -129,21 +120,14 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: Column(
         children: [
-          _buildResumenTotal(),
+          _buildTarjetaTitulo(),
           _buildCalendario(),
-          Expanded(child: _buildListaMetas()),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: dorado,
-        onPressed: _mostrarDialogoNuevaMeta,
-        tooltip: 'Agregar meta',
-        child: const Icon(Icons.add, color: Color(0xFF080C18)),
       ),
     );
   }
 
-  Widget _buildResumenTotal() {
+  Widget _buildTarjetaTitulo() {
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
@@ -156,16 +140,15 @@ class _MyHomePageState extends State<MyHomePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Total ahorrado',
-            style: TextStyle(color: Colors.white70, fontSize: 14),
+            'Actividad del Mes: ',
+            style: TextStyle(color: Colors.amber, fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          Text(
-            '\$${totalAhorrado.toStringAsFixed(0)}',
+          Text('2 ingresos, 3 gastos, 3 abonos, 1 imprevisto'
+            ,
             style: TextStyle(
-              color: dorado,
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              fontSize: 18
             ),
           ),
         ],
@@ -186,11 +169,7 @@ class _MyHomePageState extends State<MyHomePage> {
         lastDay: DateTime(2030),
         focusedDay: _diaFocalizado,
         locale: 'es_ES',
-
-        // Le dice al calendario qué día está "seleccionado" (círculo relleno)
         selectedDayPredicate: (dia) => isSameDay(_diaSeleccionado, dia),
-
-        // Se ejecuta al tocar un día
         onDaySelected: (diaSeleccionado, diaFocalizado) {
           setState(() {
             _diaSeleccionado = diaSeleccionado;
@@ -267,74 +246,6 @@ class _MyHomePageState extends State<MyHomePage> {
           },
         ),
       ),
-    );
-  }
-
-  Widget _buildListaMetas() {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: metas.length,
-      itemBuilder: (context, index) {
-        final meta = metas[index];
-        return _buildTarjetaMeta(meta);
-      },
-    );
-  }
-
-  Widget _buildTarjetaMeta(MetaAhorro meta) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: fondoTarjeta,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            meta.nombre,
-            style: const TextStyle(color: Colors.white, fontSize: 16),
-          ),
-          const SizedBox(height: 10),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: meta.progreso.clamp(0.0, 1.0),
-              backgroundColor: Colors.white12,
-              valueColor: AlwaysStoppedAnimation<Color>(dorado),
-              minHeight: 8,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            '\$${meta.montoActual.toStringAsFixed(0)} de \$${meta.montoObjetivo.toStringAsFixed(0)}',
-            style: const TextStyle(color: Colors.white54, fontSize: 12),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _mostrarDialogoNuevaMeta() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: fondoTarjeta,
-          title: Text('Nueva meta', style: TextStyle(color: dorado)),
-          content: const Text(
-            'Aquí iría el formulario para crear una meta.',
-            style: TextStyle(color: Colors.white70),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Cerrar', style: TextStyle(color: dorado)),
-            ),
-          ],
-        );
-      },
     );
   }
 }
