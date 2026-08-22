@@ -1,0 +1,4 @@
+- [x] Crear `lib/services/voice_parser_ingreso_service.dart`
+- [x] Implementar registro por voz en `lib/screens/ingresos/modulo_ingresos.dart`
+- [x] Filtrar categorías y corregir iconos/colores en `lib/screens/ingresos/agregar_ingreso_screen.dart`
+- [x] Verificar y corregir ubicación de archivos en `lib/screens/`

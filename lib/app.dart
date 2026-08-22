@@ -1,11 +1,6 @@
 import 'package:flutter/material.dart';
 import 'core/design_tokens.dart';
-// Ojo: ajusta esta ruta si en tu proyecto modulo_gastos.dart está en
-// otra carpeta. Por los imports que vimos dentro de modulo_gastos.dart
-// ('../../core/design_tokens.dart'), asumo que vive en:
-//   lib/screens/gastos/modulo_gastos.dart
-// Si está en otra ubicación, solo corrige esta línea de import.
-import 'screens/gastos/modulo_gastos.dart';
+import 'screens/main_screen.dart';
 
 class AhorrApp extends StatelessWidget {
   const AhorrApp({super.key});
@@ -27,9 +22,7 @@ class AhorrApp extends StatelessWidget {
           bodyMedium: TextStyle(color: kTextPrimary),
         ),
       ),
-      // TODO: cuando exista pantalla de login/splash, esta línea
-      // cambiará para apuntar allá en vez de directo al módulo.
-      home: const ModuloGastos(),
+      home: const MainScreen(),
     );
   }
 }
