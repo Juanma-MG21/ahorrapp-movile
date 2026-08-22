@@ -1,10 +1,11 @@
+/// Representa a una persona que depende económicamente del usuario.
 class DependienteModel {
   final int id;
   final String nombre;
   final String? relacion;
   final String? ocupacion;
   final DateTime? fechaNacimiento;
-  final int pesoEconomico;
+  final int pesoEconomico; // Valor para cálculos de distribución de gastos.
   final int idUsuario;
 
   DependienteModel({
@@ -17,6 +18,7 @@ class DependienteModel {
     required this.idUsuario,
   });
 
+  /// Mapea los datos desde Supabase a este modelo.
   factory DependienteModel.fromMap(Map<String, dynamic> map) {
     return DependienteModel(
       id: map['id_dependientes'],

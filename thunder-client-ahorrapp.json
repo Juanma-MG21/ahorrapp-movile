@@ -1,0 +1,162 @@
+{
+  "collections": [
+    {
+      "_id": "col_ahorrapp_gastos",
+      "name": "AhorrApp - Gastos API",
+      "containerId": "",
+      "requests": [
+        {
+          "_id": "req_get_categorias",
+          "colId": "col_ahorrapp_gastos",
+          "containerId": "",
+          "name": "1. GET categorias",
+          "sortNum": 1,
+          "isDeleted": false,
+          "method": "GET",
+          "url": "{{BASE_URL}}/rest/v1/categorias?select=*&or=(id_usuario.eq.1,es_global.eq.true)&limit=5",
+          "headers": [
+            { "name": "apikey", "value": "{{ANON_KEY}}" },
+            { "name": "Authorization", "value": "Bearer {{ANON_KEY}}" }
+          ],
+          "body": { "type": "json" }
+        },
+        {
+          "_id": "req_get_dependientes",
+          "colId": "col_ahorrapp_gastos",
+          "containerId": "",
+          "name": "2. GET dependientes",
+          "sortNum": 2,
+          "isDeleted": false,
+          "method": "GET",
+          "url": "{{BASE_URL}}/rest/v1/dependientes?select=*&id_usuario=eq.1&limit=5",
+          "headers": [
+            { "name": "apikey", "value": "{{ANON_KEY}}" },
+            { "name": "Authorization", "value": "Bearer {{ANON_KEY}}" }
+          ],
+          "body": { "type": "json" }
+        },
+        {
+          "_id": "req_get_gastos",
+          "colId": "col_ahorrapp_gastos",
+          "containerId": "",
+          "name": "3. GET gastos",
+          "sortNum": 3,
+          "isDeleted": false,
+          "method": "GET",
+          "url": "{{BASE_URL}}/rest/v1/gastos?select=*,categorias(nombre),dependientes(nombre)&order=fecha_registro.desc&limit=5",
+          "headers": [
+            { "name": "apikey", "value": "{{ANON_KEY}}" },
+            { "name": "Authorization", "value": "Bearer {{ANON_KEY}}" }
+          ],
+          "body": { "type": "json" }
+        },
+        {
+          "_id": "req_post_movimientos",
+          "colId": "col_ahorrapp_gastos",
+          "containerId": "",
+          "name": "4. POST movimientos",
+          "sortNum": 4,
+          "isDeleted": false,
+          "method": "POST",
+          "url": "{{BASE_URL}}/rest/v1/movimientos",
+          "headers": [
+            { "name": "apikey", "value": "{{ANON_KEY}}" },
+            { "name": "Authorization", "value": "Bearer {{ANON_KEY}}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
+          ],
+          "body": {
+            "type": "json",
+            "raw": "{ \"id_usuario\": 1, \"tipo_flujo\": \"Salida\", \"subtipo_modulo\": \"Gasto\" }"
+          }
+        },
+        {
+          "_id": "req_post_salida",
+          "colId": "col_ahorrapp_gastos",
+          "containerId": "",
+          "name": "5. POST salida",
+          "sortNum": 5,
+          "isDeleted": false,
+          "method": "POST",
+          "url": "{{BASE_URL}}/rest/v1/salida",
+          "headers": [
+            { "name": "apikey", "value": "{{ANON_KEY}}" },
+            { "name": "Authorization", "value": "Bearer {{ANON_KEY}}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
+          ],
+          "body": {
+            "type": "json",
+            "raw": "{ \"id_movimiento\": 1 }"
+          }
+        },
+        {
+          "_id": "req_post_gastos",
+          "colId": "col_ahorrapp_gastos",
+          "containerId": "",
+          "name": "6. POST gastos",
+          "sortNum": 6,
+          "isDeleted": false,
+          "method": "POST",
+          "url": "{{BASE_URL}}/rest/v1/gastos",
+          "headers": [
+            { "name": "apikey", "value": "{{ANON_KEY}}" },
+            { "name": "Authorization", "value": "Bearer {{ANON_KEY}}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
+          ],
+          "body": {
+            "type": "json",
+            "raw": "{ \"id_salida\": 1, \"id_categoria\": 1, \"monto\": 25000, \"descripcion\": \"Gasto de prueba\", \"fecha_registro\": \"2026-08-19\" }"
+          }
+        },
+        {
+          "_id": "req_patch_gastos",
+          "colId": "col_ahorrapp_gastos",
+          "containerId": "",
+          "name": "7. PATCH gastos (editar)",
+          "sortNum": 7,
+          "isDeleted": false,
+          "method": "PATCH",
+          "url": "{{BASE_URL}}/rest/v1/gastos?id_gastos=eq.1",
+          "headers": [
+            { "name": "apikey", "value": "{{ANON_KEY}}" },
+            { "name": "Authorization", "value": "Bearer {{ANON_KEY}}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
+          ],
+          "body": {
+            "type": "json",
+            "raw": "{ \"monto\": 27000, \"descripcion\": \"Gasto de prueba editado\" }"
+          }
+        },
+        {
+          "_id": "req_delete_gastos",
+          "colId": "col_ahorrapp_gastos",
+          "containerId": "",
+          "name": "8. DELETE gastos (borrar)",
+          "sortNum": 8,
+          "isDeleted": false,
+          "method": "DELETE",
+          "url": "{{BASE_URL}}/rest/v1/gastos?id_gastos=eq.1",
+          "headers": [
+            { "name": "apikey", "value": "{{ANON_KEY}}" },
+            { "name": "Authorization", "value": "Bearer {{ANON_KEY}}" },
+            { "name": "Prefer", "value": "return=representation" }
+          ],
+          "body": { "type": "json" }
+        }
+      ]
+    }
+  ],
+  "environments": [
+    {
+      "_id": "env_ahorrapp",
+      "name": "AhorrApp Dev",
+      "variables": [
+        { "name": "BASE_URL", "value": "https://vcvlcoxbxjkmvdkwnbdo.supabase.co" },
+        { "name": "ANON_KEY", "value": "sb_publishable_LrAk5c3leXpIAklL5GcHVA_3ICMCX_1" }
+      ]
+    }
+  ]
+}

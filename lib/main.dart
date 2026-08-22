@@ -19,7 +19,7 @@ Future<void> main() async {
     // Los encuentras en tu panel de Supabase:
     // Project Settings > API > "Project URL" y "anon public" key.
     url: 'https://vcvlcoxbxjkmvdkwnbdo.supabase.co',
-    anonKey: 'sb_publishable_LrAk5c3leXpIAklL5GcHVA_3ICMCX_1',
+    publishableKey: 'sb_publishable_LrAk5c3leXpIAklL5GcHVA_3ICMCX_1',
   );
 
   runApp(const AhorrApp());

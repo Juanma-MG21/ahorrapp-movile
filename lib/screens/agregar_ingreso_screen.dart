@@ -204,7 +204,7 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
       decoration: BoxDecoration(
         color: AppColors.successSoft,
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: AppColors.success.withOpacity(0.4)),
+        border: Border.all(color: AppColors.success.withValues(alpha: 0.4)),
       ),
       child: Row(
         children: const [
@@ -337,9 +337,9 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
       margin: const EdgeInsets.only(top: 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.red.withOpacity(0.12),
+        color: Colors.red.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: Colors.red.withOpacity(0.35)),
+        border: Border.all(color: Colors.red.withValues(alpha: 0.35)),
       ),
       child: Text(
         _error!,
