@@ -1,30 +1,28 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
+import 'package:ahorrapp_movil/app.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:ahorrapp/main.dart';
-
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('navega desde login hasta registro', (tester) async {
+    await tester.pumpWidget(const AhorrApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    final registerLink = find.text('Registrate').first;
+    await tester.ensureVisible(registerLink);
+    await tester.tap(registerLink);
+    await tester.pumpAndSettle();
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    expect(find.text('Crea tu cuenta'), findsOneWidget);
+    expect(find.text('Crear cuenta'), findsOneWidget);
+  });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  testWidgets('navega desde login hasta recuperar contrasena', (tester) async {
+    await tester.pumpWidget(const AhorrApp());
+
+    final forgotPasswordLink = find.text('Olvidaste tu contrasena?');
+    await tester.ensureVisible(forgotPasswordLink);
+    await tester.tap(forgotPasswordLink);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Recuperar acceso'), findsOneWidget);
+    expect(find.text('Enviar enlace de recuperacion'), findsOneWidget);
   });
 }

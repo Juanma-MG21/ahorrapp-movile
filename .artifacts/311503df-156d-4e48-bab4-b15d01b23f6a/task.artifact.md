@@ -1,0 +1,6 @@
+- [x] Arreglar navegación y rutas en el proyecto
+    - [x] Actualizar `lib/app.dart` con la nueva ruta
+    - [x] Reforzar navegación en `lib/screens/auth/login_screen.dart`
+- [x] Crear la vista de "Nueva Contraseña"
+    - [x] Crear `lib/screens/auth/reset_password_screen.dart`
+- [x] Verificar conexiones entre pantallas

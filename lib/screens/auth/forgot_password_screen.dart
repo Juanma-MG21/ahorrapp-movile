@@ -33,8 +33,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     setState(() => _isLoading = false);
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Enlace de recuperacion listo')),
+      const SnackBar(content: Text('Enlace de recuperacion enviado al correo')),
     );
+
+    // Simulamos que el usuario abre el enlace y va a la pantalla de nueva contraseña
+    await Future<void>.delayed(const Duration(seconds: 1));
+    if (!mounted) return;
+    Navigator.of(context).pushNamed('/reset-password');
   }
 
   @override

@@ -46,10 +46,12 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _openRegister() {
+    debugPrint('Navegando a Registro...');
     Navigator.of(context).pushNamed('/register');
   }
 
   void _openForgotPassword() {
+    debugPrint('Navegando a Olvido Contraseña...');
     Navigator.of(context).pushNamed('/forgot-password');
   }
 
@@ -105,7 +107,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const Spacer(),
                         _BottomAccessNav(
                           onRegister: _openRegister,
-                          onHelp: () => _showPendingFeature('Ayuda'),
+                          onHelp: () => Navigator.of(context).pushNamed('/reset-password'),
                         ),
                       ],
                     ),
