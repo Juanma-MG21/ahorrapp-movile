@@ -26,7 +26,7 @@ class AuthPageShell extends StatelessWidget {
                     MediaQuery.paddingOf(context).vertical -
                     40,
               ),
-              child: IntrinsicHeight(child: child),
+              child: child,
             ),
           ),
         ),

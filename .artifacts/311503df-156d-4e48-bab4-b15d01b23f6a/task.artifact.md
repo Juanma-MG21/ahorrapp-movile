@@ -1,7 +1,9 @@
-- [x] Arreglar navegación y rutas en el proyecto
-- [x] Crear la vista de "Nueva Contraseña"
-- [x] Crear la vista de "Acceso por PIN"
-    - [x] Crear `lib/screens/auth/pin_access_screen.dart`
-    - [x] Registrar ruta en `lib/app.dart`
-    - [x] Conectar botón en `lib/screens/auth/login_screen.dart`
-- [ ] Verificar conexiones entre pantallas
+- [x] Arreglar pantalla en negro (PIN)
+    - [x] Modificar `lib/widgets/auth_widgets.dart` (quitar IntrinsicHeight)
+- [x] Implementar API (Requisito del instructor)
+    - [x] Agregar `dio` a `pubspec.yaml`
+    - [x] Crear cliente en `lib/core/network/api_client.dart`
+    - [x] Crear modelo en `lib/models/producto_model.dart`
+    - [x] Crear servicio en `lib/services/producto_service.dart`
+    - [x] Mostrar datos en `lib/screens/productos/productos_screen.dart`
+- [ ] Verificar y Sustentar API

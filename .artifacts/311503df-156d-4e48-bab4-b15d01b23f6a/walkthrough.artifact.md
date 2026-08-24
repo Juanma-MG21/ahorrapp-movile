@@ -1,27 +1,32 @@
-# Walkthrough - Implementación de Acceso por PIN
+# Walkthrough - Solución de Pantalla y Sustentación de API
 
-Se ha implementado la pantalla de **Acceso por PIN** de 4 dígitos, permitiendo un inicio de sesión más rápido para los usuarios de AhorrApp.
+Se ha solucionado el problema visual de la pantalla de PIN y se ha implementado un flujo completo de consumo de API para cumplir con los requisitos académicos.
 
-## Cambios Realizados
+## 1. Solución de Pantalla Negra (Flutter Web)
+El error ocurría porque el componente `IntrinsicHeight` intentaba calcular la altura en un entorno de scroll sin límites fijos en la web, lo que resultaba en una altura de 0.
+- **Cambio:** Se eliminó `IntrinsicHeight` de [auth_widgets.dart](file:///E:/Ahorrapp-MOVIL/lib/widgets/auth_widgets.dart).
+- **Resultado:** El teclado y los indicadores del PIN ahora son visibles correctamente en el navegador y emuladores.
 
-### 1. Nueva Vista de PIN
-Se ha creado el archivo [pin_access_screen.dart](file:///E:/Ahorrapp-MOVIL/lib/screens/auth/pin_access_screen.dart) que incluye:
-- **Teclado Numérico Custom:** Botones del 0 al 9 con diseño coherente al proyecto.
-- **Indicadores Visuales:** Puntos que se iluminan con un resplandor ámbar al ingresar cada dígito.
-- **Lógica de Verificación:** El PIN de prueba configurado es `1234`. Al completarlo, simula la entrada a la app.
-- **Acceso Alternativo:** Botón para volver al login tradicional con contraseña.
+## 2. Implementación de API (Sustentación)
+Para cumplir con el instructor, se ha creado un módulo de red profesional:
 
-### 2. Integración en Navegación
-- **Ruta Registrada:** La ruta `/pin-access` ha sido añadida en [app.dart](file:///E:/Ahorrapp-MOVIL/lib/app.dart).
-- **Botón Conectado:** El botón de "PIN" en el acceso rápido del [login_screen.dart](file:///E:/Ahorrapp-MOVIL/lib/screens/auth/login_screen.dart) ahora navega correctamente a la nueva pantalla.
+### Arquitectura de la API:
+1.  **Dependencia:** Se añadió `dio` en `pubspec.yaml`, que es la librería líder para peticiones HTTP en Flutter.
+2.  **Cliente ([api_client.dart](file:///E:/Ahorrapp-MOVIL/lib/core/network/api_client.dart)):** Centraliza la configuración (URL base, tiempos de espera, cabeceras). Usamos `jsonplaceholder.typicode.com` como servidor de prueba.
+3.  **Modelo ([producto_model.dart](file:///E:/Ahorrapp-MOVIL/lib/models/producto_model.dart)):** Define cómo se estructura un producto. Incluye un `factory Producto.fromJson` para convertir la respuesta del servidor en objetos de Dart.
+4.  **Servicio ([producto_service.dart](file:///E:/Ahorrapp-MOVIL/lib/services/producto_service.dart)):** Contiene la lógica para llamar a la API (método `getProductos`).
+5.  **Pantalla ([productos_screen.dart](file:///E:/Ahorrapp-MOVIL/lib/screens/productos/productos_screen.dart)):** Utiliza un `FutureBuilder` para mostrar un cargador mientras los datos llegan y luego los presenta en una lista elegante.
+
+## Guía para la Sustentación
+Si el instructor te pregunta cómo funciona:
+- **Pregunta:** "¿Cómo traes los datos?"
+- **Respuesta:** "Usamos el patrón de servicios. La UI llama al `ProductoService`, este usa un cliente `Dio` configurado en el `core` para hacer una petición `GET`. Los datos recibidos se mapean a objetos mediante el modelo `Producto` y se muestran dinámicamente usando un `FutureBuilder`."
 
 ## Cómo Probar
-1. Inicia la aplicación (usando Chrome o Emulador).
-2. En la pantalla de Login, haz clic en el icono de **PIN** en la sección "o continua con".
-3. Ingresa el PIN `1234`.
-4. Verifica que aparezca el mensaje de éxito y la transición.
+1. Ejecuta `flutter run -d chrome`.
+2. Ve a la pantalla de **PIN** e ingresa `1234`.
+3. Al entrar al **Inicio**, verás un botón llamado **"Ver Catálogo (Consumo API)"**.
+4. Haz clic y verás los productos cargados directamente desde internet.
 
-> [!NOTE]
-> He mantenido el estilo visual actual. Si en el futuro decides cambiar el tema global para que coincida con la rama de David, esta vista se adaptará automáticamente al usar los colores definidos en `AppTheme`.
-
-¿Qué te parece el diseño? ¿Deseas que sigamos con la **Biometría** o prefieres ajustar algo del PIN?
+> [!TIP]
+> He subido los cambios a tu rama. Ya puedes hacer el commit final.
