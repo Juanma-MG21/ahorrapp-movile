@@ -1,0 +1,3 @@
+- [x] Modificar `gradle.properties` para desactivar `android.newDsl`
+- [x] Verificar consistencia del archivo
+- [x] Generar resumen de cambios (Walkthrough)

@@ -1,9 +1,9 @@
-- [x] Arreglar pantalla en negro (PIN)
-    - [x] Modificar `lib/widgets/auth_widgets.dart` (quitar IntrinsicHeight)
-- [x] Implementar API (Requisito del instructor)
-    - [x] Agregar `dio` a `pubspec.yaml`
-    - [x] Crear cliente en `lib/core/network/api_client.dart`
-    - [x] Crear modelo en `lib/models/producto_model.dart`
-    - [x] Crear servicio en `lib/services/producto_service.dart`
-    - [x] Mostrar datos en `lib/screens/productos/productos_screen.dart`
-- [ ] Verificar y Sustentar API
+- [x] Resolver conflictos de merge con `Juan-M`
+    - [x] Fusionar dependencias en `pubspec.yaml`
+    - [x] Ejecutar `flutter pub get`
+    - [x] Resolver `lib/main.dart` (Supabase Init)
+    - [x] Resolver `lib/app.dart` (Rutas y Tema)
+    - [x] Resolver `lib/core/theme/app_theme.dart` (Claymorphism + Form Styles)
+    - [x] Restaurar y arreglar archivos de `ios/`
+    - [x] Mover proveedores de widgets en `android/`
+- [x] Verificar consistencia del proyecto
