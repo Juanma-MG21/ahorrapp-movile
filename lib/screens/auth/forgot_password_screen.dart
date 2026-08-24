@@ -148,7 +148,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
             ),
           ),
-          const Spacer(),
+          const SizedBox(height: 20),
           OutlinedButton(
             onPressed: () => Navigator.of(context).pop(),
             style: OutlinedButton.styleFrom(

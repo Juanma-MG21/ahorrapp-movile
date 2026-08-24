@@ -1,32 +1,34 @@
-# Walkthrough - Resolución de Conflictos (Merge Juan-M)
+# Walkthrough - Conexión Real de API (Autenticación Supabase)
 
-Se han resuelto exitosamente todos los conflictos generados al integrar la rama de Juan (`Juan-M`) en tu rama actual (`Manuel-M`). La aplicación ahora cuenta con la infraestructura de **Supabase** lista y el nuevo sistema de diseño **Claymorphism**, manteniendo tus pantallas de autenticación.
+Se ha implementado la conexión real de las pantallas de Login y Registro con la API de Supabase. Con esto, tu aplicación ya no usa simulaciones, sino que realiza peticiones reales a un servidor en la nube.
 
-## Cambios Principales
+## Cambios Realizados
 
-### 1. Infraestructura de Supabase
-- **`main.dart`**: Ahora inicializa Supabase correctamente antes de arrancar la aplicación. Se han usado las credenciales proporcionadas por Juan.
-- **`pubspec.yaml`**: Se han fusionado todas las dependencias nuevas (`supabase_flutter`, `dio`, `mobile_scanner`, etc.) y se han configurado los assets necesarios.
+### 1. Inicio de Sesión Real ([login_screen.dart](file:///E:/Ahorrapp-MOVIL/lib/screens/auth/login_screen.dart))
+- Se reemplazó el retardo simulado por una llamada asíncrona a `Supabase.instance.client.auth.signInWithPassword`.
+- **Manejo de Errores:** Si el usuario ingresa mal el correo o la contraseña, la app ahora muestra el mensaje de error real devuelto por la API de Supabase en un SnackBar rojo.
+- **Éxito:** Si los datos son correctos, se redirige automáticamente al Inicio (`/home`).
 
-### 2. Sistema de Diseño Combinado
-- **`app_theme.dart`**: He creado una versión híbrida del tema.
-    - Mantiene los estilos de **InputDecoration** que diseñaste para el Login y Registro (colores ámbar, bordes redondeados).
-    - Integra la paleta de colores y las funciones de **Claymorphism** (`clayRaised`, `claySunken`) de Juan para los nuevos módulos.
-- **Compatibilidad**: He añadido alias de colores para que tu código antiguo siga funcionando sin errores (ej. `AppTheme.amber`).
+### 2. Registro de Usuarios Real ([register_screen.dart](file:///E:/Ahorrapp-MOVIL/lib/screens/auth/register_screen.dart))
+- Implementación de `auth.signUp`.
+- Se envía el nombre completo del usuario como metadatos para que se guarde en la base de datos de Supabase.
+- Al registrarse, el usuario vuelve a la pantalla de login y recibe un aviso para confirmar su correo electrónico (requisito de seguridad de Supabase).
 
-### 3. Navegación Integrada
-- **`app.dart`**: Todas tus rutas (`/login`, `/register`, `/pin-access`, etc.) están registradas junto con el nuevo módulo de gastos (`/gastos`).
-- **Home**: La aplicación sigue iniciando en tu `LoginScreen`.
+## Guía de Sustentación (Lo que debes explicar al instructor)
 
-### 4. Correcciones Técnicas
-- **iOS**: Se ha restaurado completamente la carpeta `ios/` con las configuraciones de Juan (necesarias para los Widgets).
-- **Android**: Se han movido los proveedores de widgets a tu nuevo paquete `com.example.ahorrapp_movil` y se han corregido sus declaraciones internas.
-- **PIN Screen**: Se mantiene la corrección del layout para evitar la pantalla negra en Web.
+Si el instructor te pregunta sobre la API, esta es tu base técnica:
 
-## Cómo Continuar
-Ya puedes ejecutar la app y verás que el Login ahora tiene acceso al tema actualizado de Juan.
+1.  **¿Qué API usas?**: "Uso la API de Autenticación de Supabase (GoTrue), que es un servicio de Backend as a Service (BaaS)".
+2.  **¿Cómo funciona el flujo?**:
+    - "El usuario ingresa sus datos en la **Capa de Presentación** (UI)".
+    - "La aplicación usa el **SDK de Supabase** para enviar una petición cifrada por HTTPS a los endpoints de la API".
+    - "La API valida las credenciales contra la **Base de Datos PostgreSQL** y nos devuelve un JSON con el token de sesión (JWT)".
+3.  **Manejo de estados**: "Gestionamos el estado asíncrono con `isLoading` para mostrar el indicador de carga y usamos bloques `try-catch` específicos para `AuthException`, permitiendo una experiencia de usuario robusta ante errores de red o credenciales inválidas".
+
+## Cómo Probar
+1. Ejecuta la app en Chrome o Emulador.
+2. Intenta loguearte con un correo falso (ej: `test@test.com`) y verás el error de la API.
+3. Regístrate como nuevo usuario y verifica que te devuelva el mensaje de éxito.
 
 > [!TIP]
-> Si el instructor te pregunta por la API, ya puedes mostrarle el archivo [main.dart](file:///E:/Ahorrapp-MOVIL/lib/main.dart) donde se inicializa Supabase. El siguiente paso lógico es conectar el botón de "Entrar" de tu Login con `Supabase.instance.client.auth.signInWithPassword`.
-
-¿Deseas que te ayude a hacer esa primera conexión real con Supabase en el Login?
+> Recuerda que ya tienes todo subido y listo para sustentar. ¡Mucha suerte con el instructor!

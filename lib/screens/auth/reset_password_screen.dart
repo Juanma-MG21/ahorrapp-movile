@@ -150,7 +150,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             isLoading: _isLoading,
             onPressed: _submit,
           ),
-          const Spacer(),
+          const SizedBox(height: 20),
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text(

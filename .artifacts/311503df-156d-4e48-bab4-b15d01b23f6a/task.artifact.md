@@ -1,9 +1,5 @@
 - [x] Resolver conflictos de merge con `Juan-M`
-    - [x] Fusionar dependencias en `pubspec.yaml`
-    - [x] Ejecutar `flutter pub get`
-    - [x] Resolver `lib/main.dart` (Supabase Init)
-    - [x] Resolver `lib/app.dart` (Rutas y Tema)
-    - [x] Resolver `lib/core/theme/app_theme.dart` (Claymorphism + Form Styles)
-    - [x] Restaurar y arreglar archivos de `ios/`
-    - [x] Mover proveedores de widgets en `android/`
-- [x] Verificar consistencia del proyecto
+- [x] Conectar Autenticación con Supabase
+    - [x] Actualizar `lib/screens/auth/login_screen.dart`
+    - [x] Actualizar `lib/screens/auth/register_screen.dart`
+- [x] Verificar funcionamiento de la API de Auth
