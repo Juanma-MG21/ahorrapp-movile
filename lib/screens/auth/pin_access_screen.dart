@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
-import 'register_screen.dart'; // Para usar AuthPageShell y PrimaryAuthButton si es necesario
+import '../../widgets/auth_widgets.dart';
 
 class PinAccessScreen extends StatefulWidget {
   const PinAccessScreen({super.key});
@@ -127,7 +127,7 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
             }),
           ),
           
-          const Spacer(),
+          const SizedBox(height: 60),
           
           // Teclado Numérico
           GridView.builder(

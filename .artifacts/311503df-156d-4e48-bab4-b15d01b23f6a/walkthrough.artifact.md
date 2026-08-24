@@ -1,30 +1,27 @@
-# Walkthrough - Conexión de Vistas y Nueva Contraseña
+# Walkthrough - Implementación de Acceso por PIN
 
-Se ha solucionado el problema de conexión entre las vistas y se ha implementado la siguiente pantalla en tu lista: **Nueva Contraseña**.
+Se ha implementado la pantalla de **Acceso por PIN** de 4 dígitos, permitiendo un inicio de sesión más rápido para los usuarios de AhorrApp.
 
 ## Cambios Realizados
 
-### 1. Conexión de Vistas (Login -> Registro/Olvido)
-Se han actualizado las rutas en [app.dart](file:///E:/Ahorrapp-MOVIL/lib/app.dart) y se han agregado logs de depuración en [login_screen.dart](file:///E:/Ahorrapp-MOVIL/lib/screens/auth/login_screen.dart).
+### 1. Nueva Vista de PIN
+Se ha creado el archivo [pin_access_screen.dart](file:///E:/Ahorrapp-MOVIL/lib/screens/auth/pin_access_screen.dart) que incluye:
+- **Teclado Numérico Custom:** Botones del 0 al 9 con diseño coherente al proyecto.
+- **Indicadores Visuales:** Puntos que se iluminan con un resplandor ámbar al ingresar cada dígito.
+- **Lógica de Verificación:** El PIN de prueba configurado es `1234`. Al completarlo, simula la entrada a la app.
+- **Acceso Alternativo:** Botón para volver al login tradicional con contraseña.
 
-> [!TIP]
-> Si los botones no responden al ejecutarlos, revisa la consola de depuración para ver si aparece el mensaje "Navegando a...". Si aparece pero no cambia la pantalla, asegúrate de hacer un **Hot Restart** (presiona 'R' en la terminal o el botón de rayo en Android Studio).
+### 2. Integración en Navegación
+- **Ruta Registrada:** La ruta `/pin-access` ha sido añadida en [app.dart](file:///E:/Ahorrapp-MOVIL/lib/app.dart).
+- **Botón Conectado:** El botón de "PIN" en el acceso rápido del [login_screen.dart](file:///E:/Ahorrapp-MOVIL/lib/screens/auth/login_screen.dart) ahora navega correctamente a la nueva pantalla.
 
-### 2. Implementación de "Nueva Contraseña"
-Se ha creado el archivo [reset_password_screen.dart](file:///E:/Ahorrapp-MOVIL/lib/screens/auth/reset_password_screen.dart) con el siguiente diseño:
-- Campos para **Nueva Contraseña** y **Confirmar Contraseña**.
-- Validación de coincidencia entre claves.
-- Estética consistente con `AuthPageShell`.
+## Cómo Probar
+1. Inicia la aplicación (usando Chrome o Emulador).
+2. En la pantalla de Login, haz clic en el icono de **PIN** en la sección "o continua con".
+3. Ingresa el PIN `1234`.
+4. Verifica que aparezca el mensaje de éxito y la transición.
 
-### 3. Flujo Completo de Recuperación
-Se ha modificado [forgot_password_screen.dart](file:///E:/Ahorrapp-MOVIL/lib/screens/auth/forgot_password_screen.dart) para que, al presionar "Enviar enlace", simule el envío y te redirija automáticamente a la pantalla de **Nueva Contraseña** después de 1 segundo.
+> [!NOTE]
+> He mantenido el estilo visual actual. Si en el futuro decides cambiar el tema global para que coincida con la rama de David, esta vista se adaptará automáticamente al usar los colores definidos en `AppTheme`.
 
-## Próximos Pasos Recomendados
-- **Logueo Rápido / PIN / Biometría:** Son las siguientes en tu lista.
-- **Limpiar Debug Prints:** Una vez confirmes que la navegación funciona en tu dispositivo, puedes borrar los `debugPrint` que agregamos.
-
-Para probar ahora:
-```bash
-flutter run -d chrome  # O usa tu emulador
-```
-Luego, en el Login, haz clic en **"Olvidaste tu contrasena?"**, escribe un correo y presiona **"Enviar enlace"**. Verás cómo te lleva a la nueva pantalla.
+¿Qué te parece el diseño? ¿Deseas que sigamos con la **Biometría** o prefieres ajustar algo del PIN?

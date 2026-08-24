@@ -5,6 +5,7 @@ import 'screens/auth/forgot_password_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/auth/reset_password_screen.dart';
+import 'screens/auth/pin_access_screen.dart';
 
 class AhorrApp extends StatelessWidget {
   const AhorrApp({super.key});
@@ -21,6 +22,7 @@ class AhorrApp extends StatelessWidget {
         '/register': (context) => const RegisterScreen(),
         '/forgot-password': (context) => const ForgotPasswordScreen(),
         '/reset-password': (context) => const ResetPasswordScreen(),
+        '/pin-access': (context) => const PinAccessScreen(),
       },
     );
   }
