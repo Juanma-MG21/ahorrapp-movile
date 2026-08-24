@@ -27,18 +27,6 @@ class HomeScreen extends StatelessWidget {
               'Gestión financiera al alcance de tu mano',
               style: TextStyle(color: AppTheme.muted, fontSize: 16),
             ),
-            const SizedBox(height: 40),
-            ElevatedButton.icon(
-              onPressed: () => Navigator.of(context).pushNamed('/productos'),
-              icon: const Icon(Icons.list_alt_rounded),
-              label: const Text('Ver Catálogo (Consumo API)'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.amber,
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
           ],
         ),
       ),
