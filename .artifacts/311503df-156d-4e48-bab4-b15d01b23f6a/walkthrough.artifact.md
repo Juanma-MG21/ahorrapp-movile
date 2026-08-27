@@ -1,34 +1,28 @@
-# Walkthrough - Conexión Real de API (Autenticación Supabase)
+# Walkthrough - Implementación de Acceso por Biometría
 
-Se ha implementado la conexión real de las pantallas de Login y Registro con la API de Supabase. Con esto, tu aplicación ya no usa simulaciones, sino que realiza peticiones reales a un servidor en la nube.
+Se ha integrado el soporte para autenticación biométrica (huella dactilar y reconocimiento facial) en AhorrApp, permitiendo un acceso seguro y moderno.
 
 ## Cambios Realizados
 
-### 1. Inicio de Sesión Real ([login_screen.dart](file:///E:/Ahorrapp-MOVIL/lib/screens/auth/login_screen.dart))
-- Se reemplazó el retardo simulado por una llamada asíncrona a `Supabase.instance.client.auth.signInWithPassword`.
-- **Manejo de Errores:** Si el usuario ingresa mal el correo o la contraseña, la app ahora muestra el mensaje de error real devuelto por la API de Supabase en un SnackBar rojo.
-- **Éxito:** Si los datos son correctos, se redirige automáticamente al Inicio (`/home`).
+### 1. Configuración Nativa (Android e iOS)
+- **Android:** Se actualizó el [MainActivity.kt](file:///E:/Ahorrapp-MOVIL/android/app/src/main/kotlin/com/example/ahorrapp_movil/MainActivity.kt) para soportar los diálogos de autenticación del sistema y se agregó el permiso necesario en el [AndroidManifest.xml](file:///E:/Ahorrapp-MOVIL/android/app/src/main/AndroidManifest.xml).
+- **iOS:** Se añadió la descripción de uso de Face ID en el [Info.plist](file:///E:/Ahorrapp-MOVIL/ios/Runner/Info.plist).
 
-### 2. Registro de Usuarios Real ([register_screen.dart](file:///E:/Ahorrapp-MOVIL/lib/screens/auth/register_screen.dart))
-- Implementación de `auth.signUp`.
-- Se envía el nombre completo del usuario como metadatos para que se guarde en la base de datos de Supabase.
-- Al registrarse, el usuario vuelve a la pantalla de login y recibe un aviso para confirmar su correo electrónico (requisito de seguridad de Supabase).
+### 2. Nueva Vista de Biometría
+Se creó el archivo [biometric_access_screen.dart](file:///E:/Ahorrapp-MOVIL/lib/screens/auth/biometric_access_screen.dart) con las siguientes características:
+- **Activación Automática:** Al abrir la pantalla, se solicita inmediatamente la huella/rostro.
+- **Feedback Visual:** Un icono de huella que reacciona según el estado de la autenticación.
+- **Reintento:** Botón para volver a intentar si el sensor falla.
 
-## Guía de Sustentación (Lo que debes explicar al instructor)
-
-Si el instructor te pregunta sobre la API, esta es tu base técnica:
-
-1.  **¿Qué API usas?**: "Uso la API de Autenticación de Supabase (GoTrue), que es un servicio de Backend as a Service (BaaS)".
-2.  **¿Cómo funciona el flujo?**:
-    - "El usuario ingresa sus datos en la **Capa de Presentación** (UI)".
-    - "La aplicación usa el **SDK de Supabase** para enviar una petición cifrada por HTTPS a los endpoints de la API".
-    - "La API valida las credenciales contra la **Base de Datos PostgreSQL** y nos devuelve un JSON con el token de sesión (JWT)".
-3.  **Manejo de estados**: "Gestionamos el estado asíncrono con `isLoading` para mostrar el indicador de carga y usamos bloques `try-catch` específicos para `AuthException`, permitiendo una experiencia de usuario robusta ante errores de red o credenciales inválidas".
+### 3. Integración en el Login
+- Se conectó el icono de huella dactilar de la pantalla principal de acceso rápido para que navegue directamente a la nueva vista.
 
 ## Cómo Probar
-1. Ejecuta la app en Chrome o Emulador.
-2. Intenta loguearte con un correo falso (ej: `test@test.com`) y verás el error de la API.
-3. Regístrate como nuevo usuario y verifica que te devuelva el mensaje de éxito.
+1. Ejecuta la aplicación en un dispositivo físico o emulador con biometría activada.
+2. En la pantalla de Login, presiona el icono de **Huella** en la parte inferior.
+3. El sistema mostrará el diálogo nativo para que pongas tu huella.
 
-> [!TIP]
-> Recuerda que ya tienes todo subido y listo para sustentar. ¡Mucha suerte con el instructor!
+> [!IMPORTANT]
+> Si estás usando el emulador de Android, recuerda que puedes simular una huella desde el menú de los tres puntos (...) -> Fingerprint.
+
+¿Deseas que subamos estos cambios a tu rama de GitHub ahora mismo?

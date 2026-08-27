@@ -6,6 +6,8 @@
     <string>Necesitamos la cámara para escanear el código QR del recibo</string>
     <key>NSPhotoLibraryUsageDescription</key>
     <string>Necesitamos acceso a tus fotos para leer un QR desde una imagen</string>
+    <key>NSFaceIDUsageDescription</key>
+    <string>Autentícate para acceder de forma segura a tus ahorros</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

@@ -125,8 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 18),
                         _QuickAccess(
-                          onFingerprint: () =>
-                              _showPendingFeature('Acceso por biometria'),
+                          onFingerprint: () => Navigator.of(context).pushNamed('/biometric-access'),
                           onPin: () => Navigator.of(context).pushNamed('/pin-access'),
                         ),
                         const SizedBox(height: 16),
