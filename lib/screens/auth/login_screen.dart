@@ -133,7 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const Spacer(),
                         _BottomAccessNav(
                           onRegister: _openRegister,
-                          onHelp: () => Navigator.of(context).pushNamed('/reset-password'),
+                          onHelp: () => Navigator.of(context).pushNamed('/fast-login'),
                         ),
                       ],
                     ),
@@ -532,8 +532,8 @@ class _BottomAccessNav extends StatelessWidget {
             onTap: onRegister,
           ),
           _BottomNavButton(
-            icon: Icons.help_rounded,
-            label: 'Ayuda',
+            icon: Icons.bolt_rounded,
+            label: 'Rápido',
             onTap: onHelp,
           ),
         ],

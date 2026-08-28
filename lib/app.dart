@@ -7,6 +7,7 @@ import 'screens/auth/register_screen.dart';
 import 'screens/auth/reset_password_screen.dart';
 import 'screens/auth/pin_access_screen.dart';
 import 'screens/auth/biometric_access_screen.dart';
+import 'screens/auth/fast_login_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/gastos/modulo_gastos.dart';
 
@@ -27,6 +28,7 @@ class AhorrApp extends StatelessWidget {
         '/reset-password': (context) => const ResetPasswordScreen(),
         '/pin-access': (context) => const PinAccessScreen(),
         '/biometric-access': (context) => const BiometricAccessScreen(),
+        '/fast-login': (context) => const FastLoginScreen(),
         '/home': (context) => const HomeScreen(),
         '/gastos': (context) => const ModuloGastos(),
       },

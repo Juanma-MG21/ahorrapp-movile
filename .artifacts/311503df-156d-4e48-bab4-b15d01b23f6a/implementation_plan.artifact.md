@@ -1,41 +1,27 @@
-# Plan de Implementación: Acceso por Biometría
+# Plan de Implementación: Logueo Rápido
 
-El objetivo es permitir a los usuarios autenticarse mediante huella dactilar o reconocimiento facial, integrando la librería oficial de Flutter para biometría.
-
-## User Review Required
-
-> [!IMPORTANT]
-> Para que la biometría funcione en Android, es necesario que el dispositivo tenga configurado al menos un método de bloqueo (huella, rostro o PIN). En el emulador, esto se puede simular desde los ajustes del sistema.
+El objetivo es crear la última vista de la lista: **Logueo Rápido**. Esta pantalla está diseñada para usuarios que ya han iniciado sesión previamente en el dispositivo, ofreciendo una entrada ágil mediante PIN o Biometría sin tener que escribir su correo y contraseña nuevamente.
 
 ## Proposed Changes
 
-### [Dependencias]
-#### [MODIFICAR] [pubspec.yaml](file:///E:/Ahorrapp-MOVIL/pubspec.yaml)
-- Agregar `local_auth: ^2.3.0`.
+### [Vistas de Autenticación]
 
-### [Configuración Nativa]
-#### [MODIFICAR] [MainActivity.kt](file:///E:/Ahorrapp-MOVIL/android/app/src/main/kotlin/com/example/ahorrapp_movil/MainActivity.kt)
-- Cambiar `FlutterActivity` por `FlutterFragmentActivity` (requerido por `local_auth` para mostrar diálogos nativos).
-
-#### [MODIFICAR] [AndroidManifest.xml](file:///E:/Ahorrapp-MOVIL/android/app/src/main/AndroidManifest.xml)
-- Agregar permiso `<uses-permission android:name="android.permission.USE_BIOMETRIC"/>`.
-
-#### [MODIFICAR] [Info.plist](file:///E:/Ahorrapp-MOVIL/ios/Runner/Info.plist)
-- Agregar `NSFaceIDUsageDescription` para soporte de rostro en iOS.
-
-### [Interfaz de Usuario]
-#### [NUEVO] [biometric_access_screen.dart](file:///E:/Ahorrapp-MOVIL/lib/screens/auth/biometric_access_screen.dart)
-- Pantalla elegante con icono de huella dactilar.
-- Lógica para activar automáticamente el sensor al entrar.
-- Botón de reintento en caso de fallo.
+#### [NUEVO] [fast_login_screen.dart](file:///E:/Ahorrapp-MOVIL/lib/screens/auth/fast_login_screen.dart)
+- Interfaz personalizada con un mensaje de "Bienvenido de vuelta".
+- Visualización de la cuenta del usuario (Avatar/Icono y Correo oculto).
+- Botones prominentes para acceder directamente a las pantallas de **PIN** y **Biometría**.
+- Opción de "Usar otra cuenta" para regresar al Login tradicional.
 
 #### [MODIFICAR] [app.dart](file:///E:/Ahorrapp-MOVIL/lib/app.dart)
-- Registrar la ruta `/biometric-access`.
+- Registrar la ruta `/fast-login`.
 
 #### [MODIFICAR] [login_screen.dart](file:///E:/Ahorrapp-MOVIL/lib/screens/auth/login_screen.dart)
-- Conectar el botón de huella dactilar para que navegue a la nueva pantalla.
+- Agregar un acceso temporal al "Logueo Rápido" para pruebas, o configurar que sea la pantalla inicial si se detecta un usuario previo (opcional para el prototipo).
 
 ## Verification Plan
-1. Ejecutar `flutter pub get`.
-2. Probar en un dispositivo físico o emulador con biometría configurada.
-3. Verificar que al presionar el icono de huella en el Login, se solicite la autenticación.
+
+### Manual
+1. Iniciar la app y navegar a "Logueo Rápido".
+2. Verificar que se muestre correctamente el nombre/correo simulado.
+3. Probar que los botones de PIN y Huella lleven a sus respectivas pantallas.
+4. Verificar que "Usar otra cuenta" regrese al Login.
