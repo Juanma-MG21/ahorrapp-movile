@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'core/theme/design_tokens.dart';
+import 'core/theme/app_theme.dart';
 import 'screens/main_screen.dart';
 
 class AhorrApp extends StatelessWidget {
@@ -10,18 +10,7 @@ class AhorrApp extends StatelessWidget {
     return MaterialApp(
       title: 'AhorrApp',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: kBgColor,
-        colorScheme: const ColorScheme.dark(
-          primary: kAccentColor,
-          surface: kSecondaryBgColor,
-        ),
-        textTheme: const TextTheme(
-          bodyMedium: TextStyle(color: kTextPrimary),
-        ),
-      ),
+      theme: AppTheme.dark(),
       home: const MainScreen(),
     );
   }
