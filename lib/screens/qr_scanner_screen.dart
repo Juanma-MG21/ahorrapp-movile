@@ -61,10 +61,11 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
     if (archivo == null) return;
 
     final BarcodeCapture? resultado = await _controller.analyzeImage(archivo.path);
+    if (!mounted) return;
+
     final codigos = resultado?.barcodes ?? [];
 
     if (codigos.isEmpty || codigos.first.rawValue == null) {
-      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No se encontró un código QR en esa imagen')),
       );

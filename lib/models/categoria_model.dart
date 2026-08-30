@@ -1,10 +1,11 @@
+/// Representa una categoría de gasto o ingreso.
 class CategoriaModel {
   final int id;
   final String nombre;
   final String? descripcion;
   final bool activa;
   final bool sistema;
-  final bool esGlobal;
+  final bool esGlobal; // Si es true, la ven todos los usuarios.
   final int? idUsuario;
 
   CategoriaModel({
@@ -17,6 +18,7 @@ class CategoriaModel {
     this.idUsuario,
   });
 
+  /// Mapea los datos desde Supabase a este modelo.
   factory CategoriaModel.fromMap(Map<String, dynamic> map) {
     return CategoriaModel(
       id: map['id_categoria'],

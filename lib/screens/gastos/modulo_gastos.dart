@@ -480,7 +480,6 @@ class _ModuloGastosState extends State<ModuloGastos>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kBgColor,
-      bottomNavigationBar: _buildBottomNavBar(),
       body: SafeArea(
         child: Stack(
           children: [
@@ -1342,58 +1341,9 @@ class _ModuloGastosState extends State<ModuloGastos>
       ),
     );
   }
-
-  // ---------- BARRA DE NAVEGACIÓN INFERIOR ----------
-  Widget _buildBottomNavBar() {
-    return Container(
-      height: 70,
-      decoration: BoxDecoration(
-        color: kBgColor,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.6),
-            blurRadius: 10,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildNavItem(Icons.home_outlined, 'Inicio', false),
-            _buildNavItem(Icons.arrow_upward, 'Ingresos', false),
-            _buildNavItem(Icons.account_balance_wallet, 'Gastos', true),
-            _buildNavItem(Icons.savings_outlined, 'Ahorros', false),
-            _buildNavItem(Icons.more_horiz, 'Más', false),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, String label, bool isActive) {
-    final color = isActive ? kAccentColor : kNavbarInactive;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: color, size: 24),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            color: color,
-            fontSize: 10,
-            fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-          ),
-        ),
-      ],
-    );
-  }
 }
 
-// ---------- BOTÓN DE MICRÓFONO CON ANILLOS PULSANTES ----------
+// ---------- WIDGETS NEUMÓRFICOS ----------
 
 class _VoicePulseButton extends StatefulWidget {
   final bool isListening;

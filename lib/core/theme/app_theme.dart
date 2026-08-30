@@ -147,7 +147,7 @@ BoxDecoration clayGlow({
     borderRadius: BorderRadius.circular(radius),
     boxShadow: [
       BoxShadow(
-        color: color.withOpacity(0.45),
+        color: color.withValues(alpha: 0.45),
         offset: const Offset(0, 6),
         blurRadius: 24,
         spreadRadius: 1,
