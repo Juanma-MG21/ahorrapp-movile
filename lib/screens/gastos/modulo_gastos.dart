@@ -9,8 +9,8 @@ import '../../services/widget_service.dart';
 import '../../services/supabase_service.dart';
 import 'agregar_gasto_screen.dart';
 
-import '../../services/qr_parser_service.dart';
-import '../qr_scanner_screen.dart';
+  import '../../services/qr_parser_service.dart';
+  import '../qr_scanner_screen.dart';
 
 class ModuloGastos extends StatefulWidget {
   const ModuloGastos({super.key});
