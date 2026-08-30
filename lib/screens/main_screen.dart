@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../core/design_tokens.dart';
+import '../core/theme/design_tokens.dart';
 import 'gastos/modulo_gastos.dart';
 import 'ingresos/modulo_ingresos.dart';
 

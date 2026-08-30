@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../../core/design_tokens.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../models/gasto_model.dart';
 import '../../models/categoria_model.dart';
 import '../../models/dependiente_model.dart';

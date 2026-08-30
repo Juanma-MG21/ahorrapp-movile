@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../core/theme/app_theme.dart';
+import '../core/theme/design_tokens.dart';
 
 class AuthPageShell extends StatelessWidget {
   const AuthPageShell({required this.child, super.key});
@@ -10,13 +10,7 @@ class AuthPageShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF081326), Color(0xFF0C1A33), Color(0xFF12051D)],
-          ),
-        ),
+        decoration: const BoxDecoration(color: AppColors.background),
         child: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(18, 12, 18, 28),
@@ -53,10 +47,8 @@ class PrimaryAuthButton extends StatelessWidget {
       height: 54,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15),
-          gradient: const LinearGradient(
-            colors: [AppTheme.amber, AppTheme.orange],
-          ),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          color: AppColors.accent,
           boxShadow: const [
             BoxShadow(
               color: Color(0x55FFB000),
@@ -74,25 +66,25 @@ class PrimaryAuthButton extends StatelessWidget {
             foregroundColor: Colors.black,
             disabledBackgroundColor: Colors.transparent,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
           ),
           child: isLoading
               ? const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                    color: Colors.black,
-                    strokeWidth: 2.4,
-                  ),
-                )
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(
+              color: Colors.black,
+              strokeWidth: 2.4,
+            ),
+          )
               : Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
+            label,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
         ),
       ),
     );

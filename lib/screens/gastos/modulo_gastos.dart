@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
-import '../../core/design_tokens.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../models/gasto_model.dart';
 import '../../services/voice_parser_service.dart';
 import '../../services/widget_service.dart';

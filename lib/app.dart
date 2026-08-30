@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'core/design_tokens.dart';
+import 'core/theme/design_tokens.dart';
 import 'screens/main_screen.dart';
 
 class AhorrApp extends StatelessWidget {
