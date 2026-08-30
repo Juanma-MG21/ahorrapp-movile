@@ -14,11 +14,11 @@ class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 2; // Empezamos en Gastos para coincidir con el estado inicial previo
 
   final List<Widget> _screens = [
-    const Center(child: Text('Inicio', style: TextStyle(color: kTextPrimary))),
+    const Center(child: Text('Inicio', style: TextStyle(color: AppColors.textPrimary))),
     const ModuloIngresos(),
     const ModuloGastos(),
-    const Center(child: Text('Ahorros', style: TextStyle(color: kTextPrimary))),
-    const Center(child: Text('Más', style: TextStyle(color: kTextPrimary))),
+    const Center(child: Text('Ahorros', style: TextStyle(color: AppColors.textPrimary))),
+    const Center(child: Text('Más', style: TextStyle(color: AppColors.textPrimary))),
   ];
 
   void _onItemTapped(int index) {
@@ -30,7 +30,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kBgColor,
+      backgroundColor: AppColors.background,
       body: IndexedStack(
         index: _selectedIndex,
         children: _screens,
@@ -38,7 +38,7 @@ class _MainScreenState extends State<MainScreen> {
       bottomNavigationBar: Container(
         height: 70,
         decoration: BoxDecoration(
-          color: kBgColor,
+          color: AppColors.background,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.6),
@@ -66,8 +66,8 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _buildNavItem(IconData icon, String label, int index) {
     final bool isActive = _selectedIndex == index;
-    final color = isActive ? kAccentColor : kNavbarInactive;
-    
+    final color = isActive ? AppColors.accent : AppColors.navInactive;
+
     return Expanded(
       child: InkWell(
         onTap: () => _onItemTapped(index),
