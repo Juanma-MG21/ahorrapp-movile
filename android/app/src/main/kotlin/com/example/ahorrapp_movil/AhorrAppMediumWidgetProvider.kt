@@ -1,4 +1,4 @@
-package com.example.ahorrapp
+package com.example.ahorrapp_movil
 
 import android.appwidget.AppWidgetManager
 import android.content.Context

@@ -1,10 +1,3 @@
-// lib/main.dart
-//
-// Punto de entrada de la app. Antes de arrancar el widget principal,
-// inicializamos Supabase — si no se hace esto ANTES de runApp(),
-// cualquier llamada a SupabaseService (fetchGastos, insertGasto, etc.)
-// fallará porque Supabase.instance.client no existiría todavía.
-
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app.dart';
@@ -15,9 +8,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Supabase.initialize(
-    // TODO: reemplaza esto por los valores reales de tu proyecto.
-    // Los encuentras en tu panel de Supabase:
-    // Project Settings > API > "Project URL" y "anon public" key.
+    // Valores proporcionados por la rama de Juan-M
     url: 'https://vcvlcoxbxjkmvdkwnbdo.supabase.co',
     anonKey: 'sb_publishable_LrAk5c3leXpIAklL5GcHVA_3ICMCX_1',
   );

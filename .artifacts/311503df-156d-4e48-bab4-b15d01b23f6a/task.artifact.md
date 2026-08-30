@@ -1,0 +1,11 @@
+- [x] Resolver conflictos de merge con `Juan-M`
+- [x] Conectar Autenticación con Supabase
+- [x] Implementar Acceso por Biometría
+    - [x] Agregar `local_auth` a `pubspec.yaml`
+    - [x] Configurar `MainActivity.kt` (Android)
+    - [x] Configurar `AndroidManifest.xml` (Android)
+    - [x] Configurar `Info.plist` (iOS)
+    - [x] Crear `lib/screens/auth/biometric_access_screen.dart`
+    - [x] Registrar ruta en `lib/app.dart`
+    - [x] Conectar botón en `lib/screens/auth/login_screen.dart`
+- [x] Verificar funcionamiento de Biometría
