@@ -12,6 +12,12 @@
 @import app_links;
 #endif
 
+#if __has_include(<flutter_secure_storage/FlutterSecureStoragePlugin.h>)
+#import <flutter_secure_storage/FlutterSecureStoragePlugin.h>
+#else
+@import flutter_secure_storage;
+#endif
+
 #if __has_include(<home_widget/HomeWidgetPlugin.h>)
 #import <home_widget/HomeWidgetPlugin.h>
 #else
@@ -58,6 +64,7 @@
 
 + (void)registerWithRegistry:(NSObject<FlutterPluginRegistry>*)registry {
   [AppLinksIosPlugin registerWithRegistrar:[registry registrarForPlugin:@"AppLinksIosPlugin"]];
+  [FlutterSecureStoragePlugin registerWithRegistrar:[registry registrarForPlugin:@"FlutterSecureStoragePlugin"]];
   [HomeWidgetPlugin registerWithRegistrar:[registry registrarForPlugin:@"HomeWidgetPlugin"]];
   [FLTImagePickerPlugin registerWithRegistrar:[registry registrarForPlugin:@"FLTImagePickerPlugin"]];
   [LocalAuthPlugin registerWithRegistrar:[registry registrarForPlugin:@"LocalAuthPlugin"]];
