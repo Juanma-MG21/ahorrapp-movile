@@ -48,7 +48,7 @@ class ApiClient {
     );
   }
 
-  /// GET genérico.
+  /// GET genérico. Para endpoints que responden { ok, ... }.
   Future<Map<String, dynamic>> get(String path, {String? token}) {
     return _send(
           () => http.get(_uri(path), headers: _headers(token: token)),
@@ -68,6 +68,49 @@ class ApiClient {
         body: jsonEncode(body ?? {}),
       ),
     );
+  }
+
+  /// DELETE genérico. Para endpoints que responden { ok, ... }.
+  Future<Map<String, dynamic>> delete(String path, {String? token}) {
+    return _send(
+          () => http.delete(_uri(path), headers: _headers(token: token)),
+    );
+  }
+
+  /// GET para endpoints que responden un array plano en vez de { ok, ... },
+  /// como GET /movimientos/ingresos.
+  Future<List<dynamic>> getList(String path, {String? token}) async {
+    late final http.Response response;
+
+    try {
+      response = await http.get(_uri(path), headers: _headers(token: token));
+    } catch (_) {
+      throw ApiException(
+        'No se pudo conectar con el servidor. Revisa tu conexión.',
+      );
+    }
+
+    if (response.statusCode >= 400) {
+      // Estos endpoints, cuando fallan, sí devuelven { ok: false, mensaje }.
+      try {
+        final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+        throw ApiException(
+          decoded['mensaje'] as String? ?? 'Error del servidor',
+          statusCode: response.statusCode,
+        );
+      } catch (_) {
+        throw ApiException(
+          'Ocurrió un error inesperado (código ${response.statusCode})',
+          statusCode: response.statusCode,
+        );
+      }
+    }
+
+    try {
+      return jsonDecode(response.body) as List<dynamic>;
+    } catch (_) {
+      throw ApiException('Respuesta inesperada del servidor');
+    }
   }
 
   Future<Map<String, dynamic>> _send(
