@@ -4,7 +4,7 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../core/theme/design_tokens.dart';
 import '../../models/ingreso_model.dart';
 import '../../services/ingresos_service.dart';
-import '../../services/supabase_service.dart';
+import '../../services/gastos_service.dart';
 import '../../services/widget_service.dart';
 import '../../services/voice_parser_ingreso_service.dart';
 import 'agregar_ingreso_screen.dart';
@@ -44,7 +44,7 @@ class _ModuloIngresosState extends State<ModuloIngresos>
       final matchesDate = i.fechaRegistro.month == _selectedDate.month && i.fechaRegistro.year == _selectedDate.year;
       final matchesSearch = _searchQuery.isEmpty ||
           (i.descripcion?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false) ||
-          i.categoriaNombre.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          i.titulo.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           (i.fuente?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false);
       return matchesDate && matchesSearch;
     }).toList();
@@ -100,7 +100,7 @@ class _ModuloIngresosState extends State<ModuloIngresos>
 
   void _updateWidget() async {
     final now = DateTime.now();
-    final gastos = await SupabaseService.fetchGastos();
+    final gastos = await GastosService.obtenerGastos();
     double totalGastos = 0;
     for (var g in gastos.where((g) => g.fecha.month == now.month && g.fecha.year == now.year)) {
       totalGastos += g.monto;
@@ -781,7 +781,7 @@ class _ModuloIngresosState extends State<ModuloIngresos>
                   children: [
                     Row(
                       children: [
-                        _buildDetailItem('CATEGORÍA', ingreso.categoriaNombre),
+                        _buildDetailItem('CATEGORÍA', ingreso.titulo),
                         _buildDetailItem('FECHA', '${ingreso.fechaRegistro.day.toString().padLeft(2, '0')}/${ingreso.fechaRegistro.month.toString().padLeft(2, '0')}/${ingreso.fechaRegistro.year}'),
                       ],
                     ),

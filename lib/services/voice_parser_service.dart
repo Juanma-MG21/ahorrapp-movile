@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import '../models/gasto_model.dart';
 
 class VoiceParserService {
@@ -56,8 +55,8 @@ class VoiceParserService {
   static final Set<String> _ruido = {
     'me', 'mi', 'mis', 'compre', 'compré', 'compro', 'pague', 'pagué', 'pago',
     'costo', 'costó', 'valio', 'valió', 'vale', 'gaste', 'gasté', 'gasto',
-    'que', 'un', 'una', 'el', 'la', 'los', 'las', 'de', 'del', 'por', 'en', 
-    'con', 'y', 'a', 'valor', 'monto', 'precio', 'pesos', 'luca', 'lucas', 
+    'que', 'un', 'una', 'el', 'la', 'los', 'las', 'de', 'del', 'por', 'en',
+    'con', 'y', 'a', 'valor', 'monto', 'precio', 'pesos', 'luca', 'lucas',
     'barra', 'barras', 'palo', 'palos', 'mil', 'millon', 'millones', 'fueron',
     'valieron', 'quedo'
   };
@@ -71,13 +70,15 @@ class VoiceParserService {
   static GastoModel parse(String text) {
     // Limpieza agresiva de símbolos antes de procesar
     String normalizedText = text.replaceAll('\$', '').replaceAll(',', '');
-    
+
     final textNorm = _quitarAcentos(normalizedText);
-    
+
     // 1. Extraer Monto
     double monto = _extractAmount(textNorm);
 
-    // 2. Extraer Categoría
+    // 2. Extraer Categoría (solo el NOMBRE - el formulario intenta
+    // encontrar el id real haciendo match contra las categorías
+    // reales del backend; si no encuentra, el usuario la elige a mano)
     String categoria = 'General';
     for (var entry in _mapeoCategorias.entries) {
       if (textNorm.contains(entry.key)) {
@@ -89,12 +90,12 @@ class VoiceParserService {
     // 3. Limpiar Descripción
     final originalWords = normalizedText.split(RegExp(r'\s+'));
     List<String> cleanWords = [];
-    
+
     for (var word in originalWords) {
       String wordNorm = _quitarAcentos(word).replaceAll(RegExp(r'[^\w]'), '');
-      
+
       // Si la palabra es parte de un monto numérico o escrito, o es ruido, se descarta
-      if (!_ruido.contains(wordNorm) && 
+      if (!_ruido.contains(wordNorm) &&
           !_mapeoNumeros.containsKey(wordNorm) &&
           !RegExp(r'^\d+$').hasMatch(wordNorm) &&
           wordNorm.isNotEmpty) {
@@ -103,7 +104,7 @@ class VoiceParserService {
     }
 
     String descriptionFinal = cleanWords.join(' ').trim();
-    
+
     // Si la descripción quedó vacía o solo contiene ruido, usamos el nombre de la categoría
     if (descriptionFinal.isEmpty || descriptionFinal.length < 2) {
       descriptionFinal = (categoria != 'General') ? categoria : 'Gasto manual';
@@ -115,13 +116,10 @@ class VoiceParserService {
     }
 
     return GastoModel(
-      description: descriptionFinal,
+      descripcion: descriptionFinal,
       monto: monto,
       fecha: DateTime.now(),
       categoriaNombre: categoria,
-      responsableNombre: 'Gasto propio',
-      icono: _getIconForCategory(categoria),
-      color: _getColorForCategory(categoria),
     );
   }
 
@@ -140,7 +138,7 @@ class VoiceParserService {
         .trim();
 
     final palabras = t.split(' ');
-    
+
     double totalGlobal = 0;
     double acumuladoParcial = 0;
 
@@ -171,29 +169,5 @@ class VoiceParserService {
     }
 
     return totalGlobal + acumuladoParcial;
-  }
-
-  static IconData _getIconForCategory(String category) {
-    switch (category) {
-      case 'Alimentación': return Icons.restaurant;
-      case 'Ropa': return Icons.checkroom;
-      case 'Hogar': return Icons.home;
-      case 'Transporte': return Icons.directions_bus;
-      case 'Salud': return Icons.medical_services;
-      case 'Entretenimiento': return Icons.movie;
-      default: return Icons.shopping_cart;
-    }
-  }
-
-  static Color _getColorForCategory(String category) {
-    switch (category) {
-      case 'Alimentación': return const Color(0xFFA8A2FF);
-      case 'Ropa': return const Color(0xFF4ADE80);
-      case 'Hogar': return const Color(0xFFFF8C4A);
-      case 'Transporte': return const Color(0xFF60A5FA);
-      case 'Salud': return const Color(0xFFFF6B6B);
-      case 'Entretenimiento': return const Color(0xFFC084FC);
-      default: return const Color(0xFFFFB800);
-    }
   }
 }

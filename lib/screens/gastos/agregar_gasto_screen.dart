@@ -1,10 +1,11 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../core/theme/design_tokens.dart';
+import '../../core/network/api_client.dart';
 import '../../models/gasto_model.dart';
 import '../../models/categoria_model.dart';
 import '../../models/dependiente_model.dart';
-import '../../services/supabase_service.dart';
+import '../../services/gastos_service.dart';
 
 class AgregarGastoScreen extends StatefulWidget {
   final GastoModel? gastoParaEditar;
@@ -21,7 +22,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
   DateTime _fecha = DateTime.now();
   int? _idCategoria;
   int? _idDependiente;
-  
+
   List<CategoriaModel> _listaCategorias = [];
   List<DependienteModel> _listaDependientes = [];
   bool _isLoadingData = true;
@@ -34,24 +35,40 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
   }
 
   void _loadInitialData() async {
-    final cats = await SupabaseService.fetchCategorias();
-    final deps = await SupabaseService.fetchDependientes();
-    
+    final cats = await GastosService.obtenerCategorias();
+    final deps = await GastosService.obtenerDependientes();
+
     if (mounted) {
       setState(() {
         _listaCategorias = cats;
         _listaDependientes = deps;
         _isLoadingData = false;
-        
+
         if (widget.gastoParaEditar != null) {
           final g = widget.gastoParaEditar!;
-          _montoController.text = g.monto % 1 == 0 
-              ? g.monto.toStringAsFixed(0) 
+          _montoController.text = g.monto % 1 == 0
+              ? g.monto.toStringAsFixed(0)
               : g.monto.toStringAsFixed(2).replaceAll('.', ',');
-          _descriptionController.text = g.description == 'Sin descripción' ? '' : g.description;
+          _descriptionController.text = g.descripcion ?? '';
           _fecha = g.fecha;
-          _idCategoria = g.idCategoria;
           _idDependiente = g.idDependientes;
+
+          if (g.idCategoria != null) {
+            // Gasto real que se está editando: el id ya es válido.
+            _idCategoria = g.idCategoria;
+          } else if (g.categoriaNombre != null) {
+            // Viene de un parser de voz/QR: solo detectó el NOMBRE de
+            // la categoría, no el id real. Intentamos encontrar una
+            // categoría real del backend con ese mismo nombre; si no
+            // hay coincidencia, queda sin seleccionar y el usuario la
+            // elige a mano.
+            final sugerida = _listaCategorias.where(
+                  (c) => c.nombre.toLowerCase() == g.categoriaNombre!.toLowerCase(),
+            );
+            if (sugerida.isNotEmpty) {
+              _idCategoria = sugerida.first.id;
+            }
+          }
         } else if (_listaDependientes.isNotEmpty) {
           _idDependiente = _listaDependientes.first.id;
         }
@@ -142,7 +159,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
     } else {
       montoStr = montoStr.replaceAll('.', '');
     }
-    
+
     final monto = double.tryParse(montoStr) ?? 0.0;
     if (monto <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Por favor, ingresa un monto válido')));
@@ -155,28 +172,33 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
 
     final gasto = GastoModel(
       id: widget.gastoParaEditar?.id,
-      idSalida: widget.gastoParaEditar?.idSalida,
       idCategoria: cat?.id,
       idDependientes: dep?.id,
-      description: _descriptionController.text.isEmpty ? 'Sin descripción' : _descriptionController.text,
+      descripcion: _descriptionController.text.isEmpty ? null : _descriptionController.text,
       monto: monto,
       fecha: _fecha,
     );
 
-    GastoModel? resultado;
-    if (gasto.id == null) {
-      resultado = await SupabaseService.insertGasto(gasto);
-    } else {
-      resultado = await SupabaseService.updateGasto(gasto);
-    }
-
-    if (mounted) {
-      setState(() => _isSaving = false);
-      if (resultado != null) {
-        Navigator.pop(context, resultado);
+    try {
+      if (gasto.id == null) {
+        await GastosService.crearGasto(gasto);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error al guardar en Supabase')));
+        await GastosService.actualizarGasto(gasto.id!, gasto);
       }
+
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+
+      // Devolvemos "true" para avisarle a ModuloGastos que tiene que
+      // recargar la lista completa desde el backend: crearMovimiento/
+      // updateGastos no devuelven el nombre de categoría ni de
+      // dependiente (eso solo viene del JOIN de getGastos), así que
+      // no podemos armar el card completo acá sin inventar datos.
+      Navigator.pop(context, true);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
     }
   }
 
@@ -184,12 +206,12 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
   Widget build(BuildContext context) {
     if (_isLoadingData) {
       return const Scaffold(
-        backgroundColor: kBgColor,
-        body: Center(child: CircularProgressIndicator(color: kAccentColor)),
+        backgroundColor: AppColors.background,
+        body: Center(child: CircularProgressIndicator(color: AppColors.accent)),
       );
     }
     return Scaffold(
-      backgroundColor: kBgColor,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -209,7 +231,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
                   child: Text(
                     'Ahorrapp puede cometer errores. Verifica siempre la información antes de guardar.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: kNegativeColor, fontSize: 10, fontWeight: FontWeight.w600),
+                    style: TextStyle(color: AppColors.error, fontSize: 10, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -233,12 +255,12 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
           children: [
             Text(
               widget.gastoParaEditar != null ? 'Editar gasto' : 'Agregar gasto',
-              style: const TextStyle(color: kTextPrimary, fontSize: 20, fontWeight: FontWeight.bold),
+              style: const TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 2),
             Text(
               widget.gastoParaEditar != null ? 'Modificar registro' : 'Registro manual',
-              style: const TextStyle(color: kTextSecondary, fontSize: 12),
+              style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
             ),
           ],
         ),
@@ -281,9 +303,9 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
     return RichText(
       text: TextSpan(
         children: [
-          TextSpan(text: text, style: const TextStyle(color: kTextPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
+          TextSpan(text: text, style: const TextStyle(color: AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
           if (required)
-            TextSpan(text: ' *', style: const TextStyle(color: kNegativeColor, fontSize: 13, fontWeight: FontWeight.w600)),
+            TextSpan(text: ' *', style: const TextStyle(color: AppColors.error, fontSize: 13, fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -292,7 +314,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
   Widget _buildInsetBox({required Widget child}) {
     return Container(
       decoration: BoxDecoration(
-        color: kInsetBg,
+        color: AppColors.inset,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.black.withValues(alpha: 0.35)),
       ),
@@ -305,10 +327,10 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
-        style: const TextStyle(color: kTextPrimary, fontSize: 15),
+        style: const TextStyle(color: AppColors.textPrimary, fontSize: 15),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(color: kTextSecondary, fontSize: 14),
+          hintStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
@@ -327,9 +349,9 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
             children: [
               const Icon(Icons.calendar_month, color: Color(0xFF4ADE80), size: 20),
               const SizedBox(width: 10),
-              Text(_formatFecha(_fecha), style: const TextStyle(color: kTextPrimary, fontSize: 14)),
+              Text(_formatFecha(_fecha), style: const TextStyle(color: AppColors.textPrimary, fontSize: 14)),
               const Spacer(),
-              const Icon(Icons.expand_more, color: kTextSecondary, size: 20),
+              const Icon(Icons.expand_more, color: AppColors.textSecondary, size: 20),
             ],
           ),
         ),
@@ -350,10 +372,10 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
               if (cat != null) ...[
                 Icon(_getIconForCategory(cat.nombre), color: _getColorForCategory(cat.nombre), size: 20),
                 const SizedBox(width: 10),
-                Expanded(child: Text(cat.nombre, style: const TextStyle(color: kTextPrimary, fontSize: 14))),
+                Expanded(child: Text(cat.nombre, style: const TextStyle(color: AppColors.textPrimary, fontSize: 14))),
               ] else
-                const Expanded(child: Text('Sin seleccionar', style: TextStyle(color: kTextSecondary, fontSize: 14))),
-              const Icon(Icons.expand_more, color: kTextSecondary, size: 20),
+                const Expanded(child: Text('Sin seleccionar', style: TextStyle(color: AppColors.textSecondary, fontSize: 14))),
+              const Icon(Icons.expand_more, color: AppColors.textSecondary, size: 20),
             ],
           ),
         ),
@@ -373,8 +395,8 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
             children: [
               const Icon(Icons.person, color: Color(0xFF60A5FA), size: 20),
               const SizedBox(width: 10),
-              Expanded(child: Text(dep?.nombre ?? 'Sin seleccionar', style: const TextStyle(color: kTextPrimary, fontSize: 14))),
-              const Icon(Icons.expand_more, color: kTextSecondary, size: 20),
+              Expanded(child: Text(dep?.nombre ?? 'Sin seleccionar', style: const TextStyle(color: AppColors.textPrimary, fontSize: 14))),
+              const Icon(Icons.expand_more, color: AppColors.textSecondary, size: 20),
             ],
           ),
         ),
@@ -391,7 +413,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
     const List<String> meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
     return Container(
-      decoration: const BoxDecoration(color: kSecondaryBgColor, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      decoration: const BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       child: SafeArea(
         top: false,
@@ -399,11 +421,11 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: kNavbarInactive, borderRadius: BorderRadius.circular(2)))),
+            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.navInactive, borderRadius: BorderRadius.circular(2)))),
             const SizedBox(height: 16),
-            Text('${meses[month - 1]} $year', style: const TextStyle(color: kTextPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
+            Text('${meses[month - 1]} $year', style: const TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 18),
-            Row(children: ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'].map((d) => Expanded(child: Center(child: Text(d, style: const TextStyle(color: kTextSecondary, fontSize: 11))))).toList()),
+            Row(children: ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'].map((d) => Expanded(child: Center(child: Text(d, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11))))).toList()),
             const SizedBox(height: 10),
             GridView.builder(
               shrinkWrap: true,
@@ -422,10 +444,10 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
                     opacity: isFuture ? 0.25 : 1.0,
                     child: Container(
                       margin: const EdgeInsets.all(3),
-                      decoration: isSelected 
-                        ? BoxDecoration(shape: BoxShape.circle, gradient: const RadialGradient(colors: [Color(0xFFFFD700), kAccentColor]))
-                        : BoxDecoration(color: kBgColor, shape: BoxShape.circle),
-                      child: Center(child: Text('$day', style: TextStyle(color: isSelected ? Colors.black : kTextPrimary, fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500))),
+                      decoration: isSelected
+                          ? BoxDecoration(shape: BoxShape.circle, gradient: const RadialGradient(colors: [Color(0xFFFFD700), AppColors.accent]))
+                          : const BoxDecoration(color: AppColors.background, shape: BoxShape.circle),
+                      child: Center(child: Text('$day', style: TextStyle(color: isSelected ? Colors.black : AppColors.textPrimary, fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500))),
                     ),
                   ),
                 );
@@ -439,7 +461,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
 
   Widget _buildCategorySheet() {
     return Container(
-      decoration: const BoxDecoration(color: kSecondaryBgColor, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      decoration: const BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       child: SafeArea(
         top: false,
@@ -447,9 +469,9 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: kNavbarInactive, borderRadius: BorderRadius.circular(2)))),
+            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.navInactive, borderRadius: BorderRadius.circular(2)))),
             const SizedBox(height: 16),
-            const Text('Seleccionar categoría', style: TextStyle(color: kTextPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('Seleccionar categoría', style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             ConstrainedBox(
               constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.55),
@@ -475,9 +497,9 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: kBgColor,
+          color: AppColors.background,
           borderRadius: BorderRadius.circular(18),
-          border: isSelected ? Border.all(color: kAccentColor.withValues(alpha: 0.6), width: 1.5) : null,
+          border: isSelected ? Border.all(color: AppColors.accent.withValues(alpha: 0.6), width: 1.5) : null,
           boxShadow: const [BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 8)],
         ),
         child: Row(
@@ -488,8 +510,8 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(cat.nombre, style: const TextStyle(color: kTextPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
-                  if (cat.descripcion != null) Text(cat.descripcion!, style: const TextStyle(color: kTextSecondary, fontSize: 11), maxLines: 1),
+                  Text(cat.nombre, style: const TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
+                  if (cat.descripcion != null) Text(cat.descripcion!, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11), maxLines: 1),
                 ],
               ),
             ),
@@ -501,7 +523,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
 
   Widget _buildDependentSheet() {
     return Container(
-      decoration: const BoxDecoration(color: kSecondaryBgColor, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      decoration: const BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       child: SafeArea(
         top: false,
@@ -509,9 +531,9 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: kNavbarInactive, borderRadius: BorderRadius.circular(2)))),
+            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.navInactive, borderRadius: BorderRadius.circular(2)))),
             const SizedBox(height: 16),
-            const Text('Seleccionar dependiente', style: TextStyle(color: kTextPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('Seleccionar dependiente', style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             ListView.separated(
               shrinkWrap: true,
@@ -532,16 +554,16 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: kBgColor,
+          color: AppColors.background,
           borderRadius: BorderRadius.circular(18),
-          border: isSelected ? Border.all(color: kAccentColor.withValues(alpha: 0.6), width: 1.5) : null,
+          border: isSelected ? Border.all(color: AppColors.accent.withValues(alpha: 0.6), width: 1.5) : null,
           boxShadow: const [BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 8)],
         ),
         child: Row(
           children: [
             Container(width: 44, height: 44, decoration: const BoxDecoration(color: Color(0xFF60A5FA), shape: BoxShape.circle), child: const Icon(Icons.person, color: Colors.white, size: 22)),
             const SizedBox(width: 14),
-            Text(dep.nombre, style: const TextStyle(color: kTextPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
+            Text(dep.nombre, style: const TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
           ],
         ),
       ),
@@ -557,12 +579,12 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
         decoration: BoxDecoration(
           gradient: const LinearGradient(colors: [Color(0xFFFFD700), Color(0xFFFF8C00)]),
           borderRadius: BorderRadius.circular(28),
-          boxShadow: [BoxShadow(color: kAccentColor.withValues(alpha: 0.4), blurRadius: 20)],
+          boxShadow: [BoxShadow(color: AppColors.accent.withValues(alpha: 0.4), blurRadius: 20)],
         ),
         child: Center(
-          child: _isSaving 
-            ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
-            : Text(widget.gastoParaEditar != null ? 'Guardar cambios' : 'Crear gasto', style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
+          child: _isSaving
+              ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
+              : Text(widget.gastoParaEditar != null ? 'Guardar cambios' : 'Crear gasto', style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
         ),
       ),
     );
@@ -574,8 +596,8 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
       child: Container(
         width: double.infinity,
         height: 52,
-        decoration: BoxDecoration(color: kBgColor, borderRadius: BorderRadius.circular(26)),
-        child: const Center(child: Text('Cancelar', style: TextStyle(color: kTextSecondary, fontSize: 14, fontWeight: FontWeight.w600))),
+        decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(26)),
+        child: const Center(child: Text('Cancelar', style: TextStyle(color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w600))),
       ),
     );
   }
@@ -600,7 +622,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
       case 'Educación': return const Color(0xFF4ADE80);
       case 'Entretenimiento': return const Color(0xFFC084FC);
       case 'Servicios': return const Color(0xFFFF8C4A);
-      default: return kAccentColor;
+      default: return AppColors.accent;
     }
   }
 }
@@ -614,7 +636,7 @@ class _NeumorphicContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: padding,
-      decoration: BoxDecoration(color: kBgColor, borderRadius: BorderRadius.circular(borderRadius), boxShadow: const [BoxShadow(color: Color(0xFF05060D), offset: Offset(4, 4), blurRadius: 12)]),
+      decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(borderRadius), boxShadow: const [BoxShadow(color: Color(0xFF05060D), offset: Offset(4, 4), blurRadius: 12)]),
       child: child,
     );
   }
@@ -631,8 +653,8 @@ class _NeumorphicIcon extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: 40, height: 40,
-        decoration: const BoxDecoration(color: kBgColor, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 8)]),
-        child: Icon(icon, color: kTextSecondary, size: size),
+        decoration: const BoxDecoration(color: AppColors.background, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 8)]),
+        child: Icon(icon, color: AppColors.textSecondary, size: size),
       ),
     );
   }

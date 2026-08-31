@@ -6,11 +6,11 @@ import '../../core/theme/design_tokens.dart';
 import '../../models/gasto_model.dart';
 import '../../services/voice_parser_service.dart';
 import '../../services/widget_service.dart';
-import '../../services/supabase_service.dart';
+import '../../services/gastos_service.dart';
 import 'agregar_gasto_screen.dart';
 
-  import '../../services/qr_parser_service.dart';
-  import '../qr_scanner_screen.dart';
+import '../../services/qr_parser_service.dart';
+import '../qr_scanner_screen.dart';
 
 class ModuloGastos extends StatefulWidget {
   const ModuloGastos({super.key});
@@ -44,9 +44,9 @@ class _ModuloGastosState extends State<ModuloGastos>
   List<GastoModel> get _filteredGastos {
     return _gastos.where((g) {
       final matchesDate = g.fecha.month == _selectedDate.month && g.fecha.year == _selectedDate.year;
-      final matchesSearch = _searchQuery.isEmpty || 
+      final matchesSearch = _searchQuery.isEmpty ||
           g.description.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          g.categoriaNombre.toLowerCase().contains(_searchQuery.toLowerCase());
+          g.titulo.toLowerCase().contains(_searchQuery.toLowerCase());
       return matchesDate && matchesSearch;
     }).toList();
   }
@@ -97,7 +97,7 @@ class _ModuloGastosState extends State<ModuloGastos>
 
   void _loadGastos() async {
     setState(() => _isLoading = true);
-    final list = await SupabaseService.fetchGastos();
+    final list = await GastosService.obtenerGastos();
     setState(() {
       _gastos = list;
       _isLoading = false;
@@ -119,7 +119,7 @@ class _ModuloGastosState extends State<ModuloGastos>
     const double presupuesto = 0;
     final double balance = presupuesto - totalGastos;
     final double porcentaje =
-        presupuesto > 0 ? (totalGastos / presupuesto * 100).clamp(0, 100) : 0;
+    presupuesto > 0 ? (totalGastos / presupuesto * 100).clamp(0, 100) : 0;
 
     WidgetService.updateWidgetData(
       balance: _formatCurrency(balance),
@@ -150,16 +150,15 @@ class _ModuloGastosState extends State<ModuloGastos>
   void _onOptionSelected(String metodo) async {
     _toggleMenu();
     if (metodo == 'Agregar manualmente') {
-      final resultado = await Navigator.push<GastoModel>(
+      final resultado = await Navigator.push<bool>(
         context,
         MaterialPageRoute(builder: (context) => const AgregarGastoScreen()),
       );
 
-      if (resultado != null) {
-        setState(() {
-          _gastos.add(resultado);
-        });
-        _updateWidget();
+      if (resultado == true) {
+        // Recargamos desde el backend en vez de armar el card a mano:
+        // crearMovimiento no devuelve el nombre de categoría/dependiente.
+        _loadGastos();
       }
     }
     if (metodo == 'Registro por voz') {
@@ -261,20 +260,17 @@ class _ModuloGastosState extends State<ModuloGastos>
 
   void _processVoiceResult(String text) async {
     final GastoModel parsedGasto = VoiceParserService.parse(text);
-    
+
     // Abrir formulario con los datos pre-llenados
-    final resultado = await Navigator.push<GastoModel>(
+    final resultado = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder: (context) => AgregarGastoScreen(gastoParaEditar: parsedGasto),
       ),
     );
 
-    if (resultado != null) {
-      setState(() {
-        _gastos.add(resultado);
-      });
-      _updateWidget();
+    if (resultado == true) {
+      _loadGastos();
     }
   }
 
@@ -282,18 +278,15 @@ class _ModuloGastosState extends State<ModuloGastos>
     final GastoModel parsedGasto = QrParserService.parse(textoQr);
 
     // Abrir formulario con los datos pre-llenados, igual que en voz
-    final resultado = await Navigator.push<GastoModel>(
+    final resultado = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder: (context) => AgregarGastoScreen(gastoParaEditar: parsedGasto),
       ),
     );
 
-    if (resultado != null) {
-      setState(() {
-        _gastos.add(resultado);
-      });
-      _updateWidget();
+    if (resultado == true) {
+      _loadGastos();
     }
   }
 
@@ -338,9 +331,9 @@ class _ModuloGastosState extends State<ModuloGastos>
                       child: Material(
                         type: MaterialType.transparency,
                         child: StatefulBuilder(
-                          builder: (context, setModalState) {
-                            return _buildVoiceCard(setModalState);
-                          }
+                            builder: (context, setModalState) {
+                              return _buildVoiceCard(setModalState);
+                            }
                         ),
                       ),
                     ),
@@ -363,7 +356,7 @@ class _ModuloGastosState extends State<ModuloGastos>
       margin: const EdgeInsets.symmetric(horizontal: 40),
       padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
       decoration: BoxDecoration(
-        color: kSecondaryBgColor,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
@@ -384,7 +377,7 @@ class _ModuloGastosState extends State<ModuloGastos>
           Text(
             mainText,
             style: const TextStyle(
-              color: kTextPrimary,
+              color: AppColors.textPrimary,
               fontSize: 17,
               fontWeight: FontWeight.bold,
             ),
@@ -394,13 +387,13 @@ class _ModuloGastosState extends State<ModuloGastos>
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: kBgColor.withValues(alpha: 0.5),
+                color: AppColors.background.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 _lastWords,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: kTextPrimary, fontSize: 14, fontStyle: FontStyle.italic),
+                style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontStyle: FontStyle.italic),
               ),
             )
           else if (!_isProcessing)
@@ -410,12 +403,12 @@ class _ModuloGastosState extends State<ModuloGastos>
                 children: [
                   TextSpan(
                     text: 'Di algo como: ',
-                    style: TextStyle(color: kTextSecondary, fontSize: 12),
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                   ),
                   const TextSpan(
                     text: '"Diez mil pesos en una empanada"',
                     style: TextStyle(
-                      color: kTextPrimary,
+                      color: AppColors.textPrimary,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -429,7 +422,7 @@ class _ModuloGastosState extends State<ModuloGastos>
             child: Text(
               'Ahorrapp puede cometer errores. Verifica siempre la información antes de guardar.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: kNegativeColor, fontSize: 10, fontWeight: FontWeight.w600),
+              style: TextStyle(color: AppColors.error, fontSize: 10, fontWeight: FontWeight.w600),
             ),
           ),
           const SizedBox(height: 20),
@@ -444,7 +437,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                 width: double.infinity,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: kBgColor,
+                  color: AppColors.background,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: const [
                     BoxShadow(
@@ -463,7 +456,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                   child: Text(
                     'Cancelar',
                     style: TextStyle(
-                      color: kTextSecondary,
+                      color: AppColors.textSecondary,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
@@ -479,7 +472,7 @@ class _ModuloGastosState extends State<ModuloGastos>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kBgColor,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Stack(
           children: [
@@ -593,7 +586,7 @@ class _ModuloGastosState extends State<ModuloGastos>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
               decoration: BoxDecoration(
-                color: kSecondaryBgColor,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
@@ -606,7 +599,7 @@ class _ModuloGastosState extends State<ModuloGastos>
               child: Text(
                 label,
                 style: const TextStyle(
-                  color: kTextPrimary,
+                  color: AppColors.textPrimary,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
@@ -619,7 +612,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: kSecondaryBgColor,
+                  color: AppColors.surface,
                   shape: BoxShape.circle,
                   boxShadow: const [
                     BoxShadow(
@@ -634,7 +627,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                     ),
                   ],
                 ),
-                child: Icon(icon, color: kAccentColor, size: 22),
+                child: Icon(icon, color: AppColors.accent, size: 22),
               ),
             ),
           ],
@@ -652,7 +645,7 @@ class _ModuloGastosState extends State<ModuloGastos>
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: const RadialGradient(
-          colors: [Color(0xFFFFD700), kAccentColor],
+          colors: [Color(0xFFFFD700), AppColors.accent],
         ),
         border: Border.all(
           color: Colors.white.withValues(alpha: _isMenuOpen ? 0.9 : 0),
@@ -660,7 +653,7 @@ class _ModuloGastosState extends State<ModuloGastos>
         ),
         boxShadow: [
           BoxShadow(
-            color: kAccentColor.withValues(alpha: 0.4),
+            color: AppColors.accent.withValues(alpha: 0.4),
             blurRadius: 20,
             spreadRadius: 2,
           ),
@@ -715,7 +708,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                 Text(
                   _mesesNom[_selectedDate.month - 1],
                   style: const TextStyle(
-                    color: kTextPrimary,
+                    color: AppColors.textPrimary,
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                   ),
@@ -723,7 +716,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                 Text(
                   '${_selectedDate.year}',
                   style: const TextStyle(
-                    color: kTextSecondary,
+                    color: AppColors.textSecondary,
                     fontSize: 13,
                   ),
                 ),
@@ -764,11 +757,11 @@ class _ModuloGastosState extends State<ModuloGastos>
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: const LinearGradient(
-                    colors: [kAccentColor, Color(0xFFFF8C00)],
+                    colors: [AppColors.accent, Color(0xFFFF8C00)],
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: kAccentColor.withValues(alpha: 0.3),
+                      color: AppColors.accent.withValues(alpha: 0.3),
                       blurRadius: 8,
                       spreadRadius: 1,
                     ),
@@ -793,12 +786,12 @@ class _ModuloGastosState extends State<ModuloGastos>
             _searchQuery = value;
           });
         },
-        style: const TextStyle(color: kTextPrimary, fontSize: 14),
+        style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
         decoration: InputDecoration(
           hintText: 'Buscar gasto o categoría...',
-          hintStyle: TextStyle(color: kTextSecondary.withValues(alpha: 0.5)),
+          hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.5)),
           border: InputBorder.none,
-          icon: Icon(Icons.search, color: kAccentColor, size: 20),
+          icon: Icon(Icons.search, color: AppColors.accent, size: 20),
         ),
       ),
     );
@@ -846,7 +839,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                     Text(
                       'TOTAL GASTOS',
                       style: TextStyle(
-                        color: kTextSecondary,
+                        color: AppColors.textSecondary,
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 1,
@@ -859,7 +852,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                       child: Text(
                         _formatCurrency(totalGastos),
                         style: const TextStyle(
-                          color: kTextPrimary,
+                          color: AppColors.textPrimary,
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
                         ),
@@ -869,7 +862,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                     Text(
                       '${_mesesNom[_selectedDate.month - 1]} ${_selectedDate.year}',
                       style: const TextStyle(
-                        color: kTextSecondary,
+                        color: AppColors.textSecondary,
                         fontSize: 12,
                       ),
                     ),
@@ -885,7 +878,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                     Text(
                       'PRESUPUESTO',
                       style: TextStyle(
-                        color: kTextSecondary,
+                        color: AppColors.textSecondary,
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 1,
@@ -898,7 +891,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                       child: Text(
                         _formatCurrency(presupuesto),
                         style: const TextStyle(
-                          color: kAccentColor,
+                          color: AppColors.accent,
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                         ),
@@ -918,14 +911,14 @@ class _ModuloGastosState extends State<ModuloGastos>
               Text(
                 '${(porcentaje * 100).toStringAsFixed(0)}% utilizado',
                 style: TextStyle(
-                  color: kTextSecondary,
+                  color: AppColors.textSecondary,
                   fontSize: 11,
                 ),
               ),
               Text(
                 '${filtered.length} registros',
                 style: const TextStyle(
-                  color: kTextSecondary,
+                  color: AppColors.textSecondary,
                   fontSize: 11,
                 ),
               ),
@@ -938,14 +931,14 @@ class _ModuloGastosState extends State<ModuloGastos>
                 const TextSpan(
                   text: 'Disponible: ',
                   style: TextStyle(
-                    color: kTextSecondary,
+                    color: AppColors.textSecondary,
                     fontSize: 14,
                   ),
                 ),
                 TextSpan(
                   text: _formatCurrency(disponible),
                   style: const TextStyle(
-                    color: kAccentColor,
+                    color: AppColors.accent,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
@@ -963,7 +956,7 @@ class _ModuloGastosState extends State<ModuloGastos>
     return Container(
       height: 10,
       decoration: BoxDecoration(
-        color: kInsetBg,
+        color: AppColors.inset,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: Colors.black.withValues(alpha: 0.3),
@@ -977,12 +970,12 @@ class _ModuloGastosState extends State<ModuloGastos>
           child: Container(
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [kAccentColor, Color(0xFFFFD700)],
+                colors: [AppColors.accent, Color(0xFFFFD700)],
               ),
               borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
-                  color: kAccentColor.withValues(alpha: 0.5),
+                  color: AppColors.accent.withValues(alpha: 0.5),
                   blurRadius: 4,
                 ),
               ],
@@ -1001,7 +994,7 @@ class _ModuloGastosState extends State<ModuloGastos>
         const Text(
           'Gastos del mes',
           style: TextStyle(
-            color: kTextPrimary,
+            color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -1009,7 +1002,7 @@ class _ModuloGastosState extends State<ModuloGastos>
         Text(
           '${_filteredGastos.length} total',
           style: TextStyle(
-            color: kTextSecondary,
+            color: AppColors.textSecondary,
             fontSize: 13,
           ),
         ),
@@ -1022,7 +1015,7 @@ class _ModuloGastosState extends State<ModuloGastos>
       return const Center(
         child: Padding(
           padding: EdgeInsets.only(top: 40),
-          child: CircularProgressIndicator(color: kAccentColor),
+          child: CircularProgressIndicator(color: AppColors.accent),
         ),
       );
     }
@@ -1034,11 +1027,11 @@ class _ModuloGastosState extends State<ModuloGastos>
           padding: const EdgeInsets.only(top: 40),
           child: Column(
             children: [
-              Icon(Icons.receipt_long, color: kTextSecondary.withValues(alpha: 0.3), size: 64),
+              Icon(Icons.receipt_long, color: AppColors.textSecondary.withValues(alpha: 0.3), size: 64),
               const SizedBox(height: 16),
               Text(
                 'No hay gastos en ${_mesesNom[_selectedDate.month - 1]}',
-                style: const TextStyle(color: kTextSecondary, fontSize: 14),
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
               ),
             ],
           ),
@@ -1096,7 +1089,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                         Text(
                           expense.titulo,
                           style: const TextStyle(
-                            color: kTextPrimary,
+                            color: AppColors.textPrimary,
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
@@ -1105,7 +1098,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                         Text(
                           expense.subtitulo,
                           style: const TextStyle(
-                            color: kTextSecondary,
+                            color: AppColors.textSecondary,
                             fontSize: 12,
                           ),
                         ),
@@ -1115,7 +1108,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                   Text(
                     '-${_formatCurrency(expense.monto)}',
                     style: const TextStyle(
-                      color: kNegativeColor,
+                      color: AppColors.error,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -1126,7 +1119,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                     duration: const Duration(milliseconds: 200),
                     child: const Icon(
                       Icons.expand_more,
-                      color: kTextSecondary,
+                      color: AppColors.textSecondary,
                       size: 20,
                     ),
                   ),
@@ -1141,7 +1134,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                   children: [
                     Row(
                       children: [
-                        _buildDetailItem('CATEGORÍA', expense.categoriaNombre),
+                        _buildDetailItem('CATEGORÍA', expense.titulo),
                         _buildDetailItem('FECHA', '${expense.fecha.day.toString().padLeft(2, '0')}/${expense.fecha.month.toString().padLeft(2, '0')}/${expense.fecha.year}'),
                       ],
                     ),
@@ -1149,7 +1142,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                     Row(
                       children: [
                         _buildDetailItem('DESCRIPCIÓN', expense.description),
-                        _buildDetailItem('MONTO', '-${_formatCurrency(expense.monto)}', color: kNegativeColor),
+                        _buildDetailItem('MONTO', '-${_formatCurrency(expense.monto)}', color: AppColors.error),
                       ],
                     ),
                     const SizedBox(height: 18),
@@ -1167,22 +1160,16 @@ class _ModuloGastosState extends State<ModuloGastos>
                             icon: Icons.edit_outlined,
                             color: const Color(0xFF4ADE80),
                             onTap: () async {
-                              final resultado = await Navigator.push<GastoModel>(
+                              final resultado = await Navigator.push<bool>(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => AgregarGastoScreen(gastoParaEditar: expense),
                                 ),
                               );
 
-                              if (resultado != null) {
-                                setState(() {
-                                  final indexOriginal = _gastos.indexWhere((g) => g.id == expense.id);
-                                  if (indexOriginal != -1) {
-                                    _gastos[indexOriginal] = resultado;
-                                  }
-                                  _expandedIndex = null;
-                                });
-                                _updateWidget();
+                              if (resultado == true) {
+                                setState(() => _expandedIndex = null);
+                                _loadGastos();
                               }
                             },
                           ),
@@ -1192,7 +1179,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                           child: _buildActionButton(
                             label: 'Eliminar',
                             icon: Icons.delete_outline,
-                            color: kNegativeColor,
+                            color: AppColors.error,
                             onTap: () {
                               _mostrarDialogoConfirmacion(context, expense);
                             },
@@ -1216,46 +1203,43 @@ class _ModuloGastosState extends State<ModuloGastos>
       builder: (context) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
         child: AlertDialog(
-          backgroundColor: kBgColor,
+          backgroundColor: AppColors.background,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: const Text(
             'Confirmar eliminación',
-            style: TextStyle(color: kTextPrimary, fontWeight: FontWeight.bold),
+            style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
           content: const Text(
             '¿Seguro de que quieres eliminar este gasto?',
-            style: TextStyle(color: kTextSecondary),
+            style: TextStyle(color: AppColors.textSecondary),
             textAlign: TextAlign.center,
           ),
           actionsAlignment: MainAxisAlignment.center,
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar', style: TextStyle(color: kTextSecondary)),
+              child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary)),
             ),
             const SizedBox(width: 8),
             ElevatedButton(
               onPressed: () async {
                 if (expense.id != null) {
-                  final success = await SupabaseService.deleteGasto(expense.id!);
+                  final success = await GastosService.eliminarGasto(expense.id!);
                   if (success) {
-                    setState(() {
-                      _gastos.removeWhere((g) => g.id == expense.id);
-                      _expandedIndex = null;
-                    });
-                    _updateWidget();
+                    setState(() => _expandedIndex = null);
+                    _loadGastos();
                   }
                 }
                 if (context.mounted) Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: kNegativeColor.withValues(alpha: 0.2),
-                foregroundColor: kNegativeColor,
+                backgroundColor: AppColors.error.withValues(alpha: 0.2),
+                foregroundColor: AppColors.error,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
-                  side: const BorderSide(color: kNegativeColor, width: 1),
+                  side: const BorderSide(color: AppColors.error, width: 1),
                 ),
               ),
               child: const Text('Eliminar', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -1274,7 +1258,7 @@ class _ModuloGastosState extends State<ModuloGastos>
           Text(
             label,
             style: TextStyle(
-              color: kTextSecondary,
+              color: AppColors.textSecondary,
               fontSize: 10,
               fontWeight: FontWeight.bold,
               letterSpacing: 0.5,
@@ -1284,7 +1268,7 @@ class _ModuloGastosState extends State<ModuloGastos>
           Text(
             value,
             style: TextStyle(
-              color: color ?? kTextPrimary,
+              color: color ?? AppColors.textPrimary,
               fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
@@ -1307,7 +1291,7 @@ class _ModuloGastosState extends State<ModuloGastos>
       child: Container(
         height: 48,
         decoration: BoxDecoration(
-          color: kBgColor,
+          color: AppColors.background,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: color.withValues(alpha: 0.4), width: 1),
           boxShadow: [
@@ -1387,7 +1371,7 @@ class _VoicePulseButtonState extends State<_VoicePulseButton>
               width: 80,
               height: 80,
               child: CircularProgressIndicator(
-                color: kAccentColor,
+                color: AppColors.accent,
                 strokeWidth: 3,
               ),
             ),
@@ -1395,10 +1379,10 @@ class _VoicePulseButtonState extends State<_VoicePulseButton>
               width: 60,
               height: 60,
               decoration: const BoxDecoration(
-                color: kSecondaryBgColor,
+                color: AppColors.surface,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.auto_awesome, color: kAccentColor, size: 28),
+              child: const Icon(Icons.auto_awesome, color: AppColors.accent, size: 28),
             ),
           ],
         ),
@@ -1431,7 +1415,7 @@ class _VoicePulseButtonState extends State<_VoicePulseButton>
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: kAccentColor.withValues(alpha: opacity),
+                            color: AppColors.accent.withValues(alpha: opacity),
                             width: 2,
                           ),
                         ),
@@ -1440,7 +1424,7 @@ class _VoicePulseButtonState extends State<_VoicePulseButton>
                   },
                 );
               }),
-            
+
             // Botón central con el micrófono
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
@@ -1449,13 +1433,13 @@ class _VoicePulseButtonState extends State<_VoicePulseButton>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
-                  colors: widget.isListening 
-                    ? [const Color(0xFFFFE082), kAccentColor]
-                    : [const Color(0xFFFFD700), kAccentColor],
+                  colors: widget.isListening
+                      ? [const Color(0xFFFFE082), AppColors.accent]
+                      : [const Color(0xFFFFD700), AppColors.accent],
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: kAccentColor.withValues(alpha: widget.isListening ? 0.6 : 0.4),
+                    color: AppColors.accent.withValues(alpha: widget.isListening ? 0.6 : 0.4),
                     blurRadius: widget.isListening ? 35 : 25,
                     spreadRadius: widget.isListening ? 4 : 2,
                   ),
@@ -1467,9 +1451,9 @@ class _VoicePulseButtonState extends State<_VoicePulseButton>
                 ],
               ),
               child: Icon(
-                widget.isListening ? Icons.mic : Icons.mic_none, 
-                color: Colors.black, 
-                size: 40
+                  widget.isListening ? Icons.mic : Icons.mic_none,
+                  color: Colors.black,
+                  size: 40
               ),
             ),
           ],
@@ -1497,7 +1481,7 @@ class _NeumorphicContainer extends StatelessWidget {
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: kBgColor,
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(borderRadius),
         boxShadow: [
           BoxShadow(
@@ -1536,7 +1520,7 @@ class _NeumorphicIcon extends StatelessWidget {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: kBgColor,
+          color: AppColors.background,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
@@ -1553,7 +1537,7 @@ class _NeumorphicIcon extends StatelessWidget {
         ),
         child: Icon(
           icon,
-          color: kTextSecondary,
+          color: AppColors.textSecondary,
           size: size,
         ),
       ),
