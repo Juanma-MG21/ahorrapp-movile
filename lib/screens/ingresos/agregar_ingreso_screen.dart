@@ -3,14 +3,15 @@ import 'package:flutter/material.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../models/ingreso_model.dart';
 import '../../models/categoria_model.dart';
-import '../../services/supabase_service.dart';
+import '../../services/ingresos_service.dart';
+import '../../core/network/api_client.dart';
 
 class AgregarIngresoScreen extends StatefulWidget {
   final IngresoModel? ingresoParaEditar;
   final String? textoDetectadoQr;
 
   const AgregarIngresoScreen({
-    super.key, 
+    super.key,
     this.ingresoParaEditar,
     this.textoDetectadoQr,
   });
@@ -26,7 +27,7 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
 
   DateTime _fecha = DateTime.now();
   int? _idCategoria;
-  
+
   List<CategoriaModel> _listaCategorias = [];
   bool _isLoadingData = true;
   bool _isSaving = false;
@@ -41,17 +42,17 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
   }
 
   void _loadInitialData() async {
-    final cats = await SupabaseService.fetchCategorias();
-    
+    final cats = await IngresosService.obtenerCategorias();
+
     if (mounted) {
       setState(() {
         _listaCategorias = cats;
         _isLoadingData = false;
-        
+
         if (widget.ingresoParaEditar != null) {
           final i = widget.ingresoParaEditar!;
-          _montoController.text = i.monto % 1 == 0 
-              ? i.monto.toStringAsFixed(0) 
+          _montoController.text = i.monto % 1 == 0
+              ? i.monto.toStringAsFixed(0)
               : i.monto.toStringAsFixed(2).replaceAll('.', ',');
           _descripcionController.text = i.descripcion ?? '';
           _fuenteController.text = i.fuente ?? '';
@@ -136,7 +137,7 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
     } else {
       montoStr = montoStr.replaceAll('.', '');
     }
-    
+
     final monto = double.tryParse(montoStr) ?? 0.0;
     if (monto <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Por favor, ingresa un monto válido')));
@@ -148,7 +149,6 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
 
     final ingreso = IngresoModel(
       id: widget.ingresoParaEditar?.id,
-      idEntrada: widget.ingresoParaEditar?.idEntrada,
       idCategoria: cat?.id,
       descripcion: _descripcionController.text.isEmpty ? null : _descripcionController.text,
       fuente: _fuenteController.text.isEmpty ? null : _fuenteController.text,
@@ -159,13 +159,30 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
     IngresoModel? resultado;
     try {
       if (ingreso.id == null) {
-        resultado = await SupabaseService.insertIngreso(ingreso);
+        final nuevoId = await IngresosService.crearIngreso(ingreso);
+        resultado = IngresoModel(
+          id: nuevoId,
+          idCategoria: ingreso.idCategoria,
+          descripcion: ingreso.descripcion,
+          fuente: ingreso.fuente,
+          monto: ingreso.monto,
+          fechaRegistro: ingreso.fechaRegistro,
+        );
       } else {
-        resultado = await SupabaseService.updateIngreso(ingreso);
+        await IngresosService.actualizarIngreso(ingreso.id!, ingreso);
+        resultado = ingreso;
+      }
+    } on ApiException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message), backgroundColor: Colors.redAccent),
+        );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Ocurrió un error inesperado'), backgroundColor: Colors.redAccent),
+        );
       }
     }
 
@@ -181,12 +198,12 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
   Widget build(BuildContext context) {
     if (_isLoadingData) {
       return const Scaffold(
-        backgroundColor: kBgColor,
-        body: Center(child: CircularProgressIndicator(color: kAccentColor)),
+        backgroundColor: AppColors.background,
+        body: Center(child: CircularProgressIndicator(color: AppColors.accent)),
       );
     }
     return Scaffold(
-      backgroundColor: kBgColor,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -207,7 +224,7 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
                   child: Text(
                     'Ahorrapp puede cometer errores. Verifica siempre la información antes de guardar.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: kNegativeColor, fontSize: 10, fontWeight: FontWeight.w600),
+                    style: TextStyle(color: AppColors.error, fontSize: 10, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -231,12 +248,12 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
           children: [
             Text(
               widget.ingresoParaEditar != null ? 'Editar ingreso' : 'Agregar ingreso',
-              style: const TextStyle(color: kTextPrimary, fontSize: 20, fontWeight: FontWeight.bold),
+              style: const TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 2),
             Text(
               widget.ingresoParaEditar != null ? 'Modificar registro' : 'Nuevo ingreso',
-              style: const TextStyle(color: kTextSecondary, fontSize: 12),
+              style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
             ),
           ],
         ),
@@ -303,9 +320,9 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
     return RichText(
       text: TextSpan(
         children: [
-          TextSpan(text: text, style: const TextStyle(color: kTextPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
+          TextSpan(text: text, style: const TextStyle(color: AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
           if (required)
-            TextSpan(text: ' *', style: const TextStyle(color: kNegativeColor, fontSize: 13, fontWeight: FontWeight.w600)),
+            TextSpan(text: ' *', style: const TextStyle(color: AppColors.error, fontSize: 13, fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -314,7 +331,7 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
   Widget _buildInsetBox({required Widget child}) {
     return Container(
       decoration: BoxDecoration(
-        color: kInsetBg,
+        color: AppColors.inset,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.black.withValues(alpha: 0.35)),
       ),
@@ -327,10 +344,10 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
-        style: const TextStyle(color: kTextPrimary, fontSize: 15),
+        style: const TextStyle(color: AppColors.textPrimary, fontSize: 15),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(color: kTextSecondary, fontSize: 14),
+          hintStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
@@ -349,9 +366,9 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
             children: [
               const Icon(Icons.calendar_month, color: Color(0xFF4ADE80), size: 20),
               const SizedBox(width: 10),
-              Text(_formatFecha(_fecha), style: const TextStyle(color: kTextPrimary, fontSize: 14)),
+              Text(_formatFecha(_fecha), style: const TextStyle(color: AppColors.textPrimary, fontSize: 14)),
               const Spacer(),
-              const Icon(Icons.expand_more, color: kTextSecondary, size: 20),
+              const Icon(Icons.expand_more, color: AppColors.textSecondary, size: 20),
             ],
           ),
         ),
@@ -372,10 +389,10 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
               if (cat != null) ...[
                 Icon(_getIconForCategory(cat.nombre), color: _getColorForCategory(cat.nombre), size: 20),
                 const SizedBox(width: 10),
-                Expanded(child: Text(cat.nombre, style: const TextStyle(color: kTextPrimary, fontSize: 14))),
+                Expanded(child: Text(cat.nombre, style: const TextStyle(color: AppColors.textPrimary, fontSize: 14))),
               ] else
-                const Expanded(child: Text('Sin seleccionar', style: TextStyle(color: kTextSecondary, fontSize: 14))),
-              const Icon(Icons.expand_more, color: kTextSecondary, size: 20),
+                const Expanded(child: Text('Sin seleccionar', style: TextStyle(color: AppColors.textSecondary, fontSize: 14))),
+              const Icon(Icons.expand_more, color: AppColors.textSecondary, size: 20),
             ],
           ),
         ),
@@ -392,7 +409,7 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
     const List<String> meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
     return Container(
-      decoration: const BoxDecoration(color: kSecondaryBgColor, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      decoration: const BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       child: SafeArea(
         top: false,
@@ -400,11 +417,11 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: kNavbarInactive, borderRadius: BorderRadius.circular(2)))),
+            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.navInactive, borderRadius: BorderRadius.circular(2)))),
             const SizedBox(height: 16),
-            Text('${meses[month - 1]} $year', style: const TextStyle(color: kTextPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
+            Text('${meses[month - 1]} $year', style: const TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 18),
-            Row(children: ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'].map((d) => Expanded(child: Center(child: Text(d, style: const TextStyle(color: kTextSecondary, fontSize: 11))))).toList()),
+            Row(children: ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'].map((d) => Expanded(child: Center(child: Text(d, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11))))).toList()),
             const SizedBox(height: 10),
             GridView.builder(
               shrinkWrap: true,
@@ -423,10 +440,10 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
                     opacity: isFuture ? 0.25 : 1.0,
                     child: Container(
                       margin: const EdgeInsets.all(3),
-                      decoration: isSelected 
-                        ? BoxDecoration(shape: BoxShape.circle, gradient: const RadialGradient(colors: [Color(0xFF4ADE80), Color(0xFF34D399)]))
-                        : BoxDecoration(color: kBgColor, shape: BoxShape.circle),
-                      child: Center(child: Text('$day', style: TextStyle(color: isSelected ? Colors.black : kTextPrimary, fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500))),
+                      decoration: isSelected
+                          ? BoxDecoration(shape: BoxShape.circle, gradient: const RadialGradient(colors: [Color(0xFF4ADE80), Color(0xFF34D399)]))
+                          : BoxDecoration(color: AppColors.background, shape: BoxShape.circle),
+                      child: Center(child: Text('$day', style: TextStyle(color: isSelected ? Colors.black : AppColors.textPrimary, fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500))),
                     ),
                   ),
                 );
@@ -440,7 +457,7 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
 
   Widget _buildCategorySheet() {
     return Container(
-      decoration: const BoxDecoration(color: kSecondaryBgColor, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      decoration: const BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       child: SafeArea(
         top: false,
@@ -448,9 +465,9 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: kNavbarInactive, borderRadius: BorderRadius.circular(2)))),
+            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.navInactive, borderRadius: BorderRadius.circular(2)))),
             const SizedBox(height: 16),
-            const Text('Seleccionar categoría', style: TextStyle(color: kTextPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('Seleccionar categoría', style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             ConstrainedBox(
               constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.55),
@@ -476,7 +493,7 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: kBgColor,
+          color: AppColors.background,
           borderRadius: BorderRadius.circular(18),
           border: isSelected ? Border.all(color: const Color(0xFF4ADE80).withValues(alpha: 0.6), width: 1.5) : null,
           boxShadow: const [BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 8)],
@@ -489,8 +506,8 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(cat.nombre, style: const TextStyle(color: kTextPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
-                  if (cat.descripcion != null) Text(cat.descripcion!, style: const TextStyle(color: kTextSecondary, fontSize: 11), maxLines: 1),
+                  Text(cat.nombre, style: const TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
+                  if (cat.descripcion != null) Text(cat.descripcion!, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11), maxLines: 1),
                 ],
               ),
             ),
@@ -512,9 +529,9 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
           boxShadow: [BoxShadow(color: const Color(0xFF4ADE80).withValues(alpha: 0.4), blurRadius: 20)],
         ),
         child: Center(
-          child: _isSaving 
-            ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
-            : Text(widget.ingresoParaEditar != null ? 'Guardar cambios' : 'Guardar ingreso', style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
+          child: _isSaving
+              ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
+              : Text(widget.ingresoParaEditar != null ? 'Guardar cambios' : 'Guardar ingreso', style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
         ),
       ),
     );
@@ -526,8 +543,8 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
       child: Container(
         width: double.infinity,
         height: 52,
-        decoration: BoxDecoration(color: kBgColor, borderRadius: BorderRadius.circular(26)),
-        child: const Center(child: Text('Cancelar', style: TextStyle(color: kTextSecondary, fontSize: 14, fontWeight: FontWeight.w600))),
+        decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(26)),
+        child: const Center(child: Text('Cancelar', style: TextStyle(color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w600))),
       ),
     );
   }
@@ -572,7 +589,7 @@ class _NeumorphicContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: padding,
-      decoration: BoxDecoration(color: kBgColor, borderRadius: BorderRadius.circular(borderRadius), boxShadow: const [BoxShadow(color: Color(0xFF05060D), offset: Offset(4, 4), blurRadius: 12)]),
+      decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(borderRadius), boxShadow: const [BoxShadow(color: Color(0xFF05060D), offset: Offset(4, 4), blurRadius: 12)]),
       child: child,
     );
   }
@@ -589,8 +606,8 @@ class _NeumorphicIcon extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: 40, height: 40,
-        decoration: const BoxDecoration(color: kBgColor, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 8)]),
-        child: Icon(icon, color: kTextSecondary, size: size),
+        decoration: const BoxDecoration(color: AppColors.background, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 8)]),
+        child: Icon(icon, color: AppColors.textSecondary, size: size),
       ),
     );
   }

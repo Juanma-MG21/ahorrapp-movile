@@ -55,6 +55,21 @@ class ApiClient {
     );
   }
 
+  /// PUT genérico.
+  Future<Map<String, dynamic>> put(
+      String path, {
+        Map<String, dynamic>? body,
+        String? token,
+      }) {
+    return _send(
+          () => http.put(
+        _uri(path),
+        headers: _headers(token: token),
+        body: jsonEncode(body ?? {}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> _send(
       Future<http.Response> Function() request,
       ) async {

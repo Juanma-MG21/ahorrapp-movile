@@ -1,45 +1,49 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'api_config.dart';
+import '../core/network/api_client.dart';
 import '../models/ingreso_model.dart';
+import '../models/categoria_model.dart';
+import 'auth_service.dart';
 
 class IngresosService {
+  static final ApiClient _client = ApiClient();
 
-  static Future<void> crearIngreso(IngresoModel ingreso) async {
-    final uri = Uri.parse('${ApiConfig.baseUrl}/movimientos');
+  /// Crea un ingreso nuevo (POST /movimientos).
+  /// Devuelve el id generado (id_ingresos) para que la pantalla pueda
+  /// armar el IngresoModel completo localmente.
+  static Future<int> crearIngreso(IngresoModel ingreso) async {
+    final token = await AuthService.instance.getToken();
 
-    late final http.Response respuesta;
-    try {
-      respuesta = await http.post(
-        uri,
-        headers: ApiConfig.authHeaders,
-        body: jsonEncode(ingreso.toRequestBody()),
-      );
-    } catch (_) {
-      throw Exception('No se pudo conectar con el servidor');
-    }
+    final respuesta = await _client.post(
+      '/movimientos',
+      token: token,
+      body: {
+        'tipo_flujo': 'Entrada',
+        'subtipo_modulo': 'Ingreso',
+        'datos': ingreso.toRequestBody(),
+      },
+    );
 
-    final ok = respuesta.statusCode >= 200 && respuesta.statusCode < 300;
-    if (!ok) {
-      String mensaje = 'Error al guardar el ingreso';
-      try {
-        final data = jsonDecode(respuesta.body);
-        if (data is Map && data['mensaje'] != null) {
-          mensaje = data['mensaje'];
-        }
-      } catch (_) {}
-      throw Exception(mensaje);
-    }
+    return respuesta['ID_detalle'] as int;
   }
 
-  /// Trae las categorías disponibles (GET /categorias),
+  /// Actualiza un ingreso existente (PUT /movimientos/ingresos/:id).
+  static Future<void> actualizarIngreso(int id, IngresoModel ingreso) async {
+    final token = await AuthService.instance.getToken();
+
+    await _client.put(
+      '/movimientos/ingresos/$id',
+      token: token,
+      body: ingreso.toRequestBody(),
+    );
+  }
+
+  /// Trae las categorías disponibles (GET /categorias).
   static Future<List<CategoriaModel>> obtenerCategorias() async {
-    final uri = Uri.parse('${ApiConfig.baseUrl}/categorias');
     try {
-      final respuesta = await http.get(uri, headers: ApiConfig.authHeaders);
-      if (respuesta.statusCode != 200) return [];
-      final List data = jsonDecode(respuesta.body);
-      return data
+      final token = await AuthService.instance.getToken();
+      final respuesta = await _client.get('/categorias', token: token);
+
+      final List categorias = respuesta['categorias'] ?? [];
+      return categorias
           .map((json) => CategoriaModel.fromJson(json as Map<String, dynamic>))
           .toList();
     } catch (_) {

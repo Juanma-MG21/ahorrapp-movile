@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import '../models/ingreso_model.dart';
 
 class VoiceParserIngresoService {
@@ -24,22 +23,22 @@ class VoiceParserIngresoService {
 
   static final Map<String, double> _mapeoNumeros = {
     'un': 1, 'uno': 1, 'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5, 'seis': 6,
-    'siete': 7, 'ocho': 8, 'nueve': 9, 'diez': 10, 'once': 11, 'doce': 12, 
-    'trece': 13, 'catorce': 14, 'quince': 15, 'dieciseis': 16, 'diecisiete': 17, 
-    'dieciocho': 18, 'diecinueve': 19, 'veinte': 20, 'veintiun': 21, 'veintidos': 22, 
-    'veintitres': 23, 'veinticuatro': 24, 'veinticinco': 25, 'veintiseis': 26, 
-    'veintisiete': 27, 'veintiocho': 28, 'veintinueve': 29, 'treinta': 30, 
-    'cuarenta': 40, 'cincuenta': 50, 'sesenta': 60, 'setenta': 70, 'ochenta': 80, 
+    'siete': 7, 'ocho': 8, 'nueve': 9, 'diez': 10, 'once': 11, 'doce': 12,
+    'trece': 13, 'catorce': 14, 'quince': 15, 'dieciseis': 16, 'diecisiete': 17,
+    'dieciocho': 18, 'diecinueve': 19, 'veinte': 20, 'veintiun': 21, 'veintidos': 22,
+    'veintitres': 23, 'veinticuatro': 24, 'veinticinco': 25, 'veintiseis': 26,
+    'veintisiete': 27, 'veintiocho': 28, 'veintinueve': 29, 'treinta': 30,
+    'cuarenta': 40, 'cincuenta': 50, 'sesenta': 60, 'setenta': 70, 'ochenta': 80,
     'noventa': 90, 'cien': 100, 'ciento': 100, 'doscientos': 200, 'trescientos': 300,
-    'cuatrocientos': 400, 'quinientos': 500, 'seiscientos': 600, 'setecientos': 700, 
+    'cuatrocientos': 400, 'quinientos': 500, 'seiscientos': 600, 'setecientos': 700,
     'ochocientos': 800, 'novecientos': 900,
   };
 
   static final Set<String> _ruido = {
     'me', 'mi', 'mis', 'recibi', 'recibí', 'gano', 'gané', 'entro', 'entró',
-    'ingreso', 'ingresó', 'tengo', 'tuve', 'que', 'un', 'una', 'el', 'la', 
-    'los', 'las', 'de', 'del', 'por', 'en', 'con', 'y', 'a', 'valor', 'monto', 
-    'precio', 'pesos', 'luca', 'lucas', 'barra', 'barras', 'palo', 'palos', 
+    'ingreso', 'ingresó', 'tengo', 'tuve', 'que', 'un', 'una', 'el', 'la',
+    'los', 'las', 'de', 'del', 'por', 'en', 'con', 'y', 'a', 'valor', 'monto',
+    'precio', 'pesos', 'luca', 'lucas', 'barra', 'barras', 'palo', 'palos',
     'mil', 'millon', 'millones', 'fueron', 'valieron', 'quedo'
   };
 
@@ -52,7 +51,7 @@ class VoiceParserIngresoService {
   static IngresoModel parse(String text) {
     String normalizedText = text.replaceAll('\$', '').replaceAll(',', '');
     final textNorm = _quitarAcentos(normalizedText);
-    
+
     double monto = _extractAmount(textNorm);
     String categoria = 'Otros';
     for (var entry in _mapeoCategorias.entries) {
@@ -64,10 +63,10 @@ class VoiceParserIngresoService {
 
     final originalWords = normalizedText.split(RegExp(r'\s+'));
     List<String> cleanWords = [];
-    
+
     for (var word in originalWords) {
       String wordNorm = _quitarAcentos(word).replaceAll(RegExp(r'[^\w]'), '');
-      if (!_ruido.contains(wordNorm) && 
+      if (!_ruido.contains(wordNorm) &&
           !_mapeoNumeros.containsKey(wordNorm) &&
           !RegExp(r'^\d+$').hasMatch(wordNorm) &&
           wordNorm.isNotEmpty) {
@@ -90,8 +89,6 @@ class VoiceParserIngresoService {
       fechaRegistro: DateTime.now(),
       categoriaNombre: categoria,
       fuente: categoria == 'Salario' ? 'Nómina' : 'Ingreso extra',
-      icono: _getIconForCategory(categoria),
-      color: _getColorForCategory(categoria),
     );
   }
 
@@ -132,35 +129,5 @@ class VoiceParserIngresoService {
       }
     }
     return totalGlobal + acumuladoParcial;
-  }
-
-  static IconData _getIconForCategory(String category) {
-    switch (category) {
-      case 'Salario': return Icons.payments;
-      case 'Venta': return Icons.sell;
-      case 'Regalo': return Icons.card_giftcard;
-      case 'Inversión': return Icons.trending_up;
-      case 'Bonificación': return Icons.redeem;
-      case 'Reembolso': return Icons.settings_backup_restore;
-      case 'Honorarios': return Icons.work;
-      case 'Arriendo': return Icons.apartment;
-      case 'Otros': return Icons.more_horiz;
-      default: return Icons.account_balance_wallet;
-    }
-  }
-
-  static Color _getColorForCategory(String category) {
-    switch (category) {
-      case 'Salario': return const Color(0xFF4ADE80);
-      case 'Venta': return const Color(0xFF34D399);
-      case 'Regalo': return const Color(0xFFF472B6);
-      case 'Inversión': return const Color(0xFF60A5FA);
-      case 'Bonificación': return const Color(0xFFFBBF24);
-      case 'Reembolso': return const Color(0xFFA8A2FF);
-      case 'Honorarios': return const Color(0xFFC084FC);
-      case 'Arriendo': return const Color(0xFFFF8C4A);
-      case 'Otros': return const Color(0xFF94A3B8);
-      default: return const Color(0xFF2DD4BF);
-    }
   }
 }
