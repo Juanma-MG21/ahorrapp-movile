@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../widgets/auth_widgets.dart';
+import '../../services/auth_service.dart';
+import 'auth_gate.dart';
 
 class BiometricAccessScreen extends StatefulWidget {
   const BiometricAccessScreen({super.key});
@@ -31,7 +33,7 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
         _isAuthenticating = true;
         _authStatus = 'Escaneando huella/rostro...';
       });
-      
+
       authenticated = await auth.authenticate(
         localizedReason: 'Escanea tu huella para acceder a AhorrApp',
         options: const AuthenticationOptions(
@@ -39,17 +41,39 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
           biometricOnly: true,
         ),
       );
-      
+
       setState(() {
         _isAuthenticating = false;
         _authStatus = authenticated ? 'Acceso concedido' : 'Acceso denegado';
       });
 
       if (authenticated && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('¡Bienvenido!')),
-        );
-        Navigator.of(context).pushReplacementNamed('/home');
+        // La huella es correcta, pero eso solo confirma que es el dueño
+        // del dispositivo. Antes de dejarlo entrar, confirmamos que
+        // sigue habiendo una sesión guardada y válida en AuthService.
+        final tieneSesion = await AuthService.instance.hasSession();
+
+        if (!mounted) return;
+
+        if (tieneSesion) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('¡Bienvenido!')),
+          );
+          Navigator.of(context).pushReplacementNamed('/home');
+        } else {
+          // No hay sesión válida (por ejemplo, expiró). Mandamos a
+          // AuthGate para que decida qué pantalla mostrar (login, etc.)
+          // en vez de forzar '/home' sin sesión real.
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Tu sesión expiró, inicia sesión nuevamente'),
+            ),
+          );
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const AuthGate()),
+                (route) => false,
+          );
+        }
       }
     } catch (e) {
       debugPrint(e.toString());
@@ -70,7 +94,7 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
           const Text(
             'AhorrApp',
             style: TextStyle(
-              color: AppTheme.amber,
+              color: AppColors.accent,
               fontSize: 32,
               fontWeight: FontWeight.w900,
             ),
@@ -83,25 +107,27 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
               padding: const EdgeInsets.all(30),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: _isAuthenticating 
-                  ? AppTheme.amber.withValues(alpha: 0.1) 
-                  : AppColors.surface,
+                color: _isAuthenticating
+                    ? AppColors.accent.withValues(alpha: 0.1)
+                    : AppColors.surface,
                 border: Border.all(
-                  color: _isAuthenticating ? AppTheme.amber : AppColors.borderLight,
+                  color: _isAuthenticating ? AppColors.accent : AppColors.borderLight,
                   width: 2,
                 ),
-                boxShadow: _isAuthenticating ? [
+                boxShadow: _isAuthenticating
+                    ? [
                   BoxShadow(
-                    color: AppTheme.amber.withValues(alpha: 0.3),
+                    color: AppColors.accent.withValues(alpha: 0.3),
                     blurRadius: 30,
                     spreadRadius: 5,
                   )
-                ] : [],
+                ]
+                    : [],
               ),
               child: Icon(
                 Icons.fingerprint_rounded,
                 size: 100,
-                color: _isAuthenticating ? AppTheme.amber : AppColors.textSecondary,
+                color: _isAuthenticating ? AppColors.accent : AppColors.textSecondary,
               ),
             ),
           ),
@@ -121,14 +147,14 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
               onPressed: _authenticate,
               icon: const Icon(Icons.refresh_rounded),
               label: const Text('Reintentar'),
-              style: TextButton.styleFrom(foregroundColor: AppTheme.amber),
+              style: TextButton.styleFrom(foregroundColor: AppColors.accent),
             ),
           const Spacer(),
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text(
               'Usar contraseña',
-              style: TextStyle(color: AppTheme.blue, fontWeight: FontWeight.bold),
+              style: TextStyle(color: AppColors.blue, fontWeight: FontWeight.bold),
             ),
           ),
           const SizedBox(height: 20),

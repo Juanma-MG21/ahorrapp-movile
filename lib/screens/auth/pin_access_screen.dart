@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../widgets/auth_widgets.dart';
 import 'auth_gate.dart';
 
@@ -79,7 +79,7 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
           const Text(
             'AhorrApp',
             style: TextStyle(
-              color: AppTheme.amber,
+              color: AppColors.accent,
               fontSize: 30,
               fontWeight: FontWeight.w900,
             ),
@@ -96,10 +96,10 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
           const SizedBox(height: 10),
           const Text(
             'Usa tu código de seguridad para entrar',
-            style: TextStyle(color: AppTheme.muted, fontSize: 14),
+            style: TextStyle(color: AppColors.muted, fontSize: 14),
           ),
           const SizedBox(height: 50),
-          
+
           // Indicadores de PIN
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -111,14 +111,14 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
                 height: 20,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isFilled ? AppTheme.amber : Colors.transparent,
+                  color: isFilled ? AppColors.accent : Colors.transparent,
                   border: Border.all(
-                    color: isFilled ? AppTheme.amber : const Color(0xFF334057),
+                    color: isFilled ? AppColors.accent : const Color(0xFF334057),
                     width: 2,
                   ),
                   boxShadow: isFilled ? [
                     BoxShadow(
-                      color: AppTheme.amber.withOpacity(0.4),
+                      color: AppColors.accent.withValues(alpha: 0.4),
                       blurRadius: 10,
                       spreadRadius: 2,
                     )
@@ -127,9 +127,9 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
               );
             }),
           ),
-          
+
           const SizedBox(height: 60),
-          
+
           // Teclado Numérico
           GridView.builder(
             shrinkWrap: true,
@@ -143,21 +143,21 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
             itemCount: 12,
             itemBuilder: (context, index) {
               if (index == 9) return const SizedBox.shrink();
-              
+
               if (index == 10) {
                 return _NumberButton(
                   label: '0',
                   onTap: () => _onNumberPressed('0'),
                 );
               }
-              
+
               if (index == 11) {
                 return IconButton(
                   onPressed: _onBackspace,
                   icon: const Icon(Icons.backspace_outlined, color: Colors.white, size: 28),
                 );
               }
-              
+
               String number = (index + 1).toString();
               return _NumberButton(
                 label: number,
@@ -165,7 +165,7 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
               );
             },
           ),
-          
+
           const SizedBox(height: 40),
 
           TextButton(
@@ -176,12 +176,11 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
             child: const Text(
               'Ingresar con contraseña',
               style: TextStyle(
-                color: AppTheme.blue,
+                color: AppColors.blue,
                 fontWeight: FontWeight.w600,
               ),
             ),
           ),
-
           const SizedBox(height: 20),
         ],
       ),

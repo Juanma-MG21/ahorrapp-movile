@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/design_tokens.dart';
+import '../../core/network/api_client.dart';
+import '../../services/auth_service.dart';
 import '../../widgets/auth_widgets.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -13,7 +14,8 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  final _nombreController = TextEditingController();
+  final _apellidoController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -46,13 +48,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Color get _passwordStrengthColor {
     final strength = _passwordStrength;
     if (strength <= 0.5) return const Color(0xFFFF6B6B);
-    if (strength < 1) return AppTheme.amber;
+    if (strength < 1) return AppColors.accent;
     return const Color(0xFF34D399);
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _nombreController.dispose();
+    _apellidoController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -65,25 +68,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await Supabase.instance.client.auth.signUp(
+      await AuthService.instance.register(
+        nombre: _nombreController.text.trim(),
+        apellido: _apellidoController.text.trim(),
         email: _emailController.text.trim(),
         password: _passwordController.text,
-        data: {'full_name': _nameController.text.trim()},
       );
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Registro exitoso. Revisa tu correo para confirmar.'),
-          duration: Duration(seconds: 5),
+          content: Text('Registro exitoso. Ya puedes iniciar sesión.'),
+          duration: Duration(seconds: 4),
         ),
       );
-      
+
       // Regresar al login tras el registro exitoso
       Navigator.of(context).pop();
-      
-    } on AuthException catch (error) {
+    } on ApiException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -116,7 +119,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             'AhorrApp',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: AppTheme.amber,
+              color: AppColors.accent,
               fontSize: 30,
               fontWeight: FontWeight.w900,
             ),
@@ -135,7 +138,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           const Text(
             'Comienza a gestionar tus finanzas',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppTheme.muted, fontSize: 12),
+            style: TextStyle(color: AppColors.muted, fontSize: 12),
           ),
           const SizedBox(height: 20),
           const _ProgressDots(activeIndex: 0),
@@ -146,20 +149,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 TextFormField(
-                  controller: _nameController,
+                  controller: _nombreController,
                   textInputAction: TextInputAction.next,
                   textCapitalization: TextCapitalization.words,
                   decoration: const InputDecoration(
-                    labelText: 'NOMBRE COMPLETO',
-                    hintText: 'Manuel Guevara',
+                    labelText: 'NOMBRE',
+                    hintText: 'Manuel',
                     suffixIcon: Icon(
                       Icons.person_rounded,
                       color: Color(0xFF7C4DFF),
                     ),
                   ),
                   validator: (value) {
-                    if ((value ?? '').trim().length < 3) {
-                      return 'Ingresa tu nombre completo';
+                    if ((value ?? '').trim().length < 2) {
+                      return 'Ingresa tu nombre';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 14),
+                TextFormField(
+                  controller: _apellidoController,
+                  textInputAction: TextInputAction.next,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(
+                    labelText: 'APELLIDO',
+                    hintText: 'Guevara',
+                    suffixIcon: Icon(
+                      Icons.person_outline_rounded,
+                      color: Color(0xFF7C4DFF),
+                    ),
+                  ),
+                  validator: (value) {
+                    if ((value ?? '').trim().length < 2) {
+                      return 'Ingresa tu apellido';
                     }
                     return null;
                   },
@@ -205,7 +228,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         _hidePassword
                             ? Icons.lock_rounded
                             : Icons.lock_open_rounded,
-                        color: AppTheme.amber,
+                        color: AppColors.accent,
                         size: 20,
                       ),
                     ),
@@ -243,7 +266,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         _hideConfirmPassword
                             ? Icons.lock_rounded
                             : Icons.lock_open_rounded,
-                        color: AppTheme.amber,
+                        color: AppColors.accent,
                         size: 20,
                       ),
                     ),
@@ -270,12 +293,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
             children: [
               const Text(
                 'Ya tienes cuenta? ',
-                style: TextStyle(color: AppTheme.muted, fontSize: 12),
+                style: TextStyle(color: AppColors.muted, fontSize: 12),
               ),
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
                 style: TextButton.styleFrom(
-                  foregroundColor: AppTheme.amber,
+                  foregroundColor: AppColors.accent,
                   padding: EdgeInsets.zero,
                   minimumSize: const Size(0, 34),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -333,7 +356,7 @@ class _ProgressDots extends StatelessWidget {
           height: 7,
           margin: const EdgeInsets.symmetric(horizontal: 3),
           decoration: BoxDecoration(
-            color: active ? AppTheme.amber : const Color(0xFF334057),
+            color: active ? AppColors.accent : const Color(0xFF334057),
             borderRadius: BorderRadius.circular(8),
           ),
         );

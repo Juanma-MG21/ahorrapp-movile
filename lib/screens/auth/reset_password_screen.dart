@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'auth_gate.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/design_tokens.dart';
+import '../../core/network/api_client.dart';
+import '../../services/auth_service.dart';
 import '../../widgets/auth_widgets.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
@@ -29,22 +31,50 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // El resetToken llega como argumento de ruta desde
+    // forgot_password_screen.dart (Navigator.pushNamed con arguments).
+    final resetToken = ModalRoute.of(context)?.settings.arguments as String?;
+
+    if (resetToken == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('El enlace de recuperación no es válido. Solicítalo de nuevo.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
-    await Future<void>.delayed(const Duration(milliseconds: 700));
 
-    if (!mounted) return;
-    setState(() => _isLoading = false);
+    try {
+      await AuthService.instance.resetPassword(
+        resetToken: resetToken,
+        nuevaPassword: _passwordController.text,
+      );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Contrasena actualizada con exito')),
-    );
-    
-    // Volver al login despues de cambiar la clave
+      if (!mounted) return;
+      setState(() => _isLoading = false);
 
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const AuthGate()),
-          (route) => false,
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Contrasena actualizada con exito')),
+      );
+
+      // Volver al login despues de cambiar la clave
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const AuthGate()),
+            (route) => false,
+      );
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.message),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
 
   @override
@@ -70,7 +100,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               const Text(
                 'Nueva contrasena',
                 style: TextStyle(
-                  color: AppTheme.amber,
+                  color: AppColors.accent,
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
                 ),
@@ -80,7 +110,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           const SizedBox(height: 42),
           const Icon(
             Icons.lock_reset_rounded,
-            color: AppTheme.amber,
+            color: AppColors.accent,
             size: 44,
           ),
           const SizedBox(height: 28),
@@ -97,7 +127,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           const Text(
             'Asegurate de usar una clave segura que no hayas usado antes',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppTheme.muted, fontSize: 12, height: 1.4),
+            style: TextStyle(color: AppColors.muted, fontSize: 12, height: 1.4),
           ),
           const SizedBox(height: 26),
           Form(
@@ -159,7 +189,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             onPressed: () => Navigator.of(context).pop(),
             child: const Text(
               'Cancelar',
-              style: TextStyle(color: AppTheme.muted, fontWeight: FontWeight.w600),
+              style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w600),
             ),
           ),
         ],
