@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/design_tokens.dart';
+import '../../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,7 +12,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController(text: 'manuel@correo.com');
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
   bool _rememberSession = false;
@@ -32,20 +32,19 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final response = await Supabase.instance.client.auth.signInWithPassword(
+      await AuthService.instance.login(
         email: _emailController.text.trim(),
         password: _passwordController.text,
+        rememberSession: _rememberSession,
       );
 
       if (!mounted) return;
 
-      if (response.user != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('¡Bienvenido de nuevo!')),
-        );
-        Navigator.of(context).pushReplacementNamed('/home');
-      }
-    } on AuthException catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('¡Bienvenido de nuevo!')),
+      );
+      Navigator.of(context).pushReplacementNamed('/home');
+    } on ApiException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -66,19 +65,11 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _showPendingFeature(String feature) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('$feature aun no esta conectado')));
-  }
-
   void _openRegister() {
-    debugPrint('Navegando a Registro...');
     Navigator.of(context).pushNamed('/register');
   }
 
   void _openForgotPassword() {
-    debugPrint('Navegando a Olvido Contraseña...');
     Navigator.of(context).pushNamed('/forgot-password');
   }
 
@@ -86,13 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF081326), Color(0xFF0C1A33), Color(0xFF12051D)],
-          ),
-        ),
+        decoration: const BoxDecoration(color: AppColors.background),
         child: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
@@ -125,7 +110,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 18),
                         _QuickAccess(
-                          onFingerprint: () => Navigator.of(context).pushNamed('/biometric-access'),
+                          onFingerprint: () =>
+                              Navigator.of(context).pushNamed('/biometric-access'),
                           onPin: () => Navigator.of(context).pushNamed('/pin-access'),
                         ),
                         const SizedBox(height: 16),
@@ -133,7 +119,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         const Spacer(),
                         _BottomAccessNav(
                           onRegister: _openRegister,
-                          onHelp: () => Navigator.of(context).pushNamed('/reset-password'),
+                          onHelp: () =>
+                              Navigator.of(context).pushNamed('/reset-password'),
                         ),
                       ],
                     ),
@@ -158,15 +145,15 @@ class _StatusBar extends StatelessWidget {
         Text(
           '9:41',
           style: TextStyle(
-            color: AppTheme.muted,
+            color: AppColors.muted,
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
         ),
         Spacer(),
-        Icon(Icons.more_horiz_rounded, color: AppTheme.muted, size: 20),
+        Icon(Icons.more_horiz_rounded, color: AppColors.muted, size: 20),
         SizedBox(width: 8),
-        Icon(Icons.battery_5_bar_rounded, color: Color(0xFF34D399), size: 18),
+        Icon(Icons.battery_5_bar_rounded, color: AppColors.success, size: 18),
       ],
     );
   }
@@ -183,7 +170,7 @@ class _BrandHeader extends StatelessWidget {
           'AhorrApp',
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: AppTheme.amber,
+            color: AppColors.accent,
             fontSize: 31,
             fontWeight: FontWeight.w900,
             letterSpacing: 0,
@@ -193,7 +180,7 @@ class _BrandHeader extends StatelessWidget {
         Text(
           'Gestion financiera personal',
           style: TextStyle(
-            color: Color(0xFF5F7290),
+            color: AppColors.textSecondary,
             fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
@@ -211,7 +198,7 @@ class _BrandHeader extends StatelessWidget {
         SizedBox(height: 7),
         Text(
           'Inicia sesion para continuar',
-          style: TextStyle(color: AppTheme.muted, fontSize: 12),
+          style: TextStyle(color: AppColors.muted, fontSize: 12),
         ),
       ],
     );
@@ -257,7 +244,7 @@ class _LoginForm extends StatelessWidget {
             autocorrect: false,
             decoration: const InputDecoration(
               labelText: 'CORREO ELECTRONICO',
-              suffixIcon: Icon(Icons.mail_rounded, color: Color(0xFFC6B0D8)),
+              suffixIcon: Icon(Icons.mail_rounded, color: AppColors.textSecondary),
             ),
             validator: (value) {
               final email = value?.trim() ?? '';
@@ -284,7 +271,7 @@ class _LoginForm extends StatelessWidget {
                   hidePassword
                       ? Icons.visibility_off_rounded
                       : Icons.visibility_rounded,
-                  color: const Color(0xFF52627B),
+                  color: AppColors.textSecondary,
                   size: 20,
                 ),
               ),
@@ -300,19 +287,19 @@ class _LoginForm extends StatelessWidget {
               Checkbox(
                 value: rememberSession,
                 onChanged: (value) => onRememberChanged(value ?? false),
-                activeColor: AppTheme.amber,
-                checkColor: AppTheme.background,
+                activeColor: AppColors.accent,
+                checkColor: AppColors.background,
                 visualDensity: VisualDensity.compact,
               ),
               const Text(
                 'Recordar sesion',
-                style: TextStyle(color: AppTheme.muted, fontSize: 12),
+                style: TextStyle(color: AppColors.muted, fontSize: 12),
               ),
               const Spacer(),
               TextButton(
                 onPressed: onForgotPassword,
                 style: TextButton.styleFrom(
-                  foregroundColor: AppTheme.blue,
+                  foregroundColor: AppColors.blue,
                   padding: EdgeInsets.zero,
                   minimumSize: const Size(0, 36),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -330,9 +317,7 @@ class _LoginForm extends StatelessWidget {
             child: DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(15),
-                gradient: const LinearGradient(
-                  colors: [AppTheme.amber, AppTheme.orange],
-                ),
+                color: AppColors.accent,
                 boxShadow: const [
                   BoxShadow(
                     color: Color(0x55FFB000),
@@ -355,20 +340,20 @@ class _LoginForm extends StatelessWidget {
                 ),
                 child: isLoading
                     ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          color: Colors.black,
-                          strokeWidth: 2.4,
-                        ),
-                      )
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    color: Colors.black,
+                    strokeWidth: 2.4,
+                  ),
+                )
                     : const Text(
-                        'Iniciar sesion',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
+                  'Iniciar sesion',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
               ),
             ),
           ),
@@ -454,7 +439,7 @@ class _AccessTile extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: AppTheme.amber, size: 24),
+              Icon(icon, color: AppColors.accent, size: 24),
               const SizedBox(height: 3),
               Text(
                 label,
@@ -484,12 +469,12 @@ class _RegisterCallout extends StatelessWidget {
       children: [
         const Text(
           'No tienes cuenta? ',
-          style: TextStyle(color: AppTheme.muted, fontSize: 12),
+          style: TextStyle(color: AppColors.muted, fontSize: 12),
         ),
         TextButton(
           onPressed: onTap,
           style: TextButton.styleFrom(
-            foregroundColor: AppTheme.amber,
+            foregroundColor: AppColors.accent,
             padding: EdgeInsets.zero,
             minimumSize: const Size(0, 34),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -579,7 +564,7 @@ class _BottomNavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? AppTheme.amber : const Color(0xFF43516B);
+    final color = selected ? AppColors.accent : const Color(0xFF43516B);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
