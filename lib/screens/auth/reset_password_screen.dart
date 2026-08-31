@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'auth_gate.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/auth_widgets.dart';
 
@@ -40,7 +40,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     );
     
     // Volver al login despues de cambiar la clave
-    Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const AuthGate()),
+          (route) => false,
+    );
   }
 
   @override

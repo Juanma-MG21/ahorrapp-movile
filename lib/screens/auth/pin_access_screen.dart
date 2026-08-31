@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/auth_widgets.dart';
+import 'auth_gate.dart';
 
 class PinAccessScreen extends StatefulWidget {
   const PinAccessScreen({super.key});
@@ -166,9 +167,12 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
           ),
           
           const SizedBox(height: 40),
-          
+
           TextButton(
-            onPressed: () => Navigator.of(context).pushReplacementNamed('/login'),
+            onPressed: () => Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const AuthGate()),
+                  (route) => false,
+            ),
             child: const Text(
               'Ingresar con contraseña',
               style: TextStyle(
@@ -177,6 +181,7 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
               ),
             ),
           ),
+
           const SizedBox(height: 20),
         ],
       ),
