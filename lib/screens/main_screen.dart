@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../core/theme/design_tokens.dart';
+import 'calendario/calendario_screen.dart';
 import 'gastos/modulo_gastos.dart';
+import 'home/home_screen.dart';
 import 'ingresos/modulo_ingresos.dart';
 
 class MainScreen extends StatefulWidget {
@@ -14,11 +16,12 @@ class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 2; // Empezamos en Gastos para coincidir con el estado inicial previo
 
   final List<Widget> _screens = [
-    const Center(child: Text('Inicio', style: TextStyle(color: AppColors.textPrimary))),
+    const HomeScreen(),
     const ModuloIngresos(),
     const ModuloGastos(),
     const Center(child: Text('Ahorros', style: TextStyle(color: AppColors.textPrimary))),
     const Center(child: Text('Más', style: TextStyle(color: AppColors.textPrimary))),
+    const CalendarioScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -57,6 +60,7 @@ class _MainScreenState extends State<MainScreen> {
               _buildNavItem(Icons.account_balance_wallet, 'Gastos', 2),
               _buildNavItem(Icons.savings_outlined, 'Ahorros', 3),
               _buildNavItem(Icons.more_horiz, 'Más', 4),
+              _buildNavItem(Icons.calendar_month_outlined, 'Calendario', 5),
             ],
           ),
         ),
