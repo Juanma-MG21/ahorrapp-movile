@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/utils/parsers.dart';
 
 class IngresoModel {
   final int? id;
@@ -24,7 +25,7 @@ class IngresoModel {
     return IngresoModel(
       id: json['id'],
       idCategoria: json['id_categoria'],
-      monto: (json['monto'] as num).toDouble(),
+      monto: parseMonto(json['monto']),
       descripcion: json['descripcion'],
       fuente: json['fuente'],
       fechaRegistro: DateTime.parse(json['fecha']),

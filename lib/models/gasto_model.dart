@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/utils/parsers.dart';
 
 class GastoModel {
   final int? id;
@@ -29,13 +30,14 @@ class GastoModel {
       id: json['id'],
       idCategoria: json['id_categoria'],
       idDependientes: json['id_dependientes'],
-      monto: (json['monto'] as num).toDouble(),
+      monto: parseMonto(json['monto']),
       descripcion: json['descripcion'],
       fecha: DateTime.parse(json['fecha']),
       categoriaNombre: json['categoria'],
       dependienteNombre: json['dependiente'],
     );
   }
+
 
   /// Body para POST /movimientos (dentro de "datos") y para
   /// PUT /movimientos/gastos/:id. Ambos endpoints esperan las mismas
