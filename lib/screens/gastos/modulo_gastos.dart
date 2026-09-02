@@ -1,12 +1,13 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
-import '../../core/design_tokens.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../models/gasto_model.dart';
-import '../../services/voice_parser_service.dart';
+import '../../services/local_parser_service.dart';
 import '../../services/widget_service.dart';
-import '../../services/supabase_service.dart';
+import '../../services/gastos_service.dart';
 import 'agregar_gasto_screen.dart';
 
 import '../../services/qr_parser_service.dart';
@@ -27,6 +28,7 @@ class _ModuloGastosState extends State<ModuloGastos>
   bool _isLoading = true;
   DateTime _selectedDate = DateTime.now();
   String _searchQuery = '';
+  
   late stt.SpeechToText _speech;
   bool _isListening = false;
   bool _isProcessing = false;
@@ -44,9 +46,9 @@ class _ModuloGastosState extends State<ModuloGastos>
   List<GastoModel> get _filteredGastos {
     return _gastos.where((g) {
       final matchesDate = g.fecha.month == _selectedDate.month && g.fecha.year == _selectedDate.year;
-      final matchesSearch = _searchQuery.isEmpty || 
+      final matchesSearch = _searchQuery.isEmpty ||
           g.description.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          g.categoriaNombre.toLowerCase().contains(_searchQuery.toLowerCase());
+          g.titulo.toLowerCase().contains(_searchQuery.toLowerCase());
       return matchesDate && matchesSearch;
     }).toList();
   }
@@ -59,7 +61,6 @@ class _ModuloGastosState extends State<ModuloGastos>
       1,
     );
 
-    // No permitir navegar a meses futuros
     if (delta > 0) {
       if (newDate.year > now.year || (newDate.year == now.year && newDate.month > now.month)) {
         return;
@@ -80,7 +81,6 @@ class _ModuloGastosState extends State<ModuloGastos>
       duration: const Duration(milliseconds: 350),
     );
 
-    // Animación escalonada: primero aparece la opción más cercana al botón
     _itemAnimations = List.generate(3, (i) {
       return CurvedAnimation(
         parent: _menuController,
@@ -97,7 +97,7 @@ class _ModuloGastosState extends State<ModuloGastos>
 
   void _loadGastos() async {
     setState(() => _isLoading = true);
-    final list = await SupabaseService.fetchGastos();
+    final list = await GastosService.obtenerGastos();
     setState(() {
       _gastos = list;
       _isLoading = false;
@@ -119,7 +119,7 @@ class _ModuloGastosState extends State<ModuloGastos>
     const double presupuesto = 0;
     final double balance = presupuesto - totalGastos;
     final double porcentaje =
-        presupuesto > 0 ? (totalGastos / presupuesto * 100).clamp(0, 100) : 0;
+    presupuesto > 0 ? (totalGastos / presupuesto * 100).clamp(0, 100) : 0;
 
     WidgetService.updateWidgetData(
       balance: _formatCurrency(balance),
@@ -150,61 +150,45 @@ class _ModuloGastosState extends State<ModuloGastos>
   void _onOptionSelected(String metodo) async {
     _toggleMenu();
     if (metodo == 'Agregar manualmente') {
-      final resultado = await Navigator.push<GastoModel>(
+      final resultado = await Navigator.push<bool>(
         context,
         MaterialPageRoute(builder: (context) => const AgregarGastoScreen()),
       );
-
-      if (resultado != null) {
-        setState(() {
-          _gastos.add(resultado);
-        });
-        _updateWidget();
+      if (!mounted) return;
+      if (resultado == true) {
+        _loadGastos();
       }
     }
     if (metodo == 'Registro por voz') {
       _startListening();
     }
-
     if (metodo == 'Escanear QR') {
       final String? textoQr = await Navigator.push<String>(
         context,
         MaterialPageRoute(builder: (context) => const QrScannerScreen()),
       );
-
+      if (!mounted) return;
       if (textoQr != null && textoQr.trim().isNotEmpty) {
         _processQrResult(textoQr);
       }
     }
-
   }
 
   void _startListening() async {
-    bool available = await _speech.initialize(
-      onStatus: (val) {
-        debugPrint('Speech Status: $val');
-        if (val == 'notListening' || val == 'done') {
-          if (mounted && _isListening) {
-            _stopListeningAndProcess();
-          } else if (mounted && _isModalShowing && _lastWords.isEmpty) {
-            // Si el motor se detiene por timeout y no hay palabras, cerramos el modal
-            _closeVoiceModal();
-          }
-        }
-      },
-      onError: (val) {
-        debugPrint('Speech Error: $val');
-        if (mounted) {
-          setState(() {
-            _isListening = false;
-            _isProcessing = false;
-          });
-          _closeVoiceModal();
-        }
-      },
-    );
+    var status = await Permission.microphone.request();
+    if (!status.isGranted) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Necesitamos el micrófono para usar la voz')),
+        );
+      }
+      return;
+    }
 
-    if (!mounted) return;
+    bool available = await _speech.initialize(
+      onStatus: (val) => debugPrint('Speech Status: $val'),
+      onError: (val) => debugPrint('Speech Error: $val'),
+    );
 
     if (available) {
       setState(() {
@@ -213,23 +197,6 @@ class _ModuloGastosState extends State<ModuloGastos>
         _lastWords = '';
       });
       _showVoiceModal();
-      _speech.listen(
-        onResult: (val) => setState(() {
-          _lastWords = val.recognizedWords;
-        }),
-        listenOptions: stt.SpeechListenOptions(
-          localeId: 'es_CO',
-          listenFor: const Duration(seconds: 30),
-          pauseFor: const Duration(seconds: 3), // Reducido para mayor velocidad
-          partialResults: true,
-          cancelOnError: true,
-          listenMode: stt.ListenMode.confirmation,
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('El reconocimiento de voz no está disponible')),
-      );
     }
   }
 
@@ -240,61 +207,47 @@ class _ModuloGastosState extends State<ModuloGastos>
     }
   }
 
-  void _stopListeningAndProcess() {
-    setState(() {
-      _isListening = false;
-    });
+  void _stopListeningAndProcess([StateSetter? setModalState]) async {
+    if (mounted) {
+      if (setModalState != null) {
+        setModalState(() {
+          _isListening = false;
+          _isProcessing = true;
+        });
+      }
+      setState(() {
+        _isListening = false;
+        _isProcessing = true;
+      });
+    }
+
+    await _speech.stop();
+    await Future.delayed(const Duration(milliseconds: 600));
 
     if (_lastWords.isNotEmpty) {
-      setState(() => _isProcessing = true);
-      Future.delayed(const Duration(milliseconds: 400), () {
-        if (mounted) {
-          _closeVoiceModal();
-          _processVoiceResult(_lastWords);
-          setState(() => _isProcessing = false);
-        }
-      });
+      final GastoModel parsedGasto = LocalParserService.parseGasto(_lastWords);
+      if (mounted) {
+        _closeVoiceModal();
+        setState(() => _isProcessing = false);
+        final resultado = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(builder: (context) => AgregarGastoScreen(gastoParaEditar: parsedGasto)),
+        );
+        if (resultado == true) _loadGastos();
+      }
     } else {
       _closeVoiceModal();
-    }
-  }
-
-  void _processVoiceResult(String text) async {
-    final GastoModel parsedGasto = VoiceParserService.parse(text);
-    
-    // Abrir formulario con los datos pre-llenados
-    final resultado = await Navigator.push<GastoModel>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AgregarGastoScreen(gastoParaEditar: parsedGasto),
-      ),
-    );
-
-    if (resultado != null) {
-      setState(() {
-        _gastos.add(resultado);
-      });
-      _updateWidget();
+      if (mounted) setState(() => _isProcessing = false);
     }
   }
 
   void _processQrResult(String textoQr) async {
     final GastoModel parsedGasto = QrParserService.parse(textoQr);
-
-    // Abrir formulario con los datos pre-llenados, igual que en voz
-    final resultado = await Navigator.push<GastoModel>(
+    final resultado = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(
-        builder: (context) => AgregarGastoScreen(gastoParaEditar: parsedGasto),
-      ),
+      MaterialPageRoute(builder: (context) => AgregarGastoScreen(gastoParaEditar: parsedGasto)),
     );
-
-    if (resultado != null) {
-      setState(() {
-        _gastos.add(resultado);
-      });
-      _updateWidget();
-    }
+    if (resultado == true) _loadGastos();
   }
 
   void _showVoiceModal() {
@@ -306,64 +259,76 @@ class _ModuloGastosState extends State<ModuloGastos>
       barrierColor: Colors.transparent,
       transitionDuration: const Duration(milliseconds: 250),
       pageBuilder: (context, animation, secondaryAnimation) {
-        return AnimatedBuilder(
-          animation: animation,
-          builder: (context, _) {
-            final t = Curves.easeOut.transform(animation.value);
-            return Stack(
-              children: [
-                // Oscurece y cierra al tocar fuera
-                GestureDetector(
-                  onTap: () {
-                    _speech.stop();
-                    _closeVoiceModal();
-                  },
-                  child: Container(
-                    color: Colors.black.withValues(alpha: 0.45 * t),
-                  ),
-                ),
-                // Difumina el fondo
-                Positioned.fill(
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 10 * t, sigmaY: 10 * t),
-                    child: const SizedBox.expand(),
-                  ),
-                ),
-                // Tarjeta centrada con efecto de escala
-                Center(
-                  child: Opacity(
-                    opacity: t,
-                    child: Transform.scale(
-                      scale: 0.9 + 0.1 * t,
-                      child: Material(
-                        type: MaterialType.transparency,
-                        child: StatefulBuilder(
-                          builder: (context, setModalState) {
-                            return _buildVoiceCard(setModalState);
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+                    if (_isListening && !_speech.isListening) {
+                      _speech.listen(
+                        onResult: (val) {
+                          if (mounted) {
+                            setModalState(() => _lastWords = val.recognizedWords);
+                            setState(() => _lastWords = val.recognizedWords);
                           }
+                        },
+                        listenOptions: stt.SpeechListenOptions(
+                          localeId: 'es_CO',
+                          cancelOnError: true,
+                          listenMode: stt.ListenMode.dictation,
+                          listenFor: const Duration(minutes: 20),
+                          pauseFor: const Duration(minutes: 5),
+                        ),
+                      );
+                    }
+
+            return AnimatedBuilder(
+              animation: animation,
+              builder: (context, _) {
+                final t = Curves.easeOut.transform(animation.value);
+                return Stack(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        _speech.stop();
+                        _closeVoiceModal();
+                      },
+                      child: Container(color: Colors.black.withValues(alpha: 0.45 * t)),
+                    ),
+                    Positioned.fill(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 10 * t, sigmaY: 10 * t),
+                        child: const SizedBox.expand(),
+                      ),
+                    ),
+                    Center(
+                      child: Opacity(
+                        opacity: t,
+                        child: Transform.scale(
+                          scale: 0.9 + 0.1 * t,
+                          child: Material(
+                            type: MaterialType.transparency,
+                            child: _buildVoiceCard(setModalState),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
-              ],
+                  ],
+                );
+              },
             );
-          },
+          }
         );
       },
     );
   }
 
   Widget _buildVoiceCard(StateSetter setModalState) {
-    String mainText = 'Escuchando tu voz...';
-    if (_isProcessing) mainText = 'Detectando audio…';
+    String mainText = _isListening ? 'Escuchando...' : 'Procesando...';
 
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 40),
       padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
       decoration: BoxDecoration(
-        color: kSecondaryBgColor,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
@@ -379,96 +344,56 @@ class _ModuloGastosState extends State<ModuloGastos>
           _VoicePulseButton(
             isListening: _isListening,
             isProcessing: _isProcessing,
+            onTap: () => _stopListeningAndProcess(setModalState),
+            onLongPressEnd: () => _stopListeningAndProcess(setModalState),
           ),
           const SizedBox(height: 22),
           Text(
             mainText,
             style: const TextStyle(
-              color: kTextPrimary,
+              color: AppColors.textPrimary,
               fontSize: 17,
               fontWeight: FontWeight.bold,
             ),
           ),
+          if (_isListening)
+            const Padding(
+              padding: EdgeInsets.only(top: 4),
+              child: Text(
+                'Toca el botón para detener',
+                style: TextStyle(color: AppColors.accent, fontSize: 12, fontWeight: FontWeight.w500),
+              ),
+            ),
           const SizedBox(height: 12),
           if (_lastWords.isNotEmpty)
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: kBgColor.withValues(alpha: 0.5),
+                color: AppColors.background.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 _lastWords,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: kTextPrimary, fontSize: 14, fontStyle: FontStyle.italic),
+                style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontStyle: FontStyle.italic),
               ),
             )
-          else if (!_isProcessing)
-            RichText(
+          else if (_isListening)
+            const Text(
+              'Di algo como: "Diez mil en un taxi"',
               textAlign: TextAlign.center,
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                    text: 'Di algo como: ',
-                    style: TextStyle(color: kTextSecondary, fontSize: 12),
-                  ),
-                  const TextSpan(
-                    text: '"Diez mil pesos en una empanada"',
-                    style: TextStyle(
-                      color: kTextPrimary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
             ),
-          const SizedBox(height: 18),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 10),
-            child: Text(
-              'Ahorrapp puede cometer errores. Verifica siempre la información antes de guardar.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: kNegativeColor, fontSize: 10, fontWeight: FontWeight.w600),
-            ),
-          ),
           const SizedBox(height: 20),
-          // Botón Cancelar
           if (!_isProcessing)
             GestureDetector(
               onTap: () {
                 _speech.stop();
                 _closeVoiceModal();
               },
-              child: Container(
-                width: double.infinity,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: kBgColor,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0xFF05060D),
-                      offset: Offset(3, 3),
-                      blurRadius: 8,
-                    ),
-                    BoxShadow(
-                      color: Color(0xFF1A1D3A),
-                      offset: Offset(-3, -3),
-                      blurRadius: 8,
-                    ),
-                  ],
-                ),
-                child: const Center(
-                  child: Text(
-                    'Cancelar',
-                    style: TextStyle(
-                      color: kTextSecondary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
+              child: const Text(
+                'Cancelar',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w600),
               ),
             ),
         ],
@@ -479,7 +404,7 @@ class _ModuloGastosState extends State<ModuloGastos>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kBgColor,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Stack(
           children: [
@@ -502,7 +427,6 @@ class _ModuloGastosState extends State<ModuloGastos>
                 ],
               ),
             ),
-            // --- FONDO DIFUMINADO + OSCURO CUANDO EL MENÚ ESTÁ ABIERTO ---
             Positioned.fill(
               child: IgnorePointer(
                 ignoring: !_isMenuOpen,
@@ -516,7 +440,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                         sigmaY: 10 * t,
                       ),
                       child: GestureDetector(
-                        onTap: _toggleMenu, // tocar el fondo cierra el menú
+                        onTap: _toggleMenu,
                         child: Container(
                           color: Colors.black.withValues(alpha: 0.45 * t),
                         ),
@@ -526,7 +450,6 @@ class _ModuloGastosState extends State<ModuloGastos>
                 ),
               ),
             ),
-            // --- MENÚ DESPLEGABLE + FAB ---
             Positioned(
               right: 20,
               bottom: 20,
@@ -573,7 +496,6 @@ class _ModuloGastosState extends State<ModuloGastos>
     );
   }
 
-  // ---------- MENÚ: OPCIÓN (ETIQUETA + BOTÓN CIRCULAR) ----------
   Widget _buildMenuItem({
     required String label,
     required IconData icon,
@@ -581,10 +503,7 @@ class _ModuloGastosState extends State<ModuloGastos>
     required VoidCallback onTap,
   }) {
     return SlideTransition(
-      position: Tween<Offset>(
-        begin: const Offset(0.4, 0),
-        end: Offset.zero,
-      ).animate(animation),
+      position: Tween<Offset>(begin: const Offset(0.4, 0), end: Offset.zero).animate(animation),
       child: FadeTransition(
         opacity: animation,
         child: Row(
@@ -593,48 +512,19 @@ class _ModuloGastosState extends State<ModuloGastos>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
               decoration: BoxDecoration(
-                color: kSecondaryBgColor,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.4),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.4), blurRadius: 10, offset: const Offset(0, 4))],
               ),
-              child: Text(
-                label,
-                style: const TextStyle(
-                  color: kTextPrimary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              child: Text(label, style: const TextStyle(color: AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
             ),
             const SizedBox(width: 12),
             GestureDetector(
               onTap: onTap,
               child: Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: kSecondaryBgColor,
-                  shape: BoxShape.circle,
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0xFF05060D),
-                      offset: Offset(3, 3),
-                      blurRadius: 8,
-                    ),
-                    BoxShadow(
-                      color: Color(0xFF1A1D3A),
-                      offset: Offset(-3, -3),
-                      blurRadius: 8,
-                    ),
-                  ],
-                ),
-                child: Icon(icon, color: kAccentColor, size: 22),
+                width: 50, height: 50,
+                decoration: const BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
+                child: Icon(icon, color: AppColors.accent, size: 22),
               ),
             ),
           ],
@@ -643,33 +533,14 @@ class _ModuloGastosState extends State<ModuloGastos>
     );
   }
 
-  // ---------- FAB (ROTA A "×" Y GANA ANILLO BLANCO) ----------
   Widget _buildFAB() {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      width: 60,
-      height: 60,
+      width: 60, height: 60,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: const RadialGradient(
-          colors: [Color(0xFFFFD700), kAccentColor],
-        ),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: _isMenuOpen ? 0.9 : 0),
-          width: 2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: kAccentColor.withValues(alpha: 0.4),
-            blurRadius: 20,
-            spreadRadius: 2,
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        gradient: const RadialGradient(colors: [Color(0xFFFFD700), AppColors.accent]),
+        border: Border.all(color: Colors.white.withValues(alpha: _isMenuOpen ? 0.9 : 0), width: 2),
       ),
       child: Material(
         color: Colors.transparent,
@@ -678,14 +549,10 @@ class _ModuloGastosState extends State<ModuloGastos>
           onTap: _toggleMenu,
           child: Center(
             child: AnimatedRotation(
-              turns: _isMenuOpen ? 0.125 : 0, // 45°: el "+" se vuelve "×"
+              turns: _isMenuOpen ? 0.125 : 0,
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeOut,
-              child: const Icon(
-                Icons.add,
-                color: Colors.black,
-                size: 28,
-              ),
+              child: const Icon(Icons.add, color: Colors.black, size: 28),
             ),
           ),
         ),
@@ -693,7 +560,6 @@ class _ModuloGastosState extends State<ModuloGastos>
     );
   }
 
-  // ---------- HEADER ----------
   Widget _buildHeader() {
     final now = DateTime.now();
     final isCurrentMonth = _selectedDate.year == now.year && _selectedDate.month == now.month;
@@ -703,79 +569,28 @@ class _ModuloGastosState extends State<ModuloGastos>
       children: [
         Row(
           children: [
-            _NeumorphicIcon(
-              icon: Icons.arrow_back_ios,
-              size: 12,
-              onTap: () => _changeMonth(-1),
-            ),
+            _NeumorphicIcon(icon: Icons.arrow_back_ios, size: 12, onTap: () => _changeMonth(-1)),
             const SizedBox(width: 12),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  _mesesNom[_selectedDate.month - 1],
-                  style: const TextStyle(
-                    color: kTextPrimary,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  '${_selectedDate.year}',
-                  style: const TextStyle(
-                    color: kTextSecondary,
-                    fontSize: 13,
-                  ),
-                ),
+                Text(_mesesNom[_selectedDate.month - 1], style: const TextStyle(color: AppColors.textPrimary, fontSize: 22, fontWeight: FontWeight.bold)),
+                Text('${_selectedDate.year}', style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
               ],
             ),
             const SizedBox(width: 12),
-            if (!isCurrentMonth)
-              _NeumorphicIcon(
-                icon: Icons.arrow_forward_ios,
-                size: 12,
-                onTap: () => _changeMonth(1),
-              )
-            else
-              const SizedBox(width: 40), // Espacio equivalente al icono para mantener alineación
+            if (!isCurrentMonth) _NeumorphicIcon(icon: Icons.arrow_forward_ios, size: 12, onTap: () => _changeMonth(1))
+            else const SizedBox(width: 40),
           ],
         ),
         Row(
           children: [
-            _NeumorphicIcon(
-              icon: Icons.notifications_outlined,
-              size: 22,
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('No hay notificaciones')),
-                );
-              },
-            ),
+            _NeumorphicIcon(icon: Icons.notifications_outlined, size: 22, onTap: () {}),
             const SizedBox(width: 12),
-            GestureDetector(
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Perfil de usuario')),
-                );
-              },
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    colors: [kAccentColor, Color(0xFFFF8C00)],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: kAccentColor.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      spreadRadius: 1,
-                    ),
-                  ],
-                ),
-                child: const Icon(Icons.person, color: Colors.white, size: 20),
-              ),
+            Container(
+              width: 36, height: 36,
+              decoration: const BoxDecoration(shape: BoxShape.circle, gradient: LinearGradient(colors: [AppColors.accent, Color(0xFFFF8C00)])),
+              child: const Icon(Icons.person, color: Colors.white, size: 20),
             ),
           ],
         ),
@@ -788,37 +603,24 @@ class _ModuloGastosState extends State<ModuloGastos>
       borderRadius: 16,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: TextField(
-        onChanged: (value) {
-          setState(() {
-            _searchQuery = value;
-          });
-        },
-        style: const TextStyle(color: kTextPrimary, fontSize: 14),
+        onChanged: (value) => setState(() => _searchQuery = value),
+        style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
         decoration: InputDecoration(
           hintText: 'Buscar gasto o categoría...',
-          hintStyle: TextStyle(color: kTextSecondary.withValues(alpha: 0.5)),
+          hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.5)),
           border: InputBorder.none,
-          icon: Icon(Icons.search, color: kAccentColor, size: 20),
+          icon: const Icon(Icons.search, color: AppColors.accent, size: 20),
         ),
       ),
     );
   }
 
   String _formatCurrency(double amount) {
-    if (amount % 1 == 0) {
-      String integerPart = amount.toStringAsFixed(0).replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
-      return '\$$integerPart';
-    } else {
-      String formatted = amount.toStringAsFixed(2);
-      List<String> parts = formatted.split('.');
-      String integerPart = parts[0].replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
-      return '\$$integerPart,${parts[1]}';
-    }
+    String integerPart = amount.toStringAsFixed(0).replaceAllMapped(
+        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
+    return '\$$integerPart';
   }
 
-  // ---------- TARJETA RESUMEN (DINÁMICA) ----------
   Widget _buildSummaryCard() {
     double totalGastos = 0;
     final filtered = _filteredGastos;
@@ -838,72 +640,24 @@ class _ModuloGastosState extends State<ModuloGastos>
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- Columna izquierda ---
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'TOTAL GASTOS',
-                      style: TextStyle(
-                        color: kTextSecondary,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 1,
-                      ),
-                    ),
+                    const Text('TOTAL GASTOS', style: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1)),
                     const SizedBox(height: 8),
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        _formatCurrency(totalGastos),
-                        style: const TextStyle(
-                          color: kTextPrimary,
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${_mesesNom[_selectedDate.month - 1]} ${_selectedDate.year}',
-                      style: const TextStyle(
-                        color: kTextSecondary,
-                        fontSize: 12,
-                      ),
-                    ),
+                    FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Text(_formatCurrency(totalGastos), style: const TextStyle(color: AppColors.textPrimary, fontSize: 32, fontWeight: FontWeight.bold))),
                   ],
                 ),
               ),
               const SizedBox(width: 16),
-              // --- Columna derecha ---
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text(
-                      'PRESUPUESTO',
-                      style: TextStyle(
-                        color: kTextSecondary,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 1,
-                      ),
-                    ),
+                    const Text('PRESUPUESTO', style: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1)),
                     const SizedBox(height: 8),
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerRight,
-                      child: Text(
-                        _formatCurrency(presupuesto),
-                        style: const TextStyle(
-                          color: kAccentColor,
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                    FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerRight, child: Text(_formatCurrency(presupuesto), style: const TextStyle(color: AppColors.accent, fontSize: 28, fontWeight: FontWeight.bold))),
                   ],
                 ),
               ),
@@ -915,157 +669,52 @@ class _ModuloGastosState extends State<ModuloGastos>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                '${(porcentaje * 100).toStringAsFixed(0)}% utilizado',
-                style: TextStyle(
-                  color: kTextSecondary,
-                  fontSize: 11,
-                ),
-              ),
-              Text(
-                '${filtered.length} registros',
-                style: const TextStyle(
-                  color: kTextSecondary,
-                  fontSize: 11,
-                ),
-              ),
+              Text('${(porcentaje * 100).toStringAsFixed(0)}% utilizado', style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+              Text('${filtered.length} registros', style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
             ],
           ),
           const SizedBox(height: 16),
-          RichText(
-            text: TextSpan(
-              children: [
-                const TextSpan(
-                  text: 'Disponible: ',
-                  style: TextStyle(
-                    color: kTextSecondary,
-                    fontSize: 14,
-                  ),
-                ),
-                TextSpan(
-                  text: _formatCurrency(disponible),
-                  style: const TextStyle(
-                    color: kAccentColor,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          RichText(text: TextSpan(children: [const TextSpan(text: 'Disponible: ', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)), TextSpan(text: _formatCurrency(disponible), style: const TextStyle(color: AppColors.accent, fontSize: 14, fontWeight: FontWeight.bold))])),
         ],
       ),
     );
   }
 
-  // ---------- BARRA DE PROGRESO ----------
   Widget _buildProgressBar(double porcentaje) {
     return Container(
       height: 10,
-      decoration: BoxDecoration(
-        color: kInsetBg,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: Colors.black.withValues(alpha: 0.3),
-          width: 1,
-        ),
-      ),
+      decoration: BoxDecoration(color: AppColors.inset, borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.black.withValues(alpha: 0.3), width: 1)),
       child: Align(
         alignment: Alignment.centerLeft,
         child: FractionallySizedBox(
           widthFactor: porcentaje,
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [kAccentColor, Color(0xFFFFD700)],
-              ),
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: kAccentColor.withValues(alpha: 0.5),
-                  blurRadius: 4,
-                ),
-              ],
-            ),
-          ),
+          child: Container(decoration: BoxDecoration(gradient: const LinearGradient(colors: [AppColors.accent, Color(0xFFFFD700)]), borderRadius: BorderRadius.circular(10))),
         ),
       ),
     );
   }
 
-  // ---------- LISTA DE GASTOS ----------
   Widget _buildExpensesListHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text(
-          'Gastos del mes',
-          style: TextStyle(
-            color: kTextPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        Text(
-          '${_filteredGastos.length} total',
-          style: TextStyle(
-            color: kTextSecondary,
-            fontSize: 13,
-          ),
-        ),
+        const Text('Gastos del mes', style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
+        Text('${_filteredGastos.length} total', style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
       ],
     );
   }
 
   Widget _buildExpensesList() {
-    if (_isLoading) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.only(top: 40),
-          child: CircularProgressIndicator(color: kAccentColor),
-        ),
-      );
-    }
-
+    if (_isLoading) return const Center(child: Padding(padding: EdgeInsets.only(top: 40), child: CircularProgressIndicator(color: AppColors.accent)));
     final filtered = _filteredGastos.reversed.toList();
-    if (filtered.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.only(top: 40),
-          child: Column(
-            children: [
-              Icon(Icons.receipt_long, color: kTextSecondary.withValues(alpha: 0.3), size: 64),
-              const SizedBox(height: 16),
-              Text(
-                'No hay gastos en ${_mesesNom[_selectedDate.month - 1]}',
-                style: const TextStyle(color: kTextSecondary, fontSize: 14),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return Column(
-      children: List.generate(filtered.length, (index) {
-        final expense = filtered[index];
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 14),
-          child: _buildExpenseCard(expense, index),
-        );
-      }),
-    );
+    if (filtered.isEmpty) return Center(child: Padding(padding: const EdgeInsets.only(top: 40), child: Column(children: [Icon(Icons.receipt_long, color: AppColors.textSecondary.withValues(alpha: 0.3), size: 64), const SizedBox(height: 16), const Text('No hay gastos registrados', style: TextStyle(color: AppColors.textSecondary, fontSize: 14))])));
+    return Column(children: List.generate(filtered.length, (index) => Padding(padding: const EdgeInsets.only(bottom: 14), child: _buildExpenseCard(filtered[index], index))));
   }
 
   Widget _buildExpenseCard(GastoModel expense, int index) {
     final isExpanded = _expandedIndex == index;
-
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _expandedIndex = isExpanded ? null : index;
-        });
-      },
+      onTap: () => setState(() => _expandedIndex = isExpanded ? null : index),
       child: _NeumorphicContainer(
         borderRadius: 22,
         padding: const EdgeInsets.all(0),
@@ -1075,61 +724,12 @@ class _ModuloGastosState extends State<ModuloGastos>
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: expense.color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      expense.icono,
-                      color: expense.color,
-                      size: 24,
-                    ),
-                  ),
+                  Container(width: 44, height: 44, decoration: BoxDecoration(color: expense.color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)), child: Icon(expense.icono, color: expense.color, size: 24)),
                   const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          expense.titulo,
-                          style: const TextStyle(
-                            color: kTextPrimary,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          expense.subtitulo,
-                          style: const TextStyle(
-                            color: kTextSecondary,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Text(
-                    '-${_formatCurrency(expense.monto)}',
-                    style: const TextStyle(
-                      color: kNegativeColor,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(expense.titulo, style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)), const SizedBox(height: 4), Text(expense.subtitulo, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12))])),
+                  Text('-${_formatCurrency(expense.monto)}', style: const TextStyle(color: AppColors.error, fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(width: 8),
-                  AnimatedRotation(
-                    turns: isExpanded ? 0.5 : 0.0,
-                    duration: const Duration(milliseconds: 200),
-                    child: const Icon(
-                      Icons.expand_more,
-                      color: kTextSecondary,
-                      size: 20,
-                    ),
-                  ),
+                  AnimatedRotation(turns: isExpanded ? 0.5 : 0.0, duration: const Duration(milliseconds: 200), child: const Icon(Icons.expand_more, color: AppColors.textSecondary, size: 20)),
                 ],
               ),
             ),
@@ -1139,65 +739,18 @@ class _ModuloGastosState extends State<ModuloGastos>
                 padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
                 child: Column(
                   children: [
-                    Row(
-                      children: [
-                        _buildDetailItem('CATEGORÍA', expense.categoriaNombre),
-                        _buildDetailItem('FECHA', '${expense.fecha.day.toString().padLeft(2, '0')}/${expense.fecha.month.toString().padLeft(2, '0')}/${expense.fecha.year}'),
-                      ],
-                    ),
+                    Row(children: [_buildDetailItem('CATEGORÍA', expense.titulo), _buildDetailItem('FECHA', '${expense.fecha.day.toString().padLeft(2, '0')}/${expense.fecha.month.toString().padLeft(2, '0')}/${expense.fecha.year}')]),
                     const SizedBox(height: 18),
-                    Row(
-                      children: [
-                        _buildDetailItem('DESCRIPCIÓN', expense.description),
-                        _buildDetailItem('MONTO', '-${_formatCurrency(expense.monto)}', color: kNegativeColor),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-                    Row(
-                      children: [
-                        _buildDetailItem('RESPONSABLE', expense.responsableNombre),
-                      ],
-                    ),
+                    Row(children: [_buildDetailItem('DESCRIPCIÓN', expense.description), _buildDetailItem('MONTO', '-${_formatCurrency(expense.monto)}', color: AppColors.error)]),
                     const SizedBox(height: 24),
                     Row(
                       children: [
-                        Expanded(
-                          child: _buildActionButton(
-                            label: 'Editar',
-                            icon: Icons.edit_outlined,
-                            color: const Color(0xFF4ADE80),
-                            onTap: () async {
-                              final resultado = await Navigator.push<GastoModel>(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => AgregarGastoScreen(gastoParaEditar: expense),
-                                ),
-                              );
-
-                              if (resultado != null) {
-                                setState(() {
-                                  final indexOriginal = _gastos.indexWhere((g) => g.id == expense.id);
-                                  if (indexOriginal != -1) {
-                                    _gastos[indexOriginal] = resultado;
-                                  }
-                                  _expandedIndex = null;
-                                });
-                                _updateWidget();
-                              }
-                            },
-                          ),
-                        ),
+                        Expanded(child: _buildActionButton(label: 'Editar', icon: Icons.edit_outlined, color: const Color(0xFF4ADE80), onTap: () async {
+                          final resultado = await Navigator.push<bool>(context, MaterialPageRoute(builder: (context) => AgregarGastoScreen(gastoParaEditar: expense)));
+                          if (resultado == true) { setState(() => _expandedIndex = null); _loadGastos(); }
+                        })),
                         const SizedBox(width: 16),
-                        Expanded(
-                          child: _buildActionButton(
-                            label: 'Eliminar',
-                            icon: Icons.delete_outline,
-                            color: kNegativeColor,
-                            onTap: () {
-                              _mostrarDialogoConfirmacion(context, expense);
-                            },
-                          ),
-                        ),
+                        Expanded(child: _buildActionButton(label: 'Eliminar', icon: Icons.delete_outline, color: AppColors.error, onTap: () => _mostrarDialogoConfirmacion(context, expense))),
                       ],
                     ),
                   ],
@@ -1216,49 +769,22 @@ class _ModuloGastosState extends State<ModuloGastos>
       builder: (context) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
         child: AlertDialog(
-          backgroundColor: kBgColor,
+          backgroundColor: AppColors.background,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: const Text(
-            'Confirmar eliminación',
-            style: TextStyle(color: kTextPrimary, fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
-          ),
-          content: const Text(
-            '¿Seguro de que quieres eliminar este gasto?',
-            style: TextStyle(color: kTextSecondary),
-            textAlign: TextAlign.center,
-          ),
-          actionsAlignment: MainAxisAlignment.center,
+          title: const Text('Confirmar eliminación', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+          content: const Text('¿Seguro de que quieres eliminar este gasto?', style: TextStyle(color: AppColors.textSecondary), textAlign: TextAlign.center),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar', style: TextStyle(color: kTextSecondary)),
-            ),
-            const SizedBox(width: 8),
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary))),
             ElevatedButton(
               onPressed: () async {
                 if (expense.id != null) {
-                  final success = await SupabaseService.deleteGasto(expense.id!);
-                  if (success) {
-                    setState(() {
-                      _gastos.removeWhere((g) => g.id == expense.id);
-                      _expandedIndex = null;
-                    });
-                    _updateWidget();
-                  }
+                  final success = await GastosService.eliminarGasto(expense.id!);
+                  if (success) { setState(() => _expandedIndex = null); _loadGastos(); }
                 }
                 if (context.mounted) Navigator.pop(context);
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: kNegativeColor.withValues(alpha: 0.2),
-                foregroundColor: kNegativeColor,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: const BorderSide(color: kNegativeColor, width: 1),
-                ),
-              ),
-              child: const Text('Eliminar', style: TextStyle(fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.error.withValues(alpha: 0.2), foregroundColor: AppColors.error, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              child: const Text('Eliminar'),
             ),
           ],
         ),
@@ -1267,88 +793,33 @@ class _ModuloGastosState extends State<ModuloGastos>
   }
 
   Widget _buildDetailItem(String label, String value, {Color? color}) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: kTextSecondary,
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            value,
-            style: TextStyle(
-              color: color ?? kTextPrimary,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
+    return Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5)), const SizedBox(height: 5), Text(value, style: TextStyle(color: color ?? AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis)]));
   }
 
-  Widget _buildActionButton({
-    required String label,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
+  Widget _buildActionButton({required String label, required IconData icon, required Color color, required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         height: 48,
-        decoration: BoxDecoration(
-          color: kBgColor,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withValues(alpha: 0.4), width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF05060D),
-              offset: const Offset(3, 3),
-              blurRadius: 6,
-            ),
-            BoxShadow(
-              color: const Color(0xFF1A1D3A),
-              offset: const Offset(-3, -3),
-              blurRadius: 6,
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 18),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
+        decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(14), border: Border.all(color: color.withValues(alpha: 0.4), width: 1)),
+        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(icon, color: color, size: 18), const SizedBox(width: 8), Text(label, style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.bold))]),
       ),
     );
   }
 }
 
-// ---------- WIDGETS NEUMÓRFICOS ----------
-
 class _VoicePulseButton extends StatefulWidget {
   final bool isListening;
   final bool isProcessing;
-  const _VoicePulseButton({required this.isListening, required this.isProcessing});
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPressEnd;
+
+  const _VoicePulseButton({
+    required this.isListening,
+    required this.isProcessing,
+    this.onTap,
+    this.onLongPressEnd,
+  });
 
   @override
   State<_VoicePulseButton> createState() => _VoicePulseButtonState();
@@ -1357,163 +828,63 @@ class _VoicePulseButton extends StatefulWidget {
 class _VoicePulseButtonState extends State<_VoicePulseButton>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
-
   @override
   void initState() {
     super.initState();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat();
+    _pulseController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))..repeat();
   }
-
   @override
-  void dispose() {
-    _pulseController.dispose();
-    super.dispose();
-  }
-
+  void dispose() { _pulseController.dispose(); super.dispose(); }
   @override
   Widget build(BuildContext context) {
-    // Si está procesando, mostramos un estado de carga circular neumórfico
     if (widget.isProcessing) {
-      return SizedBox(
-        width: 150,
-        height: 150,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            const SizedBox(
-              width: 80,
-              height: 80,
-              child: CircularProgressIndicator(
-                color: kAccentColor,
-                strokeWidth: 3,
-              ),
-            ),
-            Container(
-              width: 60,
-              height: 60,
-              decoration: const BoxDecoration(
-                color: kSecondaryBgColor,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.auto_awesome, color: kAccentColor, size: 28),
-            ),
-          ],
-        ),
-      );
+      return SizedBox(width: 150, height: 150, child: Stack(alignment: Alignment.center, children: [const CircularProgressIndicator(color: AppColors.accent), Container(width: 60, height: 60, decoration: const BoxDecoration(color: AppColors.surface, shape: BoxShape.circle), child: const Icon(Icons.auto_awesome, color: AppColors.accent, size: 28))]));
     }
-
-    return AnimatedScale(
-      scale: widget.isListening ? 0.9 : 1.0,
-      duration: const Duration(milliseconds: 150),
-      child: SizedBox(
-        width: 150,
-        height: 150,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // Anillos que pulsan hacia afuera (solo cuando escucha)
-            if (widget.isListening)
-              ...List.generate(3, (i) {
-                return AnimatedBuilder(
-                  animation: _pulseController,
-                  builder: (context, child) {
-                    final t = (_pulseController.value + i * 0.33) % 1.0;
-                    final scale = 1.0 + 0.8 * t;
-                    final opacity = (1 - t) * 0.5;
-                    return Transform.scale(
-                      scale: scale,
-                      child: Container(
-                        width: 96,
-                        height: 96,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: kAccentColor.withValues(alpha: opacity),
-                            width: 2,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                );
-              }),
-            
-            // Botón central con el micrófono
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 96,
-              height: 96,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: widget.isListening 
-                    ? [const Color(0xFFFFE082), kAccentColor]
-                    : [const Color(0xFFFFD700), kAccentColor],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: kAccentColor.withValues(alpha: widget.isListening ? 0.6 : 0.4),
-                    blurRadius: widget.isListening ? 35 : 25,
-                    spreadRadius: widget.isListening ? 4 : 2,
-                  ),
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.3),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+    return GestureDetector(
+      onTap: widget.onTap,
+      onLongPressEnd: (_) => widget.onLongPressEnd?.call(),
+      child: AnimatedScale(
+        scale: widget.isListening ? 0.9 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        child: SizedBox(
+          width: 150, height: 150,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              if (widget.isListening)
+                ...List.generate(3, (i) {
+                  return AnimatedBuilder(
+                    animation: _pulseController,
+                    builder: (context, child) {
+                      final t = (_pulseController.value + i * 0.33) % 1.0;
+                      final scale = 1.0 + 0.8 * t;
+                      final opacity = (1 - t) * 0.5;
+                      return Transform.scale(scale: scale, child: Container(width: 96, height: 96, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.error.withValues(alpha: opacity), width: 2))));
+                    },
+                  );
+                }),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 96, height: 96,
+                decoration: BoxDecoration(shape: BoxShape.circle, gradient: RadialGradient(colors: widget.isListening ? [const Color(0xFFFF8A8A), AppColors.error] : [const Color(0xFFFFD700), AppColors.accent])),
+                child: Icon(widget.isListening ? Icons.stop : Icons.mic, color: widget.isListening ? Colors.white : Colors.black, size: 40),
               ),
-              child: Icon(
-                widget.isListening ? Icons.mic : Icons.mic_none, 
-                color: Colors.black, 
-                size: 40
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-// ---------- WIDGETS NEUMÓRFICOS ----------
-
 class _NeumorphicContainer extends StatelessWidget {
   final Widget child;
   final double borderRadius;
   final EdgeInsets padding;
-
-  const _NeumorphicContainer({
-    required this.child,
-    this.borderRadius = 16,
-    this.padding = const EdgeInsets.all(16),
-  });
-
+  const _NeumorphicContainer({required this.child, this.borderRadius = 16, this.padding = const EdgeInsets.all(16)});
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: padding,
-      decoration: BoxDecoration(
-        color: kBgColor,
-        borderRadius: BorderRadius.circular(borderRadius),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0xFF05060D),
-            offset: Offset(4, 4),
-            blurRadius: 12,
-          ),
-          BoxShadow(
-            color: Color(0xFF1A1D3A),
-            offset: Offset(-4, -4),
-            blurRadius: 12,
-          ),
-        ],
-      ),
-      child: child,
-    );
+    return Container(padding: padding, decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(borderRadius), boxShadow: const [BoxShadow(color: Color(0xFF05060D), offset: Offset(4, 4), blurRadius: 12), BoxShadow(color: Color(0xFF1A1D3A), offset: Offset(-4, -4), blurRadius: 12)]), child: child);
   }
 }
 
@@ -1521,42 +892,9 @@ class _NeumorphicIcon extends StatelessWidget {
   final IconData icon;
   final double size;
   final VoidCallback onTap;
-
-  const _NeumorphicIcon({
-    required this.icon,
-    required this.size,
-    required this.onTap,
-  });
-
+  const _NeumorphicIcon({required this.icon, required this.size, required this.onTap});
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: kBgColor,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Color(0xFF05060D),
-              offset: Offset(3, 3),
-              blurRadius: 8,
-            ),
-            BoxShadow(
-              color: Color(0xFF1A1D3A),
-              offset: Offset(-3, -3),
-              blurRadius: 8,
-            ),
-          ],
-        ),
-        child: Icon(
-          icon,
-          color: kTextSecondary,
-          size: size,
-        ),
-      ),
-    );
+    return GestureDetector(onTap: onTap, child: Container(width: 40, height: 40, decoration: const BoxDecoration(color: AppColors.background, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 8), BoxShadow(color: Color(0xFF1A1D3A), offset: Offset(-3, -3), blurRadius: 8)]), child: Icon(icon, color: AppColors.textSecondary, size: size)));
   }
 }

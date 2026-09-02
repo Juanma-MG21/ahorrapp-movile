@@ -15,7 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../core/design_tokens.dart';
+import '../core/theme/design_tokens.dart';
 
 class QrScannerScreen extends StatefulWidget {
   const QrScannerScreen({super.key});
@@ -80,7 +80,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kBgColor,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -109,23 +109,23 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
             onTap: () => Navigator.of(context).maybePop(),
           ),
           const SizedBox(width: 16),
-          Column(
+          const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'ESCANEAR QR',
                 style: TextStyle(
-                  color: kAccentColor,
+                  color: AppColors.accent,
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.2,
                 ),
               ),
-              const SizedBox(height: 2),
-              const Text(
+              SizedBox(height: 2),
+              Text(
                 'Escanear QR',
                 style: TextStyle(
-                  color: kTextPrimary,
+                  color: AppColors.textPrimary,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
@@ -142,19 +142,19 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 32),
       child: RichText(
         textAlign: TextAlign.center,
-        text: TextSpan(
-          style: const TextStyle(
-            color: kTextSecondary,
+        text: const TextSpan(
+          style: TextStyle(
+            color: AppColors.textSecondary,
             fontSize: 13,
             height: 1.5,
           ),
           children: [
-            const TextSpan(text: 'Apunta la cámara al código QR del '),
+            TextSpan(text: 'Apunta la cámara al código QR del '),
             TextSpan(
               text: 'recibo o comprobante',
-              style: TextStyle(color: kTextPrimary, fontWeight: FontWeight.w700),
+              style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700),
             ),
-            const TextSpan(text: ' para registrar el gasto automáticamente.'),
+            TextSpan(text: ' para registrar el gasto automáticamente.'),
           ],
         ),
       ),
@@ -179,7 +179,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
             children: [
               MobileScanner(controller: _controller, onDetect: _onDetect),
               Container(color: Colors.black.withValues(alpha: 0.05)),
-              CustomPaint(painter: _CornerBracketsPainter(color: const Color(0xFF4ADE80))),
+              const CustomPaint(painter: _CornerBracketsPainter(color: Color(0xFF4ADE80))),
             ],
           ),
         ),
@@ -234,12 +234,12 @@ class _AccionRedonda extends StatelessWidget {
             width: 60,
             height: 60,
             decoration: BoxDecoration(
-              color: activo ? kAccentColor : kSecondaryBgColor,
+              color: activo ? AppColors.accent : AppColors.surface,
               shape: BoxShape.circle,
               boxShadow: activo
                   ? [
                 BoxShadow(
-                  color: kAccentColor.withValues(alpha: 0.45),
+                  color: AppColors.accent.withValues(alpha: 0.45),
                   blurRadius: 24,
                   spreadRadius: 1,
                 ),
@@ -251,7 +251,7 @@ class _AccionRedonda extends StatelessWidget {
             ),
             child: Icon(
               icono,
-              color: activo ? Colors.black87 : kTextPrimary,
+              color: activo ? Colors.black87 : AppColors.textPrimary,
               size: 26,
             ),
           ),
@@ -259,7 +259,7 @@ class _AccionRedonda extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           etiqueta,
-          style: const TextStyle(color: kTextSecondary, fontSize: 12, fontWeight: FontWeight.w600),
+          style: const TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600),
         ),
       ],
     );
@@ -287,14 +287,14 @@ class _NeumorphicIcon extends StatelessWidget {
         width: 40,
         height: 40,
         decoration: const BoxDecoration(
-          color: kBgColor,
+          color: AppColors.background,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 8),
             BoxShadow(color: Color(0xFF1A1D3A), offset: Offset(-3, -3), blurRadius: 8),
           ],
         ),
-        child: Icon(icon, color: kTextSecondary, size: size),
+        child: Icon(icon, color: AppColors.textSecondary, size: size),
       ),
     );
   }

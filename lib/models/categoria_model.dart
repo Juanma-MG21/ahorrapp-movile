@@ -18,16 +18,18 @@ class CategoriaModel {
     this.idUsuario,
   });
 
-  /// Mapea los datos desde Supabase a este modelo.
-  factory CategoriaModel.fromMap(Map<String, dynamic> map) {
+  /// Mapea los datos que devuelve el backend (GET /api/categorias).
+  /// El backend responde con claves en minúscula (no confundir con el
+  /// patrón ID_/Monto en mayúscula que usan otros módulos).
+  factory CategoriaModel.fromJson(Map<String, dynamic> json) {
     return CategoriaModel(
-      id: map['id_categoria'],
-      nombre: map['nombre'] ?? '',
-      descripcion: map['descripcion'],
-      activa: map['activa'] ?? true,
-      sistema: map['sistema'] ?? false,
-      esGlobal: map['es_global'] ?? false,
-      idUsuario: map['id_usuario'],
+      id: json['id'],
+      nombre: json['nombre'] ?? '',
+      descripcion: json['descripcion'],
+      activa: json['activa'] ?? true,
+      sistema: json['sistema'] ?? false,
+      esGlobal: json['es_global'] ?? false,
+      idUsuario: json['id_usuario'],
     );
   }
 }

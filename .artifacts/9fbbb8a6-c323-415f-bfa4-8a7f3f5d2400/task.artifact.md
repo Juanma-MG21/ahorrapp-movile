@@ -1,6 +1,0 @@
-- [x] Implementar motor de números infinitos en `lib/services/voice_parser_service.dart`
-- [x] Corregir fallos de detección de símbolos y montos
-    - [x] Limpiar signos de pesos y comas antes de extraer el monto.
-    - [x] Priorizar detección de dígitos puros.
-    - [x] Mejorar el filtrado de la descripción para evitar que el monto se filtre.
-- [x] Verificar funcionamiento con ejemplos del usuario ($12.000, diezmil).

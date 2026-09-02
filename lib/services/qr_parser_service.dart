@@ -7,11 +7,11 @@
 // sobre números en vez del diccionario de palabras que usa el de voz.
 //
 // Misma filosofía que el de voz: solo prellena lo que puede inferir con
-// confianza (monto, descripción, y el NOMBRE de categoría para mostrar
-// ícono/color). NO fija idCategoria — el usuario siempre confirma la
-// categoría real en el dropdown del formulario.
+// confianza (monto, descripción, y el NOMBRE de categoría). NO fija
+// idCategoria — no hay forma de saber el id real desde el texto del QR;
+// el formulario intenta encontrar la categoría real por nombre, y si no
+// hay match, el usuario la confirma a mano.
 
-import 'package:flutter/material.dart';
 import '../models/gasto_model.dart';
 
 class QrParserService {
@@ -68,7 +68,7 @@ class QrParserService {
     final resultadoMonto = _extractAmount(textoLimpio, textoNorm);
     final double monto = resultadoMonto.valor;
 
-    // 2. Detectar categoría por palabra clave
+    // 2. Detectar categoría por palabra clave (solo el NOMBRE)
     String categoria = 'General';
     for (var entry in _mapeoCategorias.entries) {
       if (textoNorm.contains(entry.key)) {
@@ -101,13 +101,10 @@ class QrParserService {
     }
 
     return GastoModel(
-      description: descripcion,
+      descripcion: descripcion,
       monto: monto,
       fecha: DateTime.now(),
       categoriaNombre: categoria,
-      responsableNombre: 'Gasto propio',
-      icono: _getIconForCategory(categoria),
-      color: _getColorForCategory(categoria),
     );
   }
 
@@ -160,30 +157,6 @@ class QrParserService {
     final soloDigitos = numeroCrudo.replaceAll(RegExp(r'[^\d]'), '');
     if (soloDigitos.isEmpty) return 0;
     return double.tryParse(soloDigitos) ?? 0;
-  }
-
-  static IconData _getIconForCategory(String category) {
-    switch (category) {
-      case 'Alimentación': return Icons.restaurant;
-      case 'Ropa': return Icons.checkroom;
-      case 'Hogar': return Icons.home;
-      case 'Transporte': return Icons.directions_bus;
-      case 'Salud': return Icons.medical_services;
-      case 'Entretenimiento': return Icons.movie;
-      default: return Icons.shopping_cart;
-    }
-  }
-
-  static Color _getColorForCategory(String category) {
-    switch (category) {
-      case 'Alimentación': return const Color(0xFFA8A2FF);
-      case 'Ropa': return const Color(0xFF4ADE80);
-      case 'Hogar': return const Color(0xFFFF8C4A);
-      case 'Transporte': return const Color(0xFF60A5FA);
-      case 'Salud': return const Color(0xFFFF6B6B);
-      case 'Entretenimiento': return const Color(0xFFC084FC);
-      default: return const Color(0xFFFFB800);
-    }
   }
 }
 
