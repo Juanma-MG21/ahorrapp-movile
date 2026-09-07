@@ -103,7 +103,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: IntrinsicHeight(
                     child: Column(
                       children: [
-                        const _StatusBar(),
                         const SizedBox(height: 26),
                         const _BrandHeader(),
                         const SizedBox(height: 22),
@@ -144,30 +143,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _StatusBar extends StatelessWidget {
-  const _StatusBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Row(
-      children: [
-        Text(
-          '9:41',
-          style: TextStyle(
-            color: AppTheme.muted,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        Spacer(),
-        Icon(Icons.more_horiz_rounded, color: AppTheme.muted, size: 20),
-        SizedBox(width: 8),
-        Icon(Icons.battery_5_bar_rounded, color: Color(0xFF34D399), size: 18),
-      ],
     );
   }
 }
