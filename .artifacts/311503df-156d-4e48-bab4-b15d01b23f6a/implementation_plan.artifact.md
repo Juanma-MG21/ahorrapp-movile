@@ -1,27 +1,30 @@
-# Plan de Implementación: Logueo Rápido
+# Plan de Unificación Visual y Estilo "Juan" (Claymorphism)
 
-El objetivo es crear la última vista de la lista: **Logueo Rápido**. Esta pantalla está diseñada para usuarios que ya han iniciado sesión previamente en el dispositivo, ofreciendo una entrada ágil mediante PIN o Biometría sin tener que escribir su correo y contraseña nuevamente.
+El objetivo es aplicar una simetría estética total entre las vistas de autenticación y el resto del proyecto, utilizando los tokens de diseño y el estilo Claymorphism.
 
 ## Proposed Changes
 
-### [Vistas de Autenticación]
+### [Sistema de Diseño]
+#### [MODIFICAR] [app_theme.dart](file:///E:/Ahorrapp-MOVIL/lib/core/theme/app_theme.dart)
+- Sincronizar `AppColors` con `design_tokens.dart` (Fondo: `0xFF0E1124`, Superficie: `0xFF141730`, Acento: `0xFFFFB800`).
+- Actualizar el tema global para usar estas constantes de forma estricta.
 
-#### [NUEVO] [fast_login_screen.dart](file:///E:/Ahorrapp-MOVIL/lib/screens/auth/fast_login_screen.dart)
-- Interfaz personalizada con un mensaje de "Bienvenido de vuelta".
-- Visualización de la cuenta del usuario (Avatar/Icono y Correo oculto).
-- Botones prominentes para acceder directamente a las pantallas de **PIN** y **Biometría**.
-- Opción de "Usar otra cuenta" para regresar al Login tradicional.
+### [Widgets de Autenticación]
+#### [MODIFICAR] [auth_widgets.dart](file:///E:/Ahorrapp-MOVIL/lib/widgets/auth_widgets.dart)
+- **`AuthPageShell`**: Eliminar el degradado antiguo y usar el color de fondo unificado (`kBgColor`).
+- **`PrimaryAuthButton`**: Rediseñar el botón para usar `clayGlow` y el nuevo acento.
 
-#### [MODIFICAR] [app.dart](file:///E:/Ahorrapp-MOVIL/lib/app.dart)
-- Registrar la ruta `/fast-login`.
-
+### [Pantallas de Autenticación]
 #### [MODIFICAR] [login_screen.dart](file:///E:/Ahorrapp-MOVIL/lib/screens/auth/login_screen.dart)
-- Agregar un acceso temporal al "Logueo Rápido" para pruebas, o configurar que sea la pantalla inicial si se detecta un usuario previo (opcional para el prototipo).
+- Migrar el cuerpo principal a `AuthPageShell`.
+- Rediseñar `_AccessTile` (Huella/PIN) con `clayRaised`.
+- Ajustar colores de texto y divisores a `kTextSecondary`.
+
+#### [MODIFICAR] Otras pantallas de Auth
+- Asegurar que `Register`, `Forgot Password`, `Reset Password`, `PIN` y `Fast Login` usen los componentes unificados y no tengan colores "hardcoded".
+- Aplicar `clayRaised` a los botones numéricos del teclado en la pantalla de PIN.
 
 ## Verification Plan
-
-### Manual
-1. Iniciar la app y navegar a "Logueo Rápido".
-2. Verificar que se muestre correctamente el nombre/correo simulado.
-3. Probar que los botones de PIN y Huella lleven a sus respectivas pantallas.
-4. Verificar que "Usar otra cuenta" regrese al Login.
+1. Verificar visualmente que el color de fondo sea idéntico entre el Login y el Módulo de Gastos.
+2. Comprobar que los botones tengan el efecto de brillo/relieve característico del Claymorphism.
+3. Asegurar que no hay errores de análisis de código.

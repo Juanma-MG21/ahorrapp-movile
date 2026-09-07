@@ -56,7 +56,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 icon: const Icon(Icons.arrow_back_rounded),
                 color: Colors.white,
                 style: IconButton.styleFrom(
-                  backgroundColor: const Color(0xFF12213C),
+                  backgroundColor: AppColors.surfaceAlt,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -110,7 +110,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       onPressed: () => setState(() => _hidePassword = !_hidePassword),
                       icon: Icon(
                         _hidePassword ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                        color: const Color(0xFF52627B),
+                        color: AppColors.textMuted,
                         size: 20,
                       ),
                     ),
@@ -131,7 +131,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       onPressed: () => setState(() => _hideConfirmPassword = !_hideConfirmPassword),
                       icon: Icon(
                         _hideConfirmPassword ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                        color: const Color(0xFF52627B),
+                        color: AppColors.textMuted,
                         size: 20,
                       ),
                     ),

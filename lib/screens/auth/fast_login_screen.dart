@@ -19,7 +19,7 @@ class FastLoginScreen extends StatelessWidget {
           const Text(
             'AhorrApp',
             style: TextStyle(
-              color: AppTheme.amber,
+              color: AppColors.accent,
               fontSize: 32,
               fontWeight: FontWeight.w900,
             ),
@@ -30,18 +30,7 @@ class FastLoginScreen extends StatelessWidget {
           Container(
             width: 90,
             height: 90,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.surface,
-              border: Border.all(color: AppTheme.amber, width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.amber.withValues(alpha: 0.2),
-                  blurRadius: 20,
-                  spreadRadius: 2,
-                )
-              ],
-            ),
+            decoration: clayRaised(radius: 100),
             child: const Icon(Icons.person_rounded, size: 50, color: Colors.white),
           ),
           
@@ -49,7 +38,7 @@ class FastLoginScreen extends StatelessWidget {
           const Text(
             '¡Bienvenido de vuelta!',
             style: TextStyle(
-              color: Colors.white,
+              color: AppColors.textPrimary,
               fontSize: 22,
               fontWeight: FontWeight.w900,
             ),
@@ -58,14 +47,14 @@ class FastLoginScreen extends StatelessWidget {
           const Text(
             userName,
             style: TextStyle(
-              color: AppTheme.amber,
+              color: AppColors.accent,
               fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
           ),
-          Text(
+          const Text(
             userEmail,
-            style: const TextStyle(color: AppTheme.muted, fontSize: 13),
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
           ),
           
           const SizedBox(height: 60),
@@ -88,15 +77,14 @@ class FastLoginScreen extends StatelessWidget {
             ],
           ),
           
-          const Spacer(),
+          const SizedBox(height: 60),
           
-          const SizedBox(height: 20),
           TextButton(
             onPressed: () => Navigator.of(context).pushReplacementNamed('/login'),
             child: const Text(
               'Usar otra cuenta',
               style: TextStyle(
-                color: AppTheme.blue,
+                color: AppColors.accent,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -123,21 +111,13 @@ class _FastAccessButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Material(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              width: 75,
-              height: 75,
-              decoration: BoxDecoration(
-                border: Border.all(color: AppColors.borderLight),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Icon(icon, color: AppTheme.amber, size: 34),
-            ),
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: 75,
+            height: 75,
+            decoration: clayRaised(radius: 16),
+            child: Icon(icon, color: AppColors.accent, size: 34),
           ),
         ),
         const SizedBox(height: 10),

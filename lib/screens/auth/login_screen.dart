@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../widgets/auth_widgets.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -66,12 +67,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _showPendingFeature(String feature) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('$feature aun no esta conectado')));
-  }
-
   void _openRegister() {
     debugPrint('Navegando a Registro...');
     Navigator.of(context).pushNamed('/register');
@@ -84,64 +79,41 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF081326), Color(0xFF0C1A33), Color(0xFF12051D)],
-          ),
-        ),
-        child: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(18, 12, 18, 0),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                  child: IntrinsicHeight(
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 26),
-                        const _BrandHeader(),
-                        const SizedBox(height: 22),
-                        _LoginForm(
-                          formKey: _formKey,
-                          emailController: _emailController,
-                          passwordController: _passwordController,
-                          rememberSession: _rememberSession,
-                          hidePassword: _hidePassword,
-                          isLoading: _isLoading,
-                          onRememberChanged: (value) {
-                            setState(() => _rememberSession = value);
-                          },
-                          onTogglePassword: () {
-                            setState(() => _hidePassword = !_hidePassword);
-                          },
-                          onSubmit: _submit,
-                          onForgotPassword: _openForgotPassword,
-                        ),
-                        const SizedBox(height: 18),
-                        _QuickAccess(
-                          onFingerprint: () => Navigator.of(context).pushNamed('/biometric-access'),
-                          onPin: () => Navigator.of(context).pushNamed('/pin-access'),
-                        ),
-                        const SizedBox(height: 16),
-                        _RegisterCallout(onTap: _openRegister),
-                        const Spacer(),
-                        _BottomAccessNav(
-                          onRegister: _openRegister,
-                          onHelp: () => Navigator.of(context).pushNamed('/fast-login'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
+    return AuthPageShell(
+      child: Column(
+        children: [
+          const SizedBox(height: 26),
+          const _BrandHeader(),
+          const SizedBox(height: 22),
+          _LoginForm(
+            formKey: _formKey,
+            emailController: _emailController,
+            passwordController: _passwordController,
+            rememberSession: _rememberSession,
+            hidePassword: _hidePassword,
+            isLoading: _isLoading,
+            onRememberChanged: (value) {
+              setState(() => _rememberSession = value);
             },
+            onTogglePassword: () {
+              setState(() => _hidePassword = !_hidePassword);
+            },
+            onSubmit: _submit,
+            onForgotPassword: _openForgotPassword,
           ),
-        ),
+          const SizedBox(height: 18),
+          _QuickAccess(
+            onFingerprint: () => Navigator.of(context).pushNamed('/biometric-access'),
+            onPin: () => Navigator.of(context).pushNamed('/pin-access'),
+          ),
+          const SizedBox(height: 16),
+          _RegisterCallout(onTap: _openRegister),
+          const SizedBox(height: 40),
+          _BottomAccessNav(
+            onRegister: _openRegister,
+            onHelp: () => Navigator.of(context).pushNamed('/fast-login'),
+          ),
+        ],
       ),
     );
   }
@@ -158,7 +130,7 @@ class _BrandHeader extends StatelessWidget {
           'AhorrApp',
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: AppTheme.amber,
+            color: AppColors.accent,
             fontSize: 31,
             fontWeight: FontWeight.w900,
             letterSpacing: 0,
@@ -168,7 +140,7 @@ class _BrandHeader extends StatelessWidget {
         Text(
           'Gestion financiera personal',
           style: TextStyle(
-            color: Color(0xFF5F7290),
+            color: AppColors.textSecondary,
             fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
@@ -178,7 +150,7 @@ class _BrandHeader extends StatelessWidget {
           'Bienvenido de vuelta',
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: Colors.white,
+            color: AppColors.textPrimary,
             fontSize: 22,
             fontWeight: FontWeight.w900,
           ),
@@ -186,7 +158,7 @@ class _BrandHeader extends StatelessWidget {
         SizedBox(height: 7),
         Text(
           'Inicia sesion para continuar',
-          style: TextStyle(color: AppTheme.muted, fontSize: 12),
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),
       ],
     );
@@ -232,7 +204,7 @@ class _LoginForm extends StatelessWidget {
             autocorrect: false,
             decoration: const InputDecoration(
               labelText: 'CORREO ELECTRONICO',
-              suffixIcon: Icon(Icons.mail_rounded, color: Color(0xFFC6B0D8)),
+              suffixIcon: Icon(Icons.mail_rounded, color: AppColors.textMuted),
             ),
             validator: (value) {
               final email = value?.trim() ?? '';
@@ -259,7 +231,7 @@ class _LoginForm extends StatelessWidget {
                   hidePassword
                       ? Icons.visibility_off_rounded
                       : Icons.visibility_rounded,
-                  color: const Color(0xFF52627B),
+                  color: AppColors.textMuted,
                   size: 20,
                 ),
               ),
@@ -275,19 +247,19 @@ class _LoginForm extends StatelessWidget {
               Checkbox(
                 value: rememberSession,
                 onChanged: (value) => onRememberChanged(value ?? false),
-                activeColor: AppTheme.amber,
-                checkColor: AppTheme.background,
+                activeColor: AppColors.accent,
+                checkColor: Colors.black,
                 visualDensity: VisualDensity.compact,
               ),
               const Text(
                 'Recordar sesion',
-                style: TextStyle(color: AppTheme.muted, fontSize: 12),
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
               ),
               const Spacer(),
               TextButton(
                 onPressed: onForgotPassword,
                 style: TextButton.styleFrom(
-                  foregroundColor: AppTheme.blue,
+                  foregroundColor: AppColors.accent,
                   padding: EdgeInsets.zero,
                   minimumSize: const Size(0, 36),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -300,52 +272,10 @@ class _LoginForm extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          SizedBox(
-            height: 54,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(15),
-                gradient: const LinearGradient(
-                  colors: [AppTheme.amber, AppTheme.orange],
-                ),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x55FFB000),
-                    blurRadius: 24,
-                    offset: Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: ElevatedButton(
-                onPressed: isLoading ? null : onSubmit,
-                style: ElevatedButton.styleFrom(
-                  elevation: 0,
-                  shadowColor: Colors.transparent,
-                  backgroundColor: Colors.transparent,
-                  foregroundColor: Colors.black,
-                  disabledBackgroundColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                ),
-                child: isLoading
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          color: Colors.black,
-                          strokeWidth: 2.4,
-                        ),
-                      )
-                    : const Text(
-                        'Iniciar sesion',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-              ),
-            ),
+          PrimaryAuthButton(
+            label: 'Iniciar sesion',
+            isLoading: isLoading,
+            onPressed: onSubmit,
           ),
         ],
       ),
@@ -365,15 +295,15 @@ class _QuickAccess extends StatelessWidget {
       children: [
         const Row(
           children: [
-            Expanded(child: Divider(color: Color(0xFF202B40))),
+            Expanded(child: Divider(color: AppColors.borderLight)),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 10),
               child: Text(
                 'o continua con',
-                style: TextStyle(color: Color(0xFF52627B), fontSize: 11),
+                style: TextStyle(color: AppColors.textMuted, fontSize: 11),
               ),
             ),
-            Expanded(child: Divider(color: Color(0xFF202B40))),
+            Expanded(child: Divider(color: AppColors.borderLight)),
           ],
         ),
         const SizedBox(height: 18),
@@ -386,7 +316,7 @@ class _QuickAccess extends StatelessWidget {
                 onTap: onFingerprint,
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 15),
             Expanded(
               child: _AccessTile(
                 icon: Icons.pin_rounded,
@@ -414,33 +344,25 @@ class _AccessTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: const Color(0xFF151222),
-      borderRadius: BorderRadius.circular(13),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(13),
-        child: Container(
-          height: 55,
-          decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFF2A2640)),
-            borderRadius: BorderRadius.circular(13),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: AppTheme.amber, size: 24),
-              const SizedBox(height: 3),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                ),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 60,
+        decoration: clayRaised(radius: 16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: AppColors.accent, size: 24),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -459,12 +381,12 @@ class _RegisterCallout extends StatelessWidget {
       children: [
         const Text(
           'No tienes cuenta? ',
-          style: TextStyle(color: AppTheme.muted, fontSize: 12),
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),
         TextButton(
           onPressed: onTap,
           style: TextButton.styleFrom(
-            foregroundColor: AppTheme.amber,
+            foregroundColor: AppColors.accent,
             padding: EdgeInsets.zero,
             minimumSize: const Size(0, 34),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -491,7 +413,7 @@ class _BottomAccessNav extends StatelessWidget {
       height: 62,
       margin: const EdgeInsets.only(top: 6),
       decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xFF141E31))),
+        border: Border(top: BorderSide(color: AppColors.borderLight)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -554,7 +476,7 @@ class _BottomNavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? AppTheme.amber : const Color(0xFF43516B);
+    final color = selected ? AppColors.accent : AppColors.textMuted;
 
     return Column(
       mainAxisSize: MainAxisSize.min,

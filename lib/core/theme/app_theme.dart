@@ -1,27 +1,17 @@
 import 'package:flutter/material.dart';
+import '../design_tokens.dart';
 
-// Colores y estilos de Manuel (para mantener compatibilidad con sus formularios)
-class ManuelColors {
-  static const Color background = Color(0xFF07101F);
-  static const Color surface = Color(0xFF0D1B34);
-  static const Color surfaceAlt = Color(0xFF121826);
-  static const Color amber = Color(0xFFFFC20D);
-  static const Color orange = Color(0xFFFF9900);
-  static const Color blue = Color(0xFF2F8BFF);
-  static const Color muted = Color(0xFF7890B2);
-}
-
-// Estilos de Juan (Claymorphism y Diseño Nuevo)
+// Estilos de Juan (Claymorphism y Diseño Nuevo) sincronizados con design_tokens.dart
 class AppColors {
-  static const Color background = Color(0xFF0B0E14);
-  static const Color surface = Color(0xFF171A24);
-  static const Color surfaceAlt = Color(0xFF1E2230);
-  static const Color accent = Color(0xFFFFB800);
+  static const Color background = kBgColor;
+  static const Color surface = kSecondaryBgColor;
+  static const Color surfaceAlt = kInsetBg;
+  static const Color accent = kAccentColor;
   static const Color accentSoft = Color(0x33FFB800);
   static const Color success = Color(0xFF34D399);
   static const Color successSoft = Color(0x2634D399);
-  static const Color textPrimary = Color(0xFFF5F5F7);
-  static const Color textSecondary = Color(0xFF8B8FA3);
+  static const Color textPrimary = kTextPrimary;
+  static const Color textSecondary = kTextSecondary;
   static const Color textMuted = Color(0xFF5B5F70);
   static const Color borderLight = Color(0x14FFFFFF);
 }
@@ -37,13 +27,13 @@ class AppTheme {
   const AppTheme._();
 
   // Alias para mantener compatibilidad con el código de Manuel
-  static const Color background = ManuelColors.background;
-  static const Color surface = ManuelColors.surface;
-  static const Color surfaceAlt = ManuelColors.surfaceAlt;
-  static const Color amber = ManuelColors.amber;
-  static const Color orange = ManuelColors.orange;
-  static const Color blue = ManuelColors.blue;
-  static const Color muted = ManuelColors.muted;
+  static const Color background = AppColors.background;
+  static const Color surface = AppColors.surface;
+  static const Color surfaceAlt = AppColors.surfaceAlt;
+  static const Color amber = AppColors.accent;
+  static const Color orange = Color(0xFFFF9900);
+  static const Color blue = Color(0xFF2F8BFF);
+  static const Color muted = AppColors.textSecondary;
 
   static ThemeData dark() {
     return ThemeData(
@@ -80,11 +70,11 @@ class AppTheme {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFFFF6B6B)),
+          borderSide: const BorderSide(color: kNegativeColor),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFFFF6B6B)),
+          borderSide: const BorderSide(color: kNegativeColor),
         ),
       ),
       textTheme: const TextTheme(

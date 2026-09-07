@@ -66,7 +66,7 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
                 icon: const Icon(Icons.arrow_back_rounded),
                 color: Colors.white,
                 style: IconButton.styleFrom(
-                  backgroundColor: const Color(0xFF12213C),
+                  backgroundColor: AppColors.surfaceAlt,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -78,7 +78,7 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
           const Text(
             'AhorrApp',
             style: TextStyle(
-              color: AppTheme.amber,
+              color: AppColors.accent,
               fontSize: 30,
               fontWeight: FontWeight.w900,
             ),
@@ -87,7 +87,7 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
           const Text(
             'Ingresa tu PIN',
             style: TextStyle(
-              color: Colors.white,
+              color: AppColors.textPrimary,
               fontSize: 22,
               fontWeight: FontWeight.w900,
             ),
@@ -95,7 +95,7 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
           const SizedBox(height: 10),
           const Text(
             'Usa tu código de seguridad para entrar',
-            style: TextStyle(color: AppTheme.muted, fontSize: 14),
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
           ),
           const SizedBox(height: 50),
           
@@ -110,14 +110,14 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
                 height: 20,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isFilled ? AppTheme.amber : Colors.transparent,
+                  color: isFilled ? AppColors.accent : Colors.transparent,
                   border: Border.all(
-                    color: isFilled ? AppTheme.amber : const Color(0xFF334057),
+                    color: isFilled ? AppColors.accent : AppColors.textMuted,
                     width: 2,
                   ),
                   boxShadow: isFilled ? [
                     BoxShadow(
-                      color: AppTheme.amber.withOpacity(0.4),
+                      color: AppColors.accent.withValues(alpha: 0.4),
                       blurRadius: 10,
                       spreadRadius: 2,
                     )
@@ -172,7 +172,7 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
             child: const Text(
               'Ingresar con contraseña',
               style: TextStyle(
-                color: AppTheme.blue,
+                color: AppColors.accent,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -192,25 +192,17 @@ class _NumberButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: const Color(0xFF151222),
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFF2A2640)),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 26,
-              fontWeight: FontWeight.w700,
-            ),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: clayRaised(radius: 16),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 26,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),

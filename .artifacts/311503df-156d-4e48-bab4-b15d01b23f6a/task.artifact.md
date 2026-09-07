@@ -1,8 +1,7 @@
-- [x] Resolver conflictos de merge con `Juan-M`
-- [x] Conectar Autenticación con Supabase
-- [x] Implementar Acceso por Biometría
-- [x] Implementar Logueo Rápido
-    - [x] Crear `lib/screens/auth/fast_login_screen.dart`
-    - [x] Registrar ruta en `lib/app.dart`
-    - [x] Agregar acceso en `lib/screens/auth/login_screen.dart` para pruebas
-- [x] Verificar todas las vistas de acceso
+- [/] Unificación estética y estilo Claymorphism
+    - [ ] Sincronizar tokens en `lib/core/theme/app_theme.dart`
+    - [ ] Actualizar base de pantallas en `lib/widgets/auth_widgets.dart`
+    - [ ] Refactorizar `lib/screens/auth/login_screen.dart`
+    - [ ] Refactorizar `lib/screens/auth/pin_access_screen.dart` (Teclado Clay)
+    - [ ] Refactorizar `lib/screens/auth/fast_login_screen.dart`
+- [ ] Verificar consistencia visual
