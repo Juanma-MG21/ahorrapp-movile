@@ -45,7 +45,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Color get _passwordStrengthColor {
     final strength = _passwordStrength;
-    if (strength <= 0.5) return kNegativeColor;
+    if (strength <= 0.5) return AppColors.error;
     if (strength < 1) return AppTheme.amber;
     return AppColors.success;
   }

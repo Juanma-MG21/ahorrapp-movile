@@ -1,7 +1,4 @@
-- [/] Unificación estética y estilo Claymorphism
-    - [ ] Sincronizar tokens en `lib/core/theme/app_theme.dart`
-    - [ ] Actualizar base de pantallas en `lib/widgets/auth_widgets.dart`
-    - [ ] Refactorizar `lib/screens/auth/login_screen.dart`
-    - [ ] Refactorizar `lib/screens/auth/pin_access_screen.dart` (Teclado Clay)
-    - [ ] Refactorizar `lib/screens/auth/fast_login_screen.dart`
-- [ ] Verificar consistencia visual
+- [x] Pulido de Diseño y Solución de Errores
+    - [x] Ajustar `lib/core/theme/app_theme.dart` (Bordes y ClayGlow)
+    - [x] Limpiar `lib/screens/auth/login_screen.dart` (Quitar BottomNav antiguo)
+- [ ] Forzar limpieza de caché y recarga del proyecto

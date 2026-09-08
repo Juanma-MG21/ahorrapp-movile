@@ -1,31 +1,31 @@
-# Walkthrough - Simetría Estética y Unificación Claymorphism
+# Walkthrough - Pulido de Diseño y Unificación Claymorphism
 
-Se ha realizado una unificación total de los estilos de autenticación para que coincidan exactamente con el sistema de diseño implementado por Juan, logrando una simetría estética perfecta en todo el proyecto.
+Se han aplicado ajustes finales de diseño para asegurar que las pantallas de autenticación sean 100% profesionales y coherentes con el estilo **Claymorphism** del resto del proyecto.
 
 ## Cambios Realizados
 
-### 1. Sincronización de Tokens ([app_theme.dart](file:///E:/Ahorrapp-MOVIL/lib/core/theme/app_theme.dart))
-- Se alinearon los colores de `AppColors` con los definidos en `design_tokens.dart`.
-- El color de acento ahora es el **Ámbar Token** (`0xFFFFB800`) de forma global.
-- El fondo de todas las pantallas de autenticación ahora usa el azul profundo unificado (`kBgColor`).
+### 1. Refinamiento de Estilos ([app_theme.dart](file:///E:/Ahorrapp-MOVIL/lib/core/theme/app_theme.dart))
+- **Bordes Suavizados**: Se redujo el grosor del `focusedBorder` de 1.2 a **0.8**, logrando un resaltado mucho más elegante y menos agresivo en los campos de texto.
+- **ClayGlow Elegante**: Se ajustó la función de brillo para que sea más sutil, eliminando el "ruido" visual y mejorando la percepción de relieve en los botones principales.
+- **Corrección de Errores**: Se definió `AppColors.error` vinculado al token oficial para evitar fallos de compilación.
 
-### 2. Rediseño de Componentes Auth ([auth_widgets.dart](file:///E:/Ahorrapp-MOVIL/lib/widgets/auth_widgets.dart))
-- **`AuthPageShell`**: Se eliminaron los degradados antiguos y se usa el color sólido del proyecto para una transición fluida entre pantallas.
-- **`PrimaryAuthButton`**: Ahora utiliza la función `clayGlow`, dándole ese efecto de relieve y brillo característico del **Claymorphism**.
+### 2. Limpieza de Interfaz ([login_screen.dart](file:///E:/Ahorrapp-MOVIL/lib/screens/auth/login_screen.dart))
+- **Adiós al BottomNav antiguo**: Se eliminó la barra inferior que contenía iconos de llave y reporte, la cual sobraba y chocaba con el diseño moderno.
+- **Acceso Rápido Integrado**: Se añadió un botón sutil de "Acceso rápido" que lleva al Logueo Rápido, manteniendo la pantalla despejada.
+- **Espaciado Mejorado**: Se optimizaron los márgenes para que el botón de "Registrate" y los accesos biométricos queden perfectamente distribuidos.
 
-### 3. Refactorización de Pantallas
-- Se actualizaron **Login**, **Registro**, **Recuperación**, **PIN** y **Logueo Rápido**.
-- **Acceso Rápido (Login)**: Los botones de Huella y PIN ahora usan `clayRaised` para parecer que "salen" de la pantalla.
-- **Teclado (PIN)**: Los botones numéricos también han sido migrados al estilo Claymorphism.
-- **Botones de Navegación**: Los botones de "atrás" ahora usan el color de superficie unificado (`AppColors.surfaceAlt`).
+### 3. Teclado y Superficies ([pin_access_screen.dart](file:///E:/Ahorrapp-MOVIL/lib/screens/auth/pin_access_screen.dart))
+- Los botones del teclado numérico ahora usan `clayRaised`, pareciendo botones físicos que "salen" de la pantalla, lo que mejora la experiencia táctil.
 
-## Resultado Visual
-La aplicación ahora se siente como un solo producto coherente:
-- Los mismos tonos de azul.
-- Los mismos radios de borde.
-- La misma intensidad de color ámbar en todos los botones y acentos.
+## Paso Crítico para Ver los Cambios
 
-> [!TIP]
-> Al haber eliminado los degradados manuales y usar el `AppTheme` centralizado, cualquier cambio futuro en la paleta de colores se reflejará instantáneamente en todas las pantallas.
+> [!CAUTION]
+> Debido a que el emulador suele guardar versiones antiguas en caché, **DEBES** ejecutar los siguientes comandos para ver el diseño nuevo:
 
-¿Qué te parece el resultado final? La app ahora tiene un aspecto mucho más premium y uniforme.
+1.  **Limpiar proyecto:** `flutter clean`
+2.  **Obtener paquetes:** `flutter pub get`
+3.  **Ejecutar:** `flutter run`
+
+Esto forzará a la app a eliminar el "9:41" y los iconos de batería viejos que ya no existen en el código.
+
+¿Qué te parece el nuevo acabado de los botones y los campos de texto? Se ven mucho más integrados con el trabajo de Juan.

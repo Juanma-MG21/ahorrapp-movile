@@ -14,6 +14,7 @@ class AppColors {
   static const Color textSecondary = kTextSecondary;
   static const Color textMuted = Color(0xFF5B5F70);
   static const Color borderLight = Color(0x14FFFFFF);
+  static const Color error = kNegativeColor;
 }
 
 class AppRadius {
@@ -66,7 +67,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.accent, width: 1.2),
+          borderSide: const BorderSide(color: AppColors.accent, width: 0.8),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -137,10 +138,10 @@ BoxDecoration clayGlow({
     borderRadius: BorderRadius.circular(radius),
     boxShadow: [
       BoxShadow(
-        color: color.withOpacity(0.45),
-        offset: const Offset(0, 6),
-        blurRadius: 24,
-        spreadRadius: 1,
+        color: color.withValues(alpha: 0.35),
+        offset: const Offset(0, 4),
+        blurRadius: 16,
+        spreadRadius: 0,
       ),
     ],
   );

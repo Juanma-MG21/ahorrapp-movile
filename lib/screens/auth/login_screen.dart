@@ -101,17 +101,23 @@ class _LoginScreenState extends State<LoginScreen> {
             onSubmit: _submit,
             onForgotPassword: _openForgotPassword,
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 24),
           _QuickAccess(
             onFingerprint: () => Navigator.of(context).pushNamed('/biometric-access'),
             onPin: () => Navigator.of(context).pushNamed('/pin-access'),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           _RegisterCallout(onTap: _openRegister),
           const SizedBox(height: 40),
-          _BottomAccessNav(
-            onRegister: _openRegister,
-            onHelp: () => Navigator.of(context).pushNamed('/fast-login'),
+          // Botón de Logueo Rápido integrado sutilmente
+          TextButton.icon(
+            onPressed: () => Navigator.of(context).pushNamed('/fast-login'),
+            icon: const Icon(Icons.bolt_rounded, size: 18),
+            label: const Text('Acceso rápido'),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.textMuted,
+              textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            ),
           ),
         ],
       ),
@@ -394,101 +400,6 @@ class _RegisterCallout extends StatelessWidget {
           child: const Text(
             'Registrate',
             style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _BottomAccessNav extends StatelessWidget {
-  const _BottomAccessNav({required this.onRegister, required this.onHelp});
-
-  final VoidCallback onRegister;
-  final VoidCallback onHelp;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 62,
-      margin: const EdgeInsets.only(top: 6),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.borderLight)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          const _BottomNavItem(
-            icon: Icons.key_rounded,
-            label: 'Acceso',
-            selected: true,
-          ),
-          _BottomNavButton(
-            icon: Icons.receipt_long_rounded,
-            label: 'Registro',
-            onTap: onRegister,
-          ),
-          _BottomNavButton(
-            icon: Icons.bolt_rounded,
-            label: 'Rápido',
-            onTap: onHelp,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BottomNavButton extends StatelessWidget {
-  const _BottomNavButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
-        child: _BottomNavItem(icon: icon, label: label),
-      ),
-    );
-  }
-}
-
-class _BottomNavItem extends StatelessWidget {
-  const _BottomNavItem({
-    required this.icon,
-    required this.label,
-    this.selected = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool selected;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = selected ? AppColors.accent : AppColors.textMuted;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: color, size: 22),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            color: color,
-            fontSize: 10,
-            fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
           ),
         ),
       ],
