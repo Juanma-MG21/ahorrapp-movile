@@ -47,9 +47,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Color get _passwordStrengthColor {
     final strength = _passwordStrength;
-    if (strength <= 0.5) return const Color(0xFFFF6B6B);
+    if (strength <= 0.5) return AppColors.error;
     if (strength < 1) return AppColors.accent;
-    return const Color(0xFF34D399);
+    return AppColors.success;
   }
 
   @override
@@ -157,7 +157,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     hintText: 'Manuel',
                     suffixIcon: Icon(
                       Icons.person_rounded,
-                      color: Color(0xFF7C4DFF),
+                      color: AppColors.accent,
                     ),
                   ),
                   validator: (value) {
@@ -177,7 +177,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     hintText: 'Guevara',
                     suffixIcon: Icon(
                       Icons.person_outline_rounded,
-                      color: Color(0xFF7C4DFF),
+                      color: AppColors.accent,
                     ),
                   ),
                   validator: (value) {
@@ -198,7 +198,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     hintText: 'correo@ejemplo.com',
                     suffixIcon: Icon(
                       Icons.mail_rounded,
-                      color: Color(0xFFC6B0D8),
+                      color: AppColors.textMuted,
                     ),
                   ),
                   validator: (value) {
@@ -328,7 +328,7 @@ class _TopBar extends StatelessWidget {
           icon: const Icon(Icons.arrow_back_rounded),
           color: Colors.white,
           style: IconButton.styleFrom(
-            backgroundColor: const Color(0xFF12213C),
+            backgroundColor: AppColors.surfaceAlt,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),

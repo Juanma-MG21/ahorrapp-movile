@@ -1,3 +1,11 @@
+// !NOTAS
+//? 1
+//Ninguna de las dos versiones conecta esto al backend real  
+//ambas siguen usando el PIN de prueba '1234' de forma simulada (Future.delayed + comparación local). 
+//A diferencia de ForgotPasswordScreen y ResetPasswordScreen, 
+//que ya usan AuthService, esta pantalla todavía no llama a Render/Supabase
+
+
 import 'package:flutter/material.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../widgets/auth_widgets.dart';
@@ -67,7 +75,7 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
                 icon: const Icon(Icons.arrow_back_rounded),
                 color: Colors.white,
                 style: IconButton.styleFrom(
-                  backgroundColor: const Color(0xFF12213C),
+                  backgroundColor: AppColors.surfaceAlt,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -88,7 +96,7 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
           const Text(
             'Ingresa tu PIN',
             style: TextStyle(
-              color: Colors.white,
+              color: AppColors.textPrimary,
               fontSize: 22,
               fontWeight: FontWeight.w900,
             ),
@@ -113,7 +121,7 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
                   shape: BoxShape.circle,
                   color: isFilled ? AppColors.accent : Colors.transparent,
                   border: Border.all(
-                    color: isFilled ? AppColors.accent : const Color(0xFF334057),
+                    color: isFilled ? AppColors.accent : AppColors.textMuted,
                     width: 2,
                   ),
                   boxShadow: isFilled ? [
@@ -196,16 +204,23 @@ class _NumberButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Réplica local del estilo "clayRaised" de app_theme.dart, usando solo
+    // AppColors, para no tener que importar app_theme.dart aquí (evita el
+    // conflicto de ambiguous_import con design_tokens.dart).
     return Material(
-      color: const Color(0xFF151222),
+      color: AppColors.surface,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
           decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFF2A2640)),
             borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.borderLight, width: 1),
+            boxShadow: const [
+              BoxShadow(color: Colors.black54, offset: Offset(6, 8), blurRadius: 16),
+              BoxShadow(color: Color(0x0DFFFFFF), offset: Offset(-4, -4), blurRadius: 12),
+            ],
           ),
           alignment: Alignment.center,
           child: Text(

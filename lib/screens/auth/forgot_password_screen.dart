@@ -91,7 +91,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 icon: const Icon(Icons.arrow_back_rounded),
                 color: Colors.white,
                 style: IconButton.styleFrom(
-                  backgroundColor: const Color(0xFF12213C),
+                  backgroundColor: AppColors.surfaceAlt,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -157,7 +157,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             textInputAction: TextInputAction.done,
             decoration: const InputDecoration(
               labelText: 'CORREO ELECTRONICO',
-              suffixIcon: Icon(Icons.mail_rounded, color: Color(0xFFC6B0D8)),
+              suffixIcon: Icon(Icons.mail_rounded, color: AppColors.textMuted),
             ),
             validator: (value) {
               final email = value?.trim() ?? '';
@@ -180,12 +180,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           onPressed: () => Navigator.of(context).pop(),
           style: OutlinedButton.styleFrom(
             minimumSize: const Size.fromHeight(52),
-            foregroundColor: const Color(0xFFB9C7E1),
-            side: const BorderSide(color: Color(0xFF2A2640)),
+            foregroundColor: AppColors.textSecondary,
+            side: const BorderSide(color: AppColors.borderLight),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
             ),
-            backgroundColor: const Color(0xFF151222),
+            backgroundColor: AppColors.surfaceAlt,
           ),
           child: const Text(
             'Volver al inicio de sesion',
@@ -209,7 +209,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             textInputAction: TextInputAction.done,
             decoration: const InputDecoration(
               labelText: 'CÓDIGO DE VERIFICACIÓN',
-              suffixIcon: Icon(Icons.pin_rounded, color: Color(0xFFC6B0D8)),
+              suffixIcon: Icon(Icons.pin_rounded, color: AppColors.textMuted),
             ),
             validator: (value) {
               final code = value?.trim() ?? '';

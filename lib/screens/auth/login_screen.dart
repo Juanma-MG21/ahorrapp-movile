@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/network/api_client.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/auth_widgets.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -190,7 +191,7 @@ class _BrandHeader extends StatelessWidget {
           'Bienvenido de vuelta',
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: Colors.white,
+            color: AppColors.textPrimary,
             fontSize: 22,
             fontWeight: FontWeight.w900,
           ),
@@ -244,7 +245,7 @@ class _LoginForm extends StatelessWidget {
             autocorrect: false,
             decoration: const InputDecoration(
               labelText: 'CORREO ELECTRONICO',
-              suffixIcon: Icon(Icons.mail_rounded, color: AppColors.textSecondary),
+              suffixIcon: Icon(Icons.mail_rounded, color: AppColors.textMuted),
             ),
             validator: (value) {
               final email = value?.trim() ?? '';
@@ -271,7 +272,7 @@ class _LoginForm extends StatelessWidget {
                   hidePassword
                       ? Icons.visibility_off_rounded
                       : Icons.visibility_rounded,
-                  color: AppColors.textSecondary,
+                  color: AppColors.textMuted,
                   size: 20,
                 ),
               ),
@@ -312,50 +313,10 @@ class _LoginForm extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          SizedBox(
-            height: 54,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(15),
-                color: AppColors.accent,
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x55FFB000),
-                    blurRadius: 24,
-                    offset: Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: ElevatedButton(
-                onPressed: isLoading ? null : onSubmit,
-                style: ElevatedButton.styleFrom(
-                  elevation: 0,
-                  shadowColor: Colors.transparent,
-                  backgroundColor: Colors.transparent,
-                  foregroundColor: Colors.black,
-                  disabledBackgroundColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                ),
-                child: isLoading
-                    ? const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                    color: Colors.black,
-                    strokeWidth: 2.4,
-                  ),
-                )
-                    : const Text(
-                  'Iniciar sesion',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ),
+          PrimaryAuthButton(
+            label: 'Iniciar sesion',
+            isLoading: isLoading,
+            onPressed: onSubmit,
           ),
         ],
       ),
@@ -375,15 +336,15 @@ class _QuickAccess extends StatelessWidget {
       children: [
         const Row(
           children: [
-            Expanded(child: Divider(color: Color(0xFF202B40))),
+            Expanded(child: Divider(color: AppColors.borderLight)),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 10),
               child: Text(
                 'o continua con',
-                style: TextStyle(color: Color(0xFF52627B), fontSize: 11),
+                style: TextStyle(color: AppColors.textMuted, fontSize: 11),
               ),
             ),
-            Expanded(child: Divider(color: Color(0xFF202B40))),
+            Expanded(child: Divider(color: AppColors.borderLight)),
           ],
         ),
         const SizedBox(height: 18),
@@ -424,8 +385,10 @@ class _AccessTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Réplica local del estilo "clayRaised" (ver PinAccessScreen), sin
+    // depender de app_theme.dart para evitar el conflicto de import.
     return Material(
-      color: const Color(0xFF151222),
+      color: AppColors.surface,
       borderRadius: BorderRadius.circular(13),
       child: InkWell(
         onTap: onTap,
@@ -433,7 +396,7 @@ class _AccessTile extends StatelessWidget {
         child: Container(
           height: 55,
           decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFF2A2640)),
+            border: Border.all(color: AppColors.borderLight),
             borderRadius: BorderRadius.circular(13),
           ),
           child: Column(
@@ -501,7 +464,7 @@ class _BottomAccessNav extends StatelessWidget {
       height: 62,
       margin: const EdgeInsets.only(top: 6),
       decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xFF141E31))),
+        border: Border(top: BorderSide(color: AppColors.borderLight)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -564,7 +527,7 @@ class _BottomNavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? AppColors.accent : const Color(0xFF43516B);
+    final color = selected ? AppColors.accent : AppColors.textMuted;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
