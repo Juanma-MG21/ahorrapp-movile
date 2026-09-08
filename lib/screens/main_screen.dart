@@ -7,6 +7,28 @@ import 'ingresos/modulo_ingresos.dart';
 import 'imprevistos/modulo_imprevistos.dart';
 import 'ahorros/modulo_ahorros.dart';
 import 'deudas/modulo_deudas.dart';
+import 'presupuestos/modulo_presupuestos.dart';
+
+/// Metadata (icono + label) de cada pantalla accesible desde el menú
+/// "Más". El índice de cada _MenuItem debe corresponder al mismo
+/// índice en `_pantallasSecundarias` (abajo), para que la hoja sepa
+/// qué widget mostrar al seleccionarlo.
+///
+/// Para agregar una vista nueva en el futuro (ej. "Reportes"):
+///   1. Agrega su _MenuItem aquí.
+///   2. Agrega su widget en `_pantallasSecundarias`, en la misma posición.
+class _MenuItem {
+  const _MenuItem({required this.icon, required this.label});
+  final IconData icon;
+  final String label;
+}
+
+const List<_MenuItem> _itemsMas = [
+  _MenuItem(icon: Icons.emergency_outlined, label: 'Imprevistos'),
+  _MenuItem(icon: Icons.savings_outlined, label: 'Ahorros'),
+  _MenuItem(icon: Icons.credit_card, label: 'Deudas'),
+  _MenuItem(icon: Icons.calendar_month_outlined, label: 'Calendario'),
+];
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -16,31 +38,60 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _selectedIndex = 2; // Empezamos en Gastos para coincidir con el estado inicial previo
-
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const ModuloIngresos(),
-    const ModuloGastos(),
-    const ModuloImprevistos(),
-    const ModuloAhorros(),
-    const ModuloDeudas(),
-    const CalendarioScreen(),
+  // Pantallas fijas del bottom nav (índices 0-3).
+  final List<Widget> _pantallasPrincipales = const [
+    HomeScreen(),
+    ModuloIngresos(),
+    ModuloGastos(),
+    ModuloPresupuestos(),
   ];
 
-  void _onItemTapped(int index) {
+  // Pantallas accesibles desde "Más", alineadas 1 a 1 con _itemsMas.
+  // Van todas dentro del mismo IndexedStack para conservar su estado
+  // (scroll, formularios sin guardar, etc.) igual que las principales.
+  final List<Widget> _pantallasSecundarias = const [
+    ModuloImprevistos(),
+    ModuloAhorros(),
+    ModuloDeudas(),
+    CalendarioScreen(),
+  ];
+
+  // 0-3 = una de las pestañas fijas. 4 = estamos mostrando algo de "Más".
+  int _tabPrincipal = 2; // Empezamos en Gastos, igual que antes.
+
+  // Cuál de _pantallasSecundarias se muestra cuando _tabPrincipal == 4.
+  int _indiceSecundario = 0;
+
+  bool get _mostrandoSecundaria => _tabPrincipal == 4;
+
+  void _seleccionarPrincipal(int index) {
+    setState(() => _tabPrincipal = index);
+  }
+
+  Future<void> _abrirMenuMas() async {
+    final seleccion = await showModalBottomSheet<int>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _MenuMasSheet(indiceActivo: _mostrandoSecundaria ? _indiceSecundario : null),
+    );
+    if (seleccion == null) return;
     setState(() {
-      _selectedIndex = index;
+      _tabPrincipal = 4;
+      _indiceSecundario = seleccion;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final indiceStack = _mostrandoSecundaria
+        ? _pantallasPrincipales.length + _indiceSecundario
+        : _tabPrincipal;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: IndexedStack(
-        index: _selectedIndex,
-        children: _screens,
+        index: indiceStack,
+        children: [..._pantallasPrincipales, ..._pantallasSecundarias],
       ),
       bottomNavigationBar: Container(
         height: 70,
@@ -62,10 +113,8 @@ class _MainScreenState extends State<MainScreen> {
               _buildNavItem(Icons.home_outlined, 'Inicio', 0),
               _buildNavItem(Icons.arrow_upward, 'Ingresos', 1),
               _buildNavItem(Icons.account_balance_wallet, 'Gastos', 2),
-              _buildNavItem(Icons.emergency_outlined, 'Imprevistos', 3),
-              _buildNavItem(Icons.savings_outlined, 'Ahorros', 4),
-              _buildNavItem(Icons.credit_card, 'Deudas', 5),
-              _buildNavItem(Icons.calendar_month_outlined, 'Calendario', 6),
+              _buildNavItem(Icons.pie_chart_outline, 'Presupuestos', 3),
+              _buildMasNavItem(),
             ],
           ),
         ),
@@ -74,12 +123,12 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Widget _buildNavItem(IconData icon, String label, int index) {
-    final bool isActive = _selectedIndex == index;
+    final bool isActive = !_mostrandoSecundaria && _tabPrincipal == index;
     final color = isActive ? AppColors.accent : AppColors.navInactive;
 
     return Expanded(
       child: InkWell(
-        onTap: () => _onItemTapped(index),
+        onTap: () => _seleccionarPrincipal(index),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -93,6 +142,113 @@ class _MainScreenState extends State<MainScreen> {
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMasNavItem() {
+    final bool isActive = _mostrandoSecundaria;
+    final color = isActive ? AppColors.accent : AppColors.navInactive;
+
+    return Expanded(
+      child: InkWell(
+        onTap: _abrirMenuMas,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.more_horiz, color: color, size: 24),
+            const SizedBox(height: 4),
+            Text(
+              isActive ? _itemsMas[_indiceSecundario].label : 'Más',
+              style: TextStyle(
+                color: color,
+                fontSize: 10,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Hoja inferior con la lista de pantallas secundarias. Devuelve
+/// (mediante Navigator.pop) el índice elegido, o null si se cerró sin
+/// elegir nada.
+class _MenuMasSheet extends StatelessWidget {
+  const _MenuMasSheet({required this.indiceActivo});
+  final int? indiceActivo;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Container(
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: AppColors.borderLight,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+              ),
+            ),
+            const Text(
+              'Más',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...List.generate(_itemsMas.length, (i) {
+              final item = _itemsMas[i];
+              final activo = indiceActivo == i;
+              return InkWell(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                onTap: () => Navigator.of(context).pop(i),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Row(
+                    children: [
+                      Icon(
+                        item.icon,
+                        color: activo ? AppColors.accent : AppColors.textPrimary,
+                        size: 22,
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Text(
+                          item.label,
+                          style: TextStyle(
+                            color: activo ? AppColors.accent : AppColors.textPrimary,
+                            fontSize: 15,
+                            fontWeight: activo ? FontWeight.w700 : FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      if (activo)
+                        const Icon(Icons.check, color: AppColors.accent, size: 18),
+                    ],
+                  ),
+                ),
+              );
+            }),
           ],
         ),
       ),

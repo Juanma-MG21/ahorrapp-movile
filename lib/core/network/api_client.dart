@@ -77,6 +77,20 @@ class ApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> patch(
+      String path, {
+        Map<String, dynamic>? body,
+        String? token,
+      }) {
+    return _send(
+          () => http.patch(
+        _uri(path),
+        headers: _headers(token: token),
+        body: jsonEncode(body ?? {}),
+      ),
+    );
+  }
+
   /// GET para endpoints que responden un array plano en vez de { ok, ... },
   /// como GET /movimientos/ingresos.
   Future<List<dynamic>> getList(String path, {String? token}) async {
@@ -151,3 +165,4 @@ class ApiClient {
     return decoded;
   }
 }
+

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
+import 'providers/presupuesto_provider.dart';
 import 'screens/auth/forgot_password_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
@@ -16,24 +18,35 @@ class AhorrApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'AhorrApp',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.dark(),
-      home: const AuthGate(),
-      routes: {
-        '/home': (context) => const MainScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/register': (context) => const RegisterScreen(),
-        '/forgot-password': (context) => const ForgotPasswordScreen(),
-        '/biometric-access': (context) => const BiometricAccessScreen(),
-        '/pin-access': (context) => const PinAccessScreen(),
-        '/reset-password': (context) => const ResetPasswordScreen(),
+    return MultiProvider(
+      providers: [
+        // Se crea una sola vez y vive mientras la app esté abierta.
+        // Si en el futuro quieres que se recargue justo al hacer login
+        // (para no arrastrar datos de una sesión anterior), muévelo a
+        // un ChangeNotifierProvider más abajo en el árbol (ej. dentro
+        // de MainScreen) o llama a provider.cargar() de nuevo tras el
+        // login.
+        ChangeNotifierProvider(create: (_) => PresupuestoProvider()),
+      ],
+      child: MaterialApp(
+        title: 'AhorrApp',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.dark(),
+        home: const AuthGate(),
+        routes: {
+          '/home': (context) => const MainScreen(),
+          '/login': (context) => const LoginScreen(),
+          '/register': (context) => const RegisterScreen(),
+          '/forgot-password': (context) => const ForgotPasswordScreen(),
+          '/biometric-access': (context) => const BiometricAccessScreen(),
+          '/pin-access': (context) => const PinAccessScreen(),
+          '/reset-password': (context) => const ResetPasswordScreen(),
 
-        // Nuevas rutas incorporadas
-        '/fast-login': (context) => const FastLoginScreen(),
-        '/gastos': (context) => const ModuloGastos(),
-      },
+          // Nuevas rutas incorporadas
+          '/fast-login': (context) => const FastLoginScreen(),
+          '/gastos': (context) => const ModuloGastos(),
+        },
+      ),
     );
   }
 }
