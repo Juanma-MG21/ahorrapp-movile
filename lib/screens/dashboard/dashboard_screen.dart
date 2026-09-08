@@ -17,11 +17,11 @@ import 'package:fl_chart/fl_chart.dart';
 // 'intl' trae NumberFormat, que reemplaza a `n.toLocaleString("es-CO")`.
 import 'package:intl/intl.dart';
 
-import '../services/notificaciones_services.dart';
+import '../../services/notificacion_services.dart';
 
-import '../models/notificaciones.dart';
+import '../../models/notificaciones.dart';
 
-import '../widgets/notificacion_panel.dart';
+import '../../widgets/notificacion_panel.dart';
 
 // Punto de entrada de toda app Flutter. Es literalmente el
 // `ReactDOM.render(<App />)` de una app web: arranca el widget raíz.
@@ -402,7 +402,7 @@ class MobileHeader extends StatelessWidget {
                     // en Flutter cualquier widget puede volverse
                     // "clickeable" envolviéndolo así.
                     GestureDetector(
-                      onTap: onNotif,
+                      onTap: () => showNotifPanel(context, idUsuario), // 👈 Pasamos el idUsuario al panel
                       child: Stack(
                         clipBehavior: Clip.none,
                         children: [
@@ -965,8 +965,8 @@ class NotificacionPanel extends StatefulWidget {
 }
 
 class _NotificacionPanelState extends State<NotificacionPanel> {
-  final NotificacionesServices _service = NotificacionesServices();
-  List<Notificacion> _notificaciones = [];
+final NotificacionesServices _service = NotificacionesServices();
+List<Notificacion> _notificaciones = [];
   bool _isLoading = true;
 
   @override

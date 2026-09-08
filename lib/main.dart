@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
+import 'screens/dashboard/dashboard_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
@@ -23,7 +23,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: const Color(0xFF0A0E17),
       ),
-      home: HomeScreen(),
+      home: const DashboardScreen(),  // O HomeScreen() si existe
     );
   }
 }

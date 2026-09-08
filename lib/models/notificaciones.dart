@@ -1,4 +1,3 @@
-// lib/models/notificacion.dart
 class Notificacion {
   final int? idNotificacion;
   final int idUsuario;
@@ -9,6 +8,45 @@ class Notificacion {
   final DateTime fecha;
   final bool leida;
   final bool archivada;
+
+  Notificacion({
+    this.idNotificacion,
+    required this.idUsuario,
+    required this.tipo,
+    required this.entidadTipo,
+    this.entidadId,
+    required this.mensaje,
+    required this.fecha,
+    this.leida = false,
+    this.archivada = false,
+  });
+
+  factory Notificacion.fromJson(Map<String, dynamic> json) {
+    return Notificacion(
+      idNotificacion: json['id_notificacion'],
+      idUsuario: json['id_usuario'],
+      tipo: json['tipo'],
+      entidadTipo: json['entidad_tipo'],
+      entidadId: json['entidad_id'],
+      mensaje: json['mensaje'],
+      fecha: DateTime.parse(json['fecha']),
+      leida: json['leida'] ?? false,
+      archivada: json['archivada'] ?? false,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id_usuario': idUsuario,
+      'tipo': tipo,
+      'entidad_tipo': entidadTipo,
+      'entidad_id': entidadId,
+      'mensaje': mensaje,
+      'fecha': fecha.toIso8601String(),
+      'leida': leida,
+      'archivada': archivada,
+    };
+  }
 
   Notificacion copyWith({
     int? idNotificacion,
