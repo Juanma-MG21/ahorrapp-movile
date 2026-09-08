@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/theme/design_tokens.dart';
+import '../services/auth_service.dart';
 import 'calendario/calendario_screen.dart';
 import 'gastos/modulo_gastos.dart';
 import 'home/home_screen.dart';
@@ -249,6 +250,37 @@ class _MenuMasSheet extends StatelessWidget {
                 ),
               );
             }),
+            const Divider(color: AppColors.borderLight, height: 32),
+            InkWell(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              onTap: () async {
+                await AuthService.instance.logout();
+                if (context.mounted) {
+                  Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                }
+              },
+              child: const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.logout_rounded,
+                      color: Colors.redAccent,
+                      size: 22,
+                    ),
+                    SizedBox(width: 16),
+                    Text(
+                      'Cerrar sesión',
+                      style: TextStyle(
+                        color: Colors.redAccent,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
