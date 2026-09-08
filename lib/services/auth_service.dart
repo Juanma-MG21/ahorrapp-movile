@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../core/network/api_client.dart';
 
@@ -30,10 +31,13 @@ class Usuario {
 class AuthService {
   AuthService._internal();
 
-  static final AuthService instance = AuthService._internal();
+  @visibleForTesting
+  AuthService.test(this._api, this._storage);
 
-  final ApiClient _api = ApiClient();
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  static AuthService instance = AuthService._internal();
+
+  ApiClient _api = ApiClient();
+  FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   static const _tokenKey = 'auth_token';
 

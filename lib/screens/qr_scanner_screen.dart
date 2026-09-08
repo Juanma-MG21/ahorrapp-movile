@@ -109,7 +109,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
             onTap: () => Navigator.of(context).maybePop(),
           ),
           const SizedBox(width: 16),
-          Column(
+          const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
@@ -121,8 +121,8 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
                   letterSpacing: 1.2,
                 ),
               ),
-              const SizedBox(height: 2),
-              const Text(
+              SizedBox(height: 2),
+              Text(
                 'Escanear QR',
                 style: TextStyle(
                   color: AppColors.textPrimary,
@@ -142,19 +142,19 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 32),
       child: RichText(
         textAlign: TextAlign.center,
-        text: TextSpan(
-          style: const TextStyle(
+        text: const TextSpan(
+          style: TextStyle(
             color: AppColors.textSecondary,
             fontSize: 13,
             height: 1.5,
           ),
           children: [
-            const TextSpan(text: 'Apunta la cámara al código QR del '),
+            TextSpan(text: 'Apunta la cámara al código QR del '),
             TextSpan(
               text: 'recibo o comprobante',
               style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700),
             ),
-            const TextSpan(text: ' para registrar el gasto automáticamente.'),
+            TextSpan(text: ' para registrar el gasto automáticamente.'),
           ],
         ),
       ),
@@ -179,7 +179,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
             children: [
               MobileScanner(controller: _controller, onDetect: _onDetect),
               Container(color: Colors.black.withValues(alpha: 0.05)),
-              CustomPaint(painter: _CornerBracketsPainter(color: const Color(0xFF4ADE80))),
+              const CustomPaint(painter: _CornerBracketsPainter(color: Color(0xFF4ADE80))),
             ],
           ),
         ),

@@ -12,18 +12,18 @@ class HomeScreen extends StatelessWidget {
         backgroundColor: AppColors.surface,
         foregroundColor: Colors.white,
       ),
-      body: Center(
+      body: const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.account_balance_wallet_rounded, size: 80, color: AppColors.accent),
-            const SizedBox(height: 20),
-            const Text(
+            Icon(Icons.account_balance_wallet_rounded, size: 80, color: AppColors.accent),
+            SizedBox(height: 20),
+            Text(
               '¡Bienvenido a AhorrApp!',
               style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 10),
-            const Text(
+            SizedBox(height: 10),
+            Text(
               'Gestión financiera al alcance de tu mano',
               style: TextStyle(color: AppColors.muted, fontSize: 16),
             ),

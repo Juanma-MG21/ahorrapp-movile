@@ -4,6 +4,9 @@ import 'calendario/calendario_screen.dart';
 import 'gastos/modulo_gastos.dart';
 import 'home/home_screen.dart';
 import 'ingresos/modulo_ingresos.dart';
+import 'imprevistos/modulo_imprevistos.dart';
+import 'ahorros/modulo_ahorros.dart';
+import 'deudas/modulo_deudas.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -19,8 +22,9 @@ class _MainScreenState extends State<MainScreen> {
     const HomeScreen(),
     const ModuloIngresos(),
     const ModuloGastos(),
-    const Center(child: Text('Ahorros', style: TextStyle(color: AppColors.textPrimary))),
-    const Center(child: Text('Más', style: TextStyle(color: AppColors.textPrimary))),
+    const ModuloImprevistos(),
+    const ModuloAhorros(),
+    const ModuloDeudas(),
     const CalendarioScreen(),
   ];
 
@@ -58,9 +62,10 @@ class _MainScreenState extends State<MainScreen> {
               _buildNavItem(Icons.home_outlined, 'Inicio', 0),
               _buildNavItem(Icons.arrow_upward, 'Ingresos', 1),
               _buildNavItem(Icons.account_balance_wallet, 'Gastos', 2),
-              _buildNavItem(Icons.savings_outlined, 'Ahorros', 3),
-              _buildNavItem(Icons.more_horiz, 'Más', 4),
-              _buildNavItem(Icons.calendar_month_outlined, 'Calendario', 5),
+              _buildNavItem(Icons.emergency_outlined, 'Imprevistos', 3),
+              _buildNavItem(Icons.savings_outlined, 'Ahorros', 4),
+              _buildNavItem(Icons.credit_card, 'Deudas', 5),
+              _buildNavItem(Icons.calendar_month_outlined, 'Calendario', 6),
             ],
           ),
         ),

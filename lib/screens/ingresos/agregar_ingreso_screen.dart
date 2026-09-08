@@ -58,6 +58,16 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
           _fuenteController.text = i.fuente ?? '';
           _fecha = i.fechaRegistro;
           _idCategoria = i.idCategoria;
+
+          // Si el ID es nulo pero tenemos nombre (de la IA), intentamos el match
+          if (_idCategoria == null && i.categoriaNombre != null) {
+            final sugerida = _listaCategorias.where(
+              (c) => c.nombre.toLowerCase() == i.categoriaNombre!.toLowerCase(),
+            );
+            if (sugerida.isNotEmpty) {
+              _idCategoria = sugerida.first.id;
+            }
+          }
         }
       });
     }
@@ -270,8 +280,8 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFF4ADE80).withValues(alpha: 0.3)),
       ),
-      child: Row(
-        children: const [
+      child: const Row(
+        children: [
           Icon(Icons.qr_code_2, color: Color(0xFF4ADE80), size: 20),
           SizedBox(width: 12),
           Expanded(
@@ -322,7 +332,7 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
         children: [
           TextSpan(text: text, style: const TextStyle(color: AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
           if (required)
-            TextSpan(text: ' *', style: const TextStyle(color: AppColors.error, fontSize: 13, fontWeight: FontWeight.w600)),
+            const TextSpan(text: ' *', style: TextStyle(color: AppColors.error, fontSize: 13, fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -441,8 +451,8 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
                     child: Container(
                       margin: const EdgeInsets.all(3),
                       decoration: isSelected
-                          ? BoxDecoration(shape: BoxShape.circle, gradient: const RadialGradient(colors: [Color(0xFF4ADE80), Color(0xFF34D399)]))
-                          : BoxDecoration(color: AppColors.background, shape: BoxShape.circle),
+                          ? const BoxDecoration(shape: BoxShape.circle, gradient: RadialGradient(colors: [Color(0xFF4ADE80), Color(0xFF34D399)]))
+                          : const BoxDecoration(color: AppColors.background, shape: BoxShape.circle),
                       child: Center(child: Text('$day', style: TextStyle(color: isSelected ? Colors.black : AppColors.textPrimary, fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500))),
                     ),
                   ),

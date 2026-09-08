@@ -1,10 +1,12 @@
+import 'package:flutter/foundation.dart';
 import '../core/network/api_client.dart';
 import '../models/ingreso_model.dart';
 import '../models/categoria_model.dart';
 import 'auth_service.dart';
 
 class IngresosService {
-  static final ApiClient _client = ApiClient();
+  @visibleForTesting
+  static ApiClient client = ApiClient();
 
   /// Crea un ingreso nuevo (POST /movimientos).
   /// Devuelve el id generado (id_ingresos) para que la pantalla pueda
@@ -12,7 +14,7 @@ class IngresosService {
   static Future<int> crearIngreso(IngresoModel ingreso) async {
     final token = await AuthService.instance.getToken();
 
-    final respuesta = await _client.post(
+    final respuesta = await client.post(
       '/movimientos',
       token: token,
       body: {
@@ -29,7 +31,7 @@ class IngresosService {
   static Future<void> actualizarIngreso(int id, IngresoModel ingreso) async {
     final token = await AuthService.instance.getToken();
 
-    await _client.put(
+    await client.put(
       '/movimientos/ingresos/$id',
       token: token,
       body: ingreso.toRequestBody(),
@@ -40,7 +42,7 @@ class IngresosService {
   static Future<List<IngresoModel>> obtenerIngresos() async {
     try {
       final token = await AuthService.instance.getToken();
-      final data = await _client.getList('/movimientos/ingresos', token: token);
+      final data = await client.getList('/movimientos/ingresos', token: token);
 
       return data
           .map((json) => IngresoModel.fromJson(json as Map<String, dynamic>))
@@ -56,7 +58,7 @@ class IngresosService {
   static Future<bool> eliminarIngreso(int id) async {
     try {
       final token = await AuthService.instance.getToken();
-      await _client.delete('/movimientos/ingresos/$id', token: token);
+      await client.delete('/movimientos/ingresos/$id', token: token);
       return true;
     } catch (_) {
       return false;
@@ -67,7 +69,7 @@ class IngresosService {
   static Future<List<CategoriaModel>> obtenerCategorias() async {
     try {
       final token = await AuthService.instance.getToken();
-      final respuesta = await _client.get('/categorias', token: token);
+      final respuesta = await client.get('/categorias', token: token);
 
       final List categorias = respuesta['categorias'] ?? [];
       return categorias

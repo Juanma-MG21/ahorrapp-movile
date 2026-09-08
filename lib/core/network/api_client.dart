@@ -108,8 +108,12 @@ class ApiClient {
 
     try {
       return jsonDecode(response.body) as List<dynamic>;
-    } catch (_) {
-      throw ApiException('Respuesta inesperada del servidor');
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(
+        'Respuesta inesperada del servidor (formato inválido: $e)',
+        statusCode: response.statusCode,
+      );
     }
   }
 
@@ -120,18 +124,18 @@ class ApiClient {
 
     try {
       response = await request();
-    } catch (_) {
+    } catch (e) {
       throw ApiException(
-        'No se pudo conectar con el servidor. Revisa tu conexión.',
+        'No se pudo conectar con el servidor ($e). Revisa tu conexión.',
       );
     }
 
     Map<String, dynamic> decoded;
     try {
       decoded = jsonDecode(response.body) as Map<String, dynamic>;
-    } catch (_) {
+    } catch (e) {
       throw ApiException(
-        'Respuesta inesperada del servidor',
+        'Respuesta del servidor no es JSON válido (posible error 404 o 500 HTML). Detalles: $e',
         statusCode: response.statusCode,
       );
     }

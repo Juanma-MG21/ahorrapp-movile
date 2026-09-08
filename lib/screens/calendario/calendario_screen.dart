@@ -98,17 +98,17 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
       decoration: BoxDecoration(
         color: fondoTarjeta,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: dorado.withOpacity(0.3)),
+        border: Border.all(color: dorado.withValues(alpha: 0.3)),
       ),
-      child: Column(
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Actividad del Mes: ',
             style: TextStyle(color: Colors.amber, fontSize: 20, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: 8),
+          Text(
             '2 ingresos, 3 gastos, 3 abonos, 1 imprevisto',
             style: TextStyle(color: Colors.white, fontSize: 18),
           ),
@@ -148,7 +148,7 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
           weekendTextStyle: const TextStyle(color: Colors.white70),
           outsideTextStyle: const TextStyle(color: Colors.white24),
           todayDecoration: BoxDecoration(
-            color: dorado.withOpacity(0.3),
+            color: dorado.withValues(alpha: 0.3),
             shape: BoxShape.circle,
           ),
           todayTextStyle: const TextStyle(color: Colors.white),

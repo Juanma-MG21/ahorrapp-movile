@@ -1,30 +1,31 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../core/theme/design_tokens.dart';
-import '../../core/network/api_client.dart';
-import '../../models/gasto_model.dart';
+import '../../models/imprevisto_model.dart';
 import '../../models/categoria_model.dart';
-import '../../models/dependiente_model.dart';
-import '../../services/gastos_service.dart';
+import '../../services/imprevistos_service.dart';
+import '../../core/network/api_client.dart';
 
-class AgregarGastoScreen extends StatefulWidget {
-  final GastoModel? gastoParaEditar;
-  const AgregarGastoScreen({super.key, this.gastoParaEditar});
+class AgregarImprevistoScreen extends StatefulWidget {
+  final ImprevistoModel? imprevistoParaEditar;
+
+  const AgregarImprevistoScreen({
+    super.key,
+    this.imprevistoParaEditar,
+  });
 
   @override
-  State<AgregarGastoScreen> createState() => _AgregarGastoScreenState();
+  State<AgregarImprevistoScreen> createState() => _AgregarImprevistoScreenState();
 }
 
-class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
+class _AgregarImprevistoScreenState extends State<AgregarImprevistoScreen> {
   final TextEditingController _montoController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _descripcionController = TextEditingController();
 
   DateTime _fecha = DateTime.now();
   int? _idCategoria;
-  int? _idDependiente;
 
   List<CategoriaModel> _listaCategorias = [];
-  List<DependienteModel> _listaDependientes = [];
   bool _isLoadingData = true;
   bool _isSaving = false;
 
@@ -35,42 +36,31 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
   }
 
   void _loadInitialData() async {
-    final cats = await GastosService.obtenerCategorias();
-    final deps = await GastosService.obtenerDependientes();
+    final cats = await ImprevistosService.obtenerCategorias();
 
     if (mounted) {
       setState(() {
         _listaCategorias = cats;
-        _listaDependientes = deps;
         _isLoadingData = false;
 
-        if (widget.gastoParaEditar != null) {
-          final g = widget.gastoParaEditar!;
-          _montoController.text = g.monto % 1 == 0
-              ? g.monto.toStringAsFixed(0)
-              : g.monto.toStringAsFixed(2).replaceAll('.', ',');
-          _descriptionController.text = g.descripcion ?? '';
-          _fecha = g.fecha;
-          _idDependiente = g.idDependientes;
+        if (widget.imprevistoParaEditar != null) {
+          final i = widget.imprevistoParaEditar!;
+          _montoController.text = i.monto % 1 == 0
+              ? i.monto.toStringAsFixed(0)
+              : i.monto.toStringAsFixed(2).replaceAll('.', ',');
+          _descripcionController.text = i.descripcion ?? '';
+          _fecha = i.fecha;
+          _idCategoria = i.idCategoria;
 
-          if (g.idCategoria != null) {
-            // Gasto real que se está editando: el id ya es válido.
-            _idCategoria = g.idCategoria;
-          } else if (g.categoriaNombre != null) {
-            // Viene de un parser de voz/QR: solo detectó el NOMBRE de
-            // la categoría, no el id real. Intentamos encontrar una
-            // categoría real del backend con ese mismo nombre; si no
-            // hay coincidencia, queda sin seleccionar y el usuario la
-            // elige a mano.
+          // Si el ID es nulo pero tenemos nombre (de la IA), intentamos el match
+          if (_idCategoria == null && i.categoriaNombre != null) {
             final sugerida = _listaCategorias.where(
-                  (c) => c.nombre.toLowerCase() == g.categoriaNombre!.toLowerCase(),
+              (c) => c.nombre.toLowerCase() == i.categoriaNombre!.toLowerCase(),
             );
             if (sugerida.isNotEmpty) {
               _idCategoria = sugerida.first.id;
             }
           }
-        } else if (_listaDependientes.isNotEmpty) {
-          _idDependiente = _listaDependientes.first.id;
         }
       });
     }
@@ -79,7 +69,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
   @override
   void dispose() {
     _montoController.dispose();
-    _descriptionController.dispose();
+    _descripcionController.dispose();
     super.dispose();
   }
 
@@ -87,15 +77,6 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
     if (_idCategoria == null) return null;
     try {
       return _listaCategorias.firstWhere((c) => c.id == _idCategoria);
-    } catch (_) {
-      return null;
-    }
-  }
-
-  DependienteModel? get _dependienteSeleccionado {
-    if (_idDependiente == null) return null;
-    try {
-      return _listaDependientes.firstWhere((d) => d.id == _idDependiente);
     } catch (_) {
       return null;
     }
@@ -150,9 +131,8 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
 
   void _showCalendarSheet() => _showNeumorphicSheet(_buildCalendarSheet());
   void _showCategorySheet() => _showNeumorphicSheet(_buildCategorySheet());
-  void _showDependentSheet() => _showNeumorphicSheet(_buildDependentSheet());
 
-  void _crearGasto() async {
+  void _guardar() async {
     String montoStr = _montoController.text.replaceAll('\$', '');
     if (montoStr.contains(',')) {
       montoStr = montoStr.replaceAll('.', '').replaceAll(',', '.');
@@ -161,44 +141,63 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
     }
 
     final monto = double.tryParse(montoStr) ?? 0.0;
+    
+    // RF-05: Validaciones
     if (monto <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Por favor, ingresa un monto válido')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Por favor, ingresa un monto positivo')));
+      return;
+    }
+
+    if (_descripcionController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('La descripción es obligatoria')));
       return;
     }
 
     setState(() => _isSaving = true);
     final cat = _categoriaSeleccionada;
-    final dep = _dependienteSeleccionado;
 
-    final gasto = GastoModel(
-      id: widget.gastoParaEditar?.id,
+    final imprevisto = ImprevistoModel(
+      id: widget.imprevistoParaEditar?.id,
       idCategoria: cat?.id,
-      idDependientes: dep?.id,
-      descripcion: _descriptionController.text.isEmpty ? null : _descriptionController.text,
+      descripcion: _descripcionController.text.trim(),
       monto: monto,
       fecha: _fecha,
     );
 
+    ImprevistoModel? resultado;
     try {
-      if (gasto.id == null) {
-        await GastosService.crearGasto(gasto);
+      if (imprevisto.id == null) {
+        final nuevoId = await ImprevistosService.crearImprevisto(imprevisto);
+        resultado = ImprevistoModel(
+          id: nuevoId,
+          idCategoria: imprevisto.idCategoria,
+          descripcion: imprevisto.descripcion,
+          monto: imprevisto.monto,
+          fecha: imprevisto.fecha,
+        );
       } else {
-        await GastosService.actualizarGasto(gasto.id!, gasto);
+        await ImprevistosService.actualizarImprevisto(imprevisto.id!, imprevisto);
+        resultado = imprevisto;
       }
-
-      if (!mounted) return;
-      setState(() => _isSaving = false);
-
-      // Devolvemos "true" para avisarle a ModuloGastos que tiene que
-      // recargar la lista completa desde el backend: crearMovimiento/
-      // updateGastos no devuelven el nombre de categoría ni de
-      // dependiente (eso solo viene del JOIN de getGastos), así que
-      // no podemos armar el card completo acá sin inventar datos.
-      Navigator.pop(context, true);
     } on ApiException catch (e) {
-      if (!mounted) return;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Ocurrió un error inesperado'), backgroundColor: AppColors.error),
+        );
+      }
+    }
+
+    if (mounted) {
       setState(() => _isSaving = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      if (resultado != null) {
+        Navigator.pop(context, resultado);
+      }
     }
   }
 
@@ -207,7 +206,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
     if (_isLoadingData) {
       return const Scaffold(
         backgroundColor: AppColors.background,
-        body: Center(child: CircularProgressIndicator(color: AppColors.accent)),
+        body: Center(child: CircularProgressIndicator(color: AppColors.error)),
       );
     }
     return Scaffold(
@@ -223,7 +222,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
               const SizedBox(height: 26),
               _buildFormCard(),
               const SizedBox(height: 28),
-              _buildCrearButton(),
+              _buildGuardarButton(),
               const SizedBox(height: 12),
               const Center(
                 child: Padding(
@@ -254,12 +253,12 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              widget.gastoParaEditar != null ? 'Editar gasto' : 'Agregar gasto',
+              widget.imprevistoParaEditar != null ? 'Editar imprevisto' : 'Registrar imprevisto',
               style: const TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 2),
             Text(
-              widget.gastoParaEditar != null ? 'Modificar registro' : 'Registro manual',
+              widget.imprevistoParaEditar != null ? 'Modificar registro' : 'Nuevo imprevisto',
               style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
             ),
           ],
@@ -279,21 +278,17 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
           const SizedBox(height: 8),
           _buildTextField(controller: _montoController, hint: '\$0', keyboardType: const TextInputType.numberWithOptions(decimal: true)),
           const SizedBox(height: 18),
-          _buildLabel('Descripción'),
+          _buildLabel('Descripción', required: true),
           const SizedBox(height: 8),
-          _buildTextField(controller: _descriptionController, hint: 'Ej: Almuerzo de trabajo'),
+          _buildTextField(controller: _descripcionController, hint: 'Ej: Reparación de tubería'),
           const SizedBox(height: 18),
-          _buildLabel('Fecha de registro', required: true),
+          _buildLabel('Fecha del evento', required: true),
           const SizedBox(height: 8),
           _buildFechaField(),
           const SizedBox(height: 18),
           _buildLabel('Categoría'),
           const SizedBox(height: 8),
           _buildCategoriaField(),
-          const SizedBox(height: 18),
-          _buildLabel('Dependiente'),
-          const SizedBox(height: 8),
-          _buildDependienteField(),
         ],
       ),
     );
@@ -347,7 +342,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
-              const Icon(Icons.calendar_month, color: Color(0xFF4ADE80), size: 20),
+              const Icon(Icons.calendar_month, color: AppColors.error, size: 20),
               const SizedBox(width: 10),
               Text(_formatFecha(_fecha), style: const TextStyle(color: AppColors.textPrimary, fontSize: 14)),
               const Spacer(),
@@ -370,32 +365,11 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
           child: Row(
             children: [
               if (cat != null) ...[
-                Icon(_getIconForCategory(cat.nombre), color: _getColorForCategory(cat.nombre), size: 20),
+                Icon(_getIconForCategory(cat.nombre), color: AppColors.error, size: 20),
                 const SizedBox(width: 10),
                 Expanded(child: Text(cat.nombre, style: const TextStyle(color: AppColors.textPrimary, fontSize: 14))),
               ] else
                 const Expanded(child: Text('Sin seleccionar', style: TextStyle(color: AppColors.textSecondary, fontSize: 14))),
-              const Icon(Icons.expand_more, color: AppColors.textSecondary, size: 20),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDependienteField() {
-    final dep = _dependienteSeleccionado;
-    return _buildInsetBox(
-      child: InkWell(
-        onTap: _showDependentSheet,
-        borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            children: [
-              const Icon(Icons.person, color: Color(0xFF60A5FA), size: 20),
-              const SizedBox(width: 10),
-              Expanded(child: Text(dep?.nombre ?? 'Sin seleccionar', style: const TextStyle(color: AppColors.textPrimary, fontSize: 14))),
               const Icon(Icons.expand_more, color: AppColors.textSecondary, size: 20),
             ],
           ),
@@ -445,9 +419,9 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
                     child: Container(
                       margin: const EdgeInsets.all(3),
                       decoration: isSelected
-                          ? const BoxDecoration(shape: BoxShape.circle, gradient: RadialGradient(colors: [Color(0xFFFFD700), AppColors.accent]))
+                          ? const BoxDecoration(shape: BoxShape.circle, gradient: RadialGradient(colors: [Color(0xFFFF8A8A), AppColors.error]))
                           : const BoxDecoration(color: AppColors.background, shape: BoxShape.circle),
-                      child: Center(child: Text('$day', style: TextStyle(color: isSelected ? Colors.black : AppColors.textPrimary, fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500))),
+                      child: Center(child: Text('$day', style: TextStyle(color: isSelected ? Colors.white : AppColors.textPrimary, fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500))),
                     ),
                   ),
                 );
@@ -491,7 +465,6 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
   Widget _buildCategoryCard(CategoriaModel cat) {
     final isSelected = _idCategoria == cat.id;
     final icon = _getIconForCategory(cat.nombre);
-    final color = _getColorForCategory(cat.nombre);
     return GestureDetector(
       onTap: () { setState(() => _idCategoria = cat.id); Navigator.pop(context); },
       child: Container(
@@ -499,12 +472,12 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
         decoration: BoxDecoration(
           color: AppColors.background,
           borderRadius: BorderRadius.circular(18),
-          border: isSelected ? Border.all(color: AppColors.accent.withValues(alpha: 0.6), width: 1.5) : null,
+          border: isSelected ? Border.all(color: AppColors.error.withValues(alpha: 0.6), width: 1.5) : null,
           boxShadow: const [BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 8)],
         ),
         child: Row(
           children: [
-            Container(width: 44, height: 44, decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: color, size: 22)),
+            Container(width: 44, height: 44, decoration: BoxDecoration(color: AppColors.error.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: AppColors.error, size: 22)),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -521,70 +494,21 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
     );
   }
 
-  Widget _buildDependentSheet() {
-    return Container(
-      decoration: const BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.navInactive, borderRadius: BorderRadius.circular(2)))),
-            const SizedBox(height: 16),
-            const Text('Seleccionar dependiente', style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            ListView.separated(
-              shrinkWrap: true,
-              itemCount: _listaDependientes.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 12),
-              itemBuilder: (context, index) => _buildDependentCard(_listaDependientes[index]),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDependentCard(DependienteModel dep) {
-    final isSelected = _idDependiente == dep.id;
+  Widget _buildGuardarButton() {
     return GestureDetector(
-      onTap: () { setState(() => _idDependiente = dep.id); Navigator.pop(context); },
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          borderRadius: BorderRadius.circular(18),
-          border: isSelected ? Border.all(color: AppColors.accent.withValues(alpha: 0.6), width: 1.5) : null,
-          boxShadow: const [BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 8)],
-        ),
-        child: Row(
-          children: [
-            Container(width: 44, height: 44, decoration: const BoxDecoration(color: Color(0xFF60A5FA), shape: BoxShape.circle), child: const Icon(Icons.person, color: Colors.white, size: 22)),
-            const SizedBox(width: 14),
-            Text(dep.nombre, style: const TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCrearButton() {
-    return GestureDetector(
-      onTap: _isSaving ? null : _crearGasto,
+      onTap: _isSaving ? null : _guardar,
       child: Container(
         width: double.infinity,
         height: 56,
         decoration: BoxDecoration(
-          gradient: const LinearGradient(colors: [Color(0xFFFFD700), Color(0xFFFF8C00)]),
+          gradient: const LinearGradient(colors: [Color(0xFFFF8A8A), AppColors.error]),
           borderRadius: BorderRadius.circular(28),
-          boxShadow: [BoxShadow(color: AppColors.accent.withValues(alpha: 0.4), blurRadius: 20)],
+          boxShadow: [BoxShadow(color: AppColors.error.withValues(alpha: 0.4), blurRadius: 20)],
         ),
         child: Center(
           child: _isSaving
-              ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
-              : Text(widget.gastoParaEditar != null ? 'Guardar cambios' : 'Crear gasto', style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
+              ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+              : Text(widget.imprevistoParaEditar != null ? 'Guardar cambios' : 'Registrar imprevisto', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
         ),
       ),
     );
@@ -604,25 +528,13 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
 
   IconData _getIconForCategory(String nombre) {
     switch (nombre) {
-      case 'Alimentación': return Icons.restaurant;
-      case 'Transporte': return Icons.directions_bus;
       case 'Salud': return Icons.medical_services;
-      case 'Educación': return Icons.school;
-      case 'Entretenimiento': return Icons.movie;
-      case 'Servicios': return Icons.home;
-      default: return Icons.shopping_cart;
-    }
-  }
-
-  Color _getColorForCategory(String nombre) {
-    switch (nombre) {
-      case 'Alimentación': return const Color(0xFFA8A2FF);
-      case 'Transporte': return const Color(0xFF60A5FA);
-      case 'Salud': return const Color(0xFFFF6B6B);
-      case 'Educación': return const Color(0xFF4ADE80);
-      case 'Entretenimiento': return const Color(0xFFC084FC);
-      case 'Servicios': return const Color(0xFFFF8C4A);
-      default: return AppColors.accent;
+      case 'Hogar': return Icons.home_repair_service;
+      case 'Vehículo': return Icons.directions_car;
+      case 'Emergencia': return Icons.emergency;
+      case 'Mascota': return Icons.pets;
+      case 'Otros': return Icons.report_problem;
+      default: return Icons.warning_amber_rounded;
     }
   }
 }

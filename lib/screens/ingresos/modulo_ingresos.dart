@@ -1,16 +1,18 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../core/theme/design_tokens.dart';
 import '../../models/ingreso_model.dart';
 import '../../services/ingresos_service.dart';
 import '../../services/gastos_service.dart';
 import '../../services/widget_service.dart';
-import '../../services/voice_parser_ingreso_service.dart';
+import '../../services/local_parser_service.dart';
 import 'agregar_ingreso_screen.dart';
 
 class ModuloIngresos extends StatefulWidget {
-  const ModuloIngresos({super.key});
+  final stt.SpeechToText? speechInstance;
+  const ModuloIngresos({super.key, this.speechInstance});
 
   @override
   State<ModuloIngresos> createState() => _ModuloIngresosState();
@@ -72,7 +74,7 @@ class _ModuloIngresosState extends State<ModuloIngresos>
   @override
   void initState() {
     super.initState();
-    _speech = stt.SpeechToText();
+    _speech = widget.speechInstance ?? stt.SpeechToText();
     _menuController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 350),
@@ -146,13 +148,7 @@ class _ModuloIngresosState extends State<ModuloIngresos>
         context,
         MaterialPageRoute(builder: (context) => const AgregarIngresoScreen()),
       );
-
-      if (resultado != null) {
-        setState(() {
-          _ingresos.insert(0, resultado);
-        });
-        _updateWidget();
-      }
+      if (resultado != null) _loadIngresos();
     }
     if (metodo == 'Registro por voz') {
       _startListening();
@@ -160,28 +156,13 @@ class _ModuloIngresosState extends State<ModuloIngresos>
   }
 
   void _startListening() async {
-    bool available = await _speech.initialize(
-      onStatus: (val) {
-        if (val == 'notListening' || val == 'done') {
-          if (mounted && _isListening) {
-            _stopListeningAndProcess();
-          } else if (mounted && _isModalShowing && _lastWords.isEmpty) {
-            _closeVoiceModal();
-          }
-        }
-      },
-      onError: (val) {
-        if (mounted) {
-          setState(() {
-            _isListening = false;
-            _isProcessing = false;
-          });
-          _closeVoiceModal();
-        }
-      },
-    );
+    var status = await Permission.microphone.request();
+    if (!status.isGranted) return;
 
-    if (!mounted) return;
+    bool available = await _speech.initialize(
+      onStatus: (val) => debugPrint('Speech Status: $val'),
+      onError: (val) => debugPrint('Speech Error: $val'),
+    );
 
     if (available) {
       setState(() {
@@ -190,23 +171,6 @@ class _ModuloIngresosState extends State<ModuloIngresos>
         _lastWords = '';
       });
       _showVoiceModal();
-      _speech.listen(
-        onResult: (val) => setState(() {
-          _lastWords = val.recognizedWords;
-        }),
-        listenOptions: stt.SpeechListenOptions(
-          localeId: 'es_CO',
-          listenFor: const Duration(seconds: 30),
-          pauseFor: const Duration(seconds: 3),
-          partialResults: true,
-          cancelOnError: true,
-          listenMode: stt.ListenMode.confirmation,
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('El reconocimiento de voz no está disponible')),
-      );
     }
   }
 
@@ -217,38 +181,37 @@ class _ModuloIngresosState extends State<ModuloIngresos>
     }
   }
 
-  void _stopListeningAndProcess() {
-    setState(() => _isListening = false);
+  void _stopListeningAndProcess([StateSetter? setModalState]) async {
+    if (mounted) {
+      if (setModalState != null) {
+        setModalState(() {
+          _isListening = false;
+          _isProcessing = true;
+        });
+      }
+      setState(() {
+        _isListening = false;
+        _isProcessing = true;
+      });
+    }
+
+    await _speech.stop();
+    await Future.delayed(const Duration(milliseconds: 600));
 
     if (_lastWords.isNotEmpty) {
-      setState(() => _isProcessing = true);
-      Future.delayed(const Duration(milliseconds: 400), () {
-        if (mounted) {
-          _closeVoiceModal();
-          _processVoiceResult(_lastWords);
-          setState(() => _isProcessing = false);
-        }
-      });
+      final IngresoModel parsedIngreso = LocalParserService.parseIngreso(_lastWords);
+      if (mounted) {
+        _closeVoiceModal();
+        setState(() => _isProcessing = false);
+        final resultado = await Navigator.push<IngresoModel>(
+          context,
+          MaterialPageRoute(builder: (context) => AgregarIngresoScreen(ingresoParaEditar: parsedIngreso)),
+        );
+        if (resultado != null) _loadIngresos();
+      }
     } else {
       _closeVoiceModal();
-    }
-  }
-
-  void _processVoiceResult(String text) async {
-    final IngresoModel parsedIngreso = VoiceParserIngresoService.parse(text);
-
-    final resultado = await Navigator.push<IngresoModel>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AgregarIngresoScreen(ingresoParaEditar: parsedIngreso),
-      ),
-    );
-
-    if (resultado != null) {
-      setState(() {
-        _ingresos.insert(0, resultado);
-      });
-      _updateWidget();
+      if (mounted) setState(() => _isProcessing = false);
     }
   }
 
@@ -261,48 +224,69 @@ class _ModuloIngresosState extends State<ModuloIngresos>
       barrierColor: Colors.transparent,
       transitionDuration: const Duration(milliseconds: 250),
       pageBuilder: (context, animation, secondaryAnimation) {
-        return AnimatedBuilder(
-          animation: animation,
-          builder: (context, _) {
-            final t = Curves.easeOut.transform(animation.value);
-            return Stack(
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    _speech.stop();
-                    _closeVoiceModal();
-                  },
-                  child: Container(color: Colors.black.withValues(alpha: 0.45 * t)),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            if (_isListening && !_speech.isListening) {
+              _speech.listen(
+                onResult: (val) {
+                  if (mounted) {
+                    setModalState(() => _lastWords = val.recognizedWords);
+                    setState(() => _lastWords = val.recognizedWords);
+                  }
+                },
+                listenOptions: stt.SpeechListenOptions(
+                  localeId: 'es_CO',
+                  cancelOnError: true,
+                  listenMode: stt.ListenMode.dictation,
+                  listenFor: const Duration(minutes: 20),
+                  pauseFor: const Duration(minutes: 5),
                 ),
-                Positioned.fill(
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 10 * t, sigmaY: 10 * t),
-                    child: const SizedBox.expand(),
-                  ),
-                ),
-                Center(
-                  child: Opacity(
-                    opacity: t,
-                    child: Transform.scale(
-                      scale: 0.9 + 0.1 * t,
-                      child: Material(
-                        type: MaterialType.transparency,
-                        child: _buildVoiceCard(),
+              );
+            }
+
+            return AnimatedBuilder(
+              animation: animation,
+              builder: (context, _) {
+                final t = Curves.easeOut.transform(animation.value);
+                return Stack(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        _speech.stop();
+                        _closeVoiceModal();
+                      },
+                      child: Container(color: Colors.black.withValues(alpha: 0.45 * t)),
+                    ),
+                    Positioned.fill(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 10 * t, sigmaY: 10 * t),
+                        child: const SizedBox.expand(),
                       ),
                     ),
-                  ),
-                ),
-              ],
+                    Center(
+                      child: Opacity(
+                        opacity: t,
+                        child: Transform.scale(
+                          scale: 0.9 + 0.1 * t,
+                          child: Material(
+                            type: MaterialType.transparency,
+                            child: _buildVoiceCard(setModalState),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             );
-          },
+          }
         );
       },
     );
   }
 
-  Widget _buildVoiceCard() {
-    String mainText = 'Escuchando tu voz...';
-    if (_isProcessing) mainText = 'Detectando audio…';
+  Widget _buildVoiceCard(StateSetter setModalState) {
+    String mainText = _isListening ? 'Escuchando...' : 'Procesando...';
 
     return Container(
       width: double.infinity,
@@ -325,6 +309,8 @@ class _ModuloIngresosState extends State<ModuloIngresos>
           _VoicePulseButton(
             isListening: _isListening,
             isProcessing: _isProcessing,
+            onTap: () => _stopListeningAndProcess(setModalState),
+            onLongPressEnd: () => _stopListeningAndProcess(setModalState),
           ),
           const SizedBox(height: 22),
           Text(
@@ -335,6 +321,14 @@ class _ModuloIngresosState extends State<ModuloIngresos>
               fontWeight: FontWeight.bold,
             ),
           ),
+          if (_isListening)
+            const Padding(
+              padding: EdgeInsets.only(top: 4),
+              child: Text(
+                'Toca el botón para detener',
+                style: TextStyle(color: Color(0xFF4ADE80), fontSize: 12, fontWeight: FontWeight.w500),
+              ),
+            ),
           const SizedBox(height: 12),
           if (_lastWords.isNotEmpty)
             Container(
@@ -349,35 +343,12 @@ class _ModuloIngresosState extends State<ModuloIngresos>
                 style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontStyle: FontStyle.italic),
               ),
             )
-          else if (!_isProcessing)
-            RichText(
+          else if (_isListening)
+            const Text(
+              'Di algo como: "Recibí un millón de pesos"',
               textAlign: TextAlign.center,
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                    text: 'Di algo como: ',
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-                  ),
-                  const TextSpan(
-                    text: '"Recibí un millón de pesos de salario"',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
             ),
-          const SizedBox(height: 18),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 10),
-            child: Text(
-              'Ahorrapp puede cometer errores. Verifica siempre la información antes de guardar.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.error, fontSize: 10, fontWeight: FontWeight.w600),
-            ),
-          ),
           const SizedBox(height: 20),
           if (!_isProcessing)
             GestureDetector(
@@ -385,23 +356,9 @@ class _ModuloIngresosState extends State<ModuloIngresos>
                 _speech.stop();
                 _closeVoiceModal();
               },
-              child: Container(
-                width: double.infinity,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: const [
-                    BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 8),
-                    BoxShadow(color: Color(0xFF1A1D3A), offset: Offset(-3, -3), blurRadius: 8),
-                  ],
-                ),
-                child: const Center(
-                  child: Text(
-                    'Cancelar',
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w600),
-                  ),
-                ),
+              child: const Text(
+                'Cancelar',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w600),
               ),
             ),
         ],
@@ -435,7 +392,6 @@ class _ModuloIngresosState extends State<ModuloIngresos>
                 ],
               ),
             ),
-
             Positioned.fill(
               child: IgnorePointer(
                 ignoring: !_isMenuOpen,
@@ -454,7 +410,6 @@ class _ModuloIngresosState extends State<ModuloIngresos>
                 ),
               ),
             ),
-
             Positioned(
               right: 20,
               bottom: 20,
@@ -521,14 +476,7 @@ class _ModuloIngresosState extends State<ModuloIngresos>
               onTap: onTap,
               child: Container(
                 width: 50, height: 50,
-                decoration: const BoxDecoration(
-                  color: AppColors.surface,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 8),
-                    BoxShadow(color: Color(0xFF1A1D3A), offset: Offset(-3, -3), blurRadius: 8),
-                  ],
-                ),
+                decoration: const BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
                 child: Icon(icon, color: const Color(0xFF4ADE80), size: 22),
               ),
             ),
@@ -546,10 +494,6 @@ class _ModuloIngresosState extends State<ModuloIngresos>
         shape: BoxShape.circle,
         gradient: const RadialGradient(colors: [Color(0xFF4ADE80), Color(0xFF34D399)]),
         border: Border.all(color: Colors.white.withValues(alpha: _isMenuOpen ? 0.9 : 0), width: 2),
-        boxShadow: [
-          BoxShadow(color: const Color(0xFF4ADE80).withValues(alpha: 0.4), blurRadius: 20, spreadRadius: 2),
-          BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -635,37 +579,18 @@ class _ModuloIngresosState extends State<ModuloIngresos>
     for (var i in _filteredIngresos) {
       totalIngresos += i.monto;
     }
-
     return _NeumorphicContainer(
       borderRadius: 24,
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'TOTAL INGRESOS',
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1),
-          ),
+          const Text('TOTAL INGRESOS', style: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1)),
           const SizedBox(height: 8),
           Row(
             children: [
-              Expanded(
-                child: Text(
-                  _formatCurrency(totalIngresos),
-                  style: const TextStyle(color: Color(0xFF4ADE80), fontSize: 32, fontWeight: FontWeight.bold),
-                ),
-              ),
+              Expanded(child: Text(_formatCurrency(totalIngresos), style: const TextStyle(color: Color(0xFF4ADE80), fontSize: 32, fontWeight: FontWeight.bold))),
               const Icon(Icons.trending_up, color: Color(0xFF4ADE80), size: 32),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text('${_mesesNom[_selectedDate.month - 1]} ${_selectedDate.year}', style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Tendencia positiva', style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
-              Text('${_filteredIngresos.length} registros', style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
             ],
           ),
         ],
@@ -686,90 +611,29 @@ class _ModuloIngresosState extends State<ModuloIngresos>
   Widget _buildIngresosList() {
     if (_isLoading) return const Center(child: Padding(padding: EdgeInsets.only(top: 40), child: CircularProgressIndicator(color: Color(0xFF4ADE80))));
     final filtered = _filteredIngresos.reversed.toList();
-    if (filtered.isEmpty) {
-      return Center(child: Padding(padding: const EdgeInsets.only(top: 40), child: Column(children: [
-        Icon(Icons.receipt_long, color: AppColors.textSecondary.withValues(alpha: 0.3), size: 64),
-        const SizedBox(height: 16),
-        Text('No hay ingresos en ${_mesesNom[_selectedDate.month - 1]}', style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
-      ])));
-    }
+    if (filtered.isEmpty) return Center(child: Padding(padding: const EdgeInsets.only(top: 40), child: Column(children: [Icon(Icons.receipt_long, color: AppColors.textSecondary.withValues(alpha: 0.3), size: 64), const SizedBox(height: 16), const Text('No hay ingresos registrados', style: TextStyle(color: AppColors.textSecondary, fontSize: 14))])));
     return Column(children: List.generate(filtered.length, (index) => Padding(padding: const EdgeInsets.only(bottom: 14), child: _buildIngresoCard(filtered[index], index))));
   }
 
   Widget _buildIngresoCard(IngresoModel ingreso, int index) {
     final isExpanded = _expandedIndex == index;
-
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _expandedIndex = isExpanded ? null : index;
-        });
-      },
+      onTap: () => setState(() => _expandedIndex = isExpanded ? null : index),
       child: _NeumorphicContainer(
         borderRadius: 22,
         padding: const EdgeInsets.all(0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: ingreso.color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      ingreso.icono,
-                      color: ingreso.color,
-                      size: 24,
-                    ),
-                  ),
+                  Container(width: 44, height: 44, decoration: BoxDecoration(color: ingreso.color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)), child: Icon(ingreso.icono, color: ingreso.color, size: 24)),
                   const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          ingreso.titulo,
-                          style: const TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          ingreso.subtitulo,
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Text(
-                    '+${_formatCurrency(ingreso.monto)}',
-                    style: const TextStyle(
-                      color: Color(0xFF4ADE80),
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(ingreso.titulo, style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)), const SizedBox(height: 4), Text(ingreso.subtitulo, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12))])),
+                  Text('+${_formatCurrency(ingreso.monto)}', style: const TextStyle(color: Color(0xFF4ADE80), fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(width: 8),
-                  AnimatedRotation(
-                    turns: isExpanded ? 0.5 : 0.0,
-                    duration: const Duration(milliseconds: 200),
-                    child: const Icon(
-                      Icons.expand_more,
-                      color: AppColors.textSecondary,
-                      size: 20,
-                    ),
-                  ),
+                  AnimatedRotation(turns: isExpanded ? 0.5 : 0.0, duration: const Duration(milliseconds: 200), child: const Icon(Icons.expand_more, color: AppColors.textSecondary, size: 20)),
                 ],
               ),
             ),
@@ -779,63 +643,18 @@ class _ModuloIngresosState extends State<ModuloIngresos>
                 padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
                 child: Column(
                   children: [
-                    Row(
-                      children: [
-                        _buildDetailItem('CATEGORÍA', ingreso.titulo),
-                        _buildDetailItem('FECHA', '${ingreso.fechaRegistro.day.toString().padLeft(2, '0')}/${ingreso.fechaRegistro.month.toString().padLeft(2, '0')}/${ingreso.fechaRegistro.year}'),
-                      ],
-                    ),
+                    Row(children: [_buildDetailItem('CATEGORÍA', ingreso.titulo), _buildDetailItem('FECHA', '${ingreso.fechaRegistro.day.toString().padLeft(2, '0')}/${ingreso.fechaRegistro.month.toString().padLeft(2, '0')}/${ingreso.fechaRegistro.year}')]),
                     const SizedBox(height: 18),
-                    Row(
-                      children: [
-                        _buildDetailItem('FUENTE', ingreso.fuente ?? 'No especificada'),
-                        _buildDetailItem('MONTO', '+${_formatCurrency(ingreso.monto)}', color: const Color(0xFF4ADE80)),
-                      ],
-                    ),
-                    if (ingreso.descripcion != null && ingreso.descripcion!.isNotEmpty) ...[
-                      const SizedBox(height: 18),
-                      Row(
-                        children: [
-                          _buildDetailItem('DESCRIPCIÓN', ingreso.descripcion!),
-                        ],
-                      ),
-                    ],
+                    Row(children: [_buildDetailItem('FUENTE', ingreso.fuente ?? 'No especificada'), _buildDetailItem('MONTO', '+${_formatCurrency(ingreso.monto)}', color: const Color(0xFF4ADE80))]),
                     const SizedBox(height: 24),
                     Row(
                       children: [
-                        Expanded(
-                          child: _buildActionButton(
-                            label: 'Editar',
-                            icon: Icons.edit_outlined,
-                            color: const Color(0xFF4ADE80),
-                            onTap: () async {
-                              final resultado = await Navigator.push<IngresoModel>(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => AgregarIngresoScreen(ingresoParaEditar: ingreso),
-                                ),
-                              );
-
-                              if (resultado != null) {
-                                setState(() {
-                                  final idx = _ingresos.indexWhere((i) => i.id == ingreso.id);
-                                  if (idx != -1) _ingresos[idx] = resultado;
-                                  _expandedIndex = null;
-                                });
-                                _updateWidget();
-                              }
-                            },
-                          ),
-                        ),
+                        Expanded(child: _buildActionButton(label: 'Editar', icon: Icons.edit_outlined, color: const Color(0xFF4ADE80), onTap: () async {
+                          final resultado = await Navigator.push<IngresoModel>(context, MaterialPageRoute(builder: (context) => AgregarIngresoScreen(ingresoParaEditar: ingreso)));
+                          if (resultado != null) _loadIngresos();
+                        })),
                         const SizedBox(width: 16),
-                        Expanded(
-                          child: _buildActionButton(
-                            label: 'Eliminar',
-                            icon: Icons.delete_outline,
-                            color: AppColors.error,
-                            onTap: () => _mostrarConfirmacion(ingreso),
-                          ),
-                        ),
+                        Expanded(child: _buildActionButton(label: 'Eliminar', icon: Icons.delete_outline, color: AppColors.error, onTap: () => _mostrarConfirmacion(ingreso))),
                       ],
                     ),
                   ],
@@ -858,26 +677,18 @@ class _ModuloIngresosState extends State<ModuloIngresos>
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: const Text('Confirmar eliminación', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
           content: const Text('¿Seguro de que quieres eliminar este ingreso?', style: TextStyle(color: AppColors.textSecondary), textAlign: TextAlign.center),
-          actionsAlignment: MainAxisAlignment.center,
           actions: [
             TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary))),
-            const SizedBox(width: 8),
             ElevatedButton(
               onPressed: () async {
                 if (ingreso.id != null) {
                   final success = await IngresosService.eliminarIngreso(ingreso.id!);
-                  if (success) {
-                    setState(() {
-                      _ingresos.removeWhere((i) => i.id == ingreso.id);
-                      _expandedIndex = null;
-                    });
-                    _updateWidget();
-                  }
+                  if (success) _loadIngresos();
                 }
                 if (context.mounted) Navigator.pop(context);
               },
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.error.withValues(alpha: 0.2), foregroundColor: AppColors.error, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: const BorderSide(color: AppColors.error, width: 1))),
-              child: const Text('Eliminar', style: TextStyle(fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.error.withValues(alpha: 0.2), foregroundColor: AppColors.error, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              child: const Text('Eliminar'),
             ),
           ],
         ),
@@ -886,30 +697,26 @@ class _ModuloIngresosState extends State<ModuloIngresos>
   }
 
   Widget _buildDetailItem(String label, String value, {Color? color}) {
-    return Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
-      const SizedBox(height: 5),
-      Text(value, style: TextStyle(color: color ?? AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
-    ]));
+    return Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5)), const SizedBox(height: 5), Text(value, style: TextStyle(color: color ?? AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis)]));
   }
 
   Widget _buildActionButton({required String label, required IconData icon, required Color color, required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 48, decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(14), border: Border.all(color: color.withValues(alpha: 0.4), width: 1), boxShadow: const [BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 6), BoxShadow(color: Color(0xFF1A1D3A), offset: Offset(-3, -3), blurRadius: 6)]),
-        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(icon, color: color, size: 18), const SizedBox(width: 8), Text(label, style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.bold))]),
-      ),
-    );
+    return GestureDetector(onTap: onTap, child: Container(height: 48, decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(14), border: Border.all(color: color.withValues(alpha: 0.4), width: 1)), child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(icon, color: color, size: 18), const SizedBox(width: 8), Text(label, style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.bold))])));
   }
 }
-
-// ---------- BOTÓN DE MICRÓFONO CON ANILLOS PULSANTES ----------
 
 class _VoicePulseButton extends StatefulWidget {
   final bool isListening;
   final bool isProcessing;
-  const _VoicePulseButton({required this.isListening, required this.isProcessing});
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPressEnd;
+
+  const _VoicePulseButton({
+    required this.isListening,
+    required this.isProcessing,
+    this.onTap,
+    this.onLongPressEnd,
+  });
 
   @override
   State<_VoicePulseButton> createState() => _VoicePulseButtonState();
@@ -918,74 +725,49 @@ class _VoicePulseButton extends StatefulWidget {
 class _VoicePulseButtonState extends State<_VoicePulseButton>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
-
   @override
   void initState() {
     super.initState();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat();
+    _pulseController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))..repeat();
   }
-
   @override
-  void dispose() {
-    _pulseController.dispose();
-    super.dispose();
-  }
-
+  void dispose() { _pulseController.dispose(); super.dispose(); }
   @override
   Widget build(BuildContext context) {
     if (widget.isProcessing) {
-      return SizedBox(
-        width: 150, height: 150,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            const SizedBox(width: 80, height: 80, child: CircularProgressIndicator(color: Color(0xFF4ADE80), strokeWidth: 3)),
-            Container(width: 60, height: 60, decoration: const BoxDecoration(color: AppColors.surface, shape: BoxShape.circle), child: const Icon(Icons.auto_awesome, color: Color(0xFF4ADE80), size: 28)),
-          ],
-        ),
-      );
+      return SizedBox(width: 150, height: 150, child: Stack(alignment: Alignment.center, children: [const CircularProgressIndicator(color: Color(0xFF4ADE80)), Container(width: 60, height: 60, decoration: const BoxDecoration(color: AppColors.surface, shape: BoxShape.circle), child: const Icon(Icons.auto_awesome, color: Color(0xFF4ADE80), size: 28))]));
     }
-
-    return AnimatedScale(
-      scale: widget.isListening ? 0.9 : 1.0,
-      duration: const Duration(milliseconds: 150),
-      child: SizedBox(
-        width: 150, height: 150,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            if (widget.isListening)
-              ...List.generate(3, (i) {
-                return AnimatedBuilder(
-                  animation: _pulseController,
-                  builder: (context, child) {
-                    final t = (_pulseController.value + i * 0.33) % 1.0;
-                    final scale = 1.0 + 0.8 * t;
-                    final opacity = (1 - t) * 0.5;
-                    return Transform.scale(
-                      scale: scale,
-                      child: Container(width: 96, height: 96, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFF4ADE80).withValues(alpha: opacity), width: 2))),
-                    );
-                  },
-                );
-              }),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 96, height: 96,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(colors: widget.isListening ? [const Color(0xFFD1FAE5), const Color(0xFF4ADE80)] : [const Color(0xFF4ADE80), const Color(0xFF34D399)]),
-                boxShadow: [
-                  BoxShadow(color: const Color(0xFF4ADE80).withValues(alpha: widget.isListening ? 0.6 : 0.4), blurRadius: widget.isListening ? 35 : 25, spreadRadius: widget.isListening ? 4 : 2),
-                  BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4)),
-                ],
+    return GestureDetector(
+      onTap: widget.onTap,
+      onLongPressEnd: (_) => widget.onLongPressEnd?.call(),
+      child: AnimatedScale(
+        scale: widget.isListening ? 0.9 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        child: SizedBox(
+          width: 150, height: 150,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              if (widget.isListening)
+                ...List.generate(3, (i) {
+                  return AnimatedBuilder(
+                    animation: _pulseController,
+                    builder: (context, child) {
+                      final t = (_pulseController.value + i * 0.33) % 1.0;
+                      final scale = 1.0 + 0.8 * t;
+                      final opacity = (1 - t) * 0.5;
+                      return Transform.scale(scale: scale, child: Container(width: 96, height: 96, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.error.withValues(alpha: opacity), width: 2))));
+                    },
+                  );
+                }),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 96, height: 96,
+                decoration: BoxDecoration(shape: BoxShape.circle, gradient: RadialGradient(colors: widget.isListening ? [const Color(0xFFFF8A8A), AppColors.error] : [const Color(0xFF4ADE80), const Color(0xFF34D399)])),
+                child: Icon(widget.isListening ? Icons.stop : Icons.mic, color: widget.isListening ? Colors.white : Colors.black, size: 40),
               ),
-              child: Icon(widget.isListening ? Icons.mic : Icons.mic_none, color: Colors.black, size: 40),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1010,9 +792,6 @@ class _NeumorphicIcon extends StatelessWidget {
   const _NeumorphicIcon({required this.icon, required this.size, required this.onTap});
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(width: 40, height: 40, decoration: const BoxDecoration(color: AppColors.background, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 8), BoxShadow(color: Color(0xFF1A1D3A), offset: Offset(-3, -3), blurRadius: 8)]), child: Icon(icon, color: AppColors.textSecondary, size: size)),
-    );
+    return GestureDetector(onTap: onTap, child: Container(width: 40, height: 40, decoration: const BoxDecoration(color: AppColors.background, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 8), BoxShadow(color: Color(0xFF1A1D3A), offset: Offset(-3, -3), blurRadius: 8)]), child: Icon(icon, color: AppColors.textSecondary, size: size)));
   }
 }
