@@ -33,6 +33,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.4"
+<<<<<<< HEAD
   archive:
     dependency: transitive
     description:
@@ -41,6 +42,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.2.0"
+=======
+>>>>>>> 957670e35c327a6ac6e8a999a0f93100740c316d
   args:
     dependency: transitive
     description:
@@ -121,6 +124,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.2"
+<<<<<<< HEAD
   cross_file:
     dependency: transitive
     description:
@@ -129,6 +133,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.3.5+5"
+=======
+>>>>>>> 957670e35c327a6ac6e8a999a0f93100740c316d
   crypto:
     dependency: transitive
     description:
@@ -153,6 +159,17 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.4.1"
+<<<<<<< HEAD
+=======
+  equatable:
+    dependency: transitive
+    description:
+      name: equatable
+      sha256: "3bce007a596ff8b3119c45d68aaef631272537c03d30e5d4534dd24bf4c5eaa2"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.0"
+>>>>>>> 957670e35c327a6ac6e8a999a0f93100740c316d
   fake_async:
     dependency: transitive
     description:
@@ -177,6 +194,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.1"
+<<<<<<< HEAD
   file_selector_linux:
     dependency: transitive
     description:
@@ -209,6 +227,16 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.9.3+6"
+=======
+  fl_chart:
+    dependency: "direct main"
+    description:
+      name: fl_chart
+      sha256: d0f0d49112f2f4b192481c16d05b6418bd7820e021e265a3c22db98acf7ed7fb
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.68.0"
+>>>>>>> 957670e35c327a6ac6e8a999a0f93100740c316d
   flutter:
     dependency: "direct main"
     description: flutter
@@ -230,6 +258,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.0.0"
+<<<<<<< HEAD
   flutter_plugin_android_lifecycle:
     dependency: transitive
     description:
@@ -238,6 +267,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.35"
+=======
+>>>>>>> 957670e35c327a6ac6e8a999a0f93100740c316d
   flutter_secure_storage:
     dependency: "direct main"
     description:
@@ -320,6 +351,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.0"
+<<<<<<< HEAD
   home_widget:
     dependency: "direct main"
     description:
@@ -328,6 +360,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.9.3"
+=======
+>>>>>>> 957670e35c327a6ac6e8a999a0f93100740c316d
   hooks:
     dependency: transitive
     description:
@@ -352,6 +386,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.1.2"
+<<<<<<< HEAD
   image:
     dependency: transitive
     description:
@@ -424,6 +459,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.2"
+=======
+>>>>>>> 957670e35c327a6ac6e8a999a0f93100740c316d
   intl:
     dependency: "direct main"
     description:
@@ -444,10 +481,17 @@ packages:
     dependency: transitive
     description:
       name: jni_flutter
+<<<<<<< HEAD
       sha256: "7b717011ea40d04fd47c2731d3d1d36eb99eba3435c2753d62489e8c3c9991d5"
       url: "https://pub.dev"
     source: hosted
     version: "1.0.2"
+=======
+      sha256: b2310cdd4c18c65c081ab141a41efa94aa26c65431803703ece51996f174f351
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.3"
+>>>>>>> 957670e35c327a6ac6e8a999a0f93100740c316d
   jni_util:
     dependency: transitive
     description:
@@ -504,6 +548,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.1.0"
+<<<<<<< HEAD
   local_auth:
     dependency: "direct main"
     description:
@@ -544,6 +589,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.11"
+=======
+>>>>>>> 957670e35c327a6ac6e8a999a0f93100740c316d
   logging:
     dependency: transitive
     description:
@@ -584,6 +631,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.0"
+<<<<<<< HEAD
   mobile_scanner:
     dependency: "direct main"
     description:
@@ -608,6 +656,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.0"
+=======
+>>>>>>> 957670e35c327a6ac6e8a999a0f93100740c316d
   objective_c:
     dependency: transitive
     description:
@@ -688,6 +738,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.0"
+<<<<<<< HEAD
   permission_handler:
     dependency: "direct main"
     description:
@@ -736,14 +787,23 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.2"
+=======
+>>>>>>> 957670e35c327a6ac6e8a999a0f93100740c316d
   platform:
     dependency: transitive
     description:
       name: platform
+<<<<<<< HEAD
       sha256: "5d6b1b0036a5f331ebc77c850ebc8506cbc1e9416c27e59b439f917a902a4984"
       url: "https://pub.dev"
     source: hosted
     version: "3.1.6"
+=======
+      sha256: a36d119c13416516a7b5913fbe8af8531e11633d784c550b2125f76c758524ec
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.2.0"
+>>>>>>> 957670e35c327a6ac6e8a999a0f93100740c316d
   plugin_platform_interface:
     dependency: transitive
     description:
@@ -760,6 +820,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.0"
+<<<<<<< HEAD
   posix:
     dependency: transitive
     description:
@@ -768,6 +829,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.5.2"
+=======
+>>>>>>> 957670e35c327a6ac6e8a999a0f93100740c316d
   postgrest:
     dependency: transitive
     description:
@@ -776,6 +839,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.9.1"
+<<<<<<< HEAD
   provider:
     dependency: "direct main"
     description:
@@ -784,6 +848,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.1.5+1"
+=======
+>>>>>>> 957670e35c327a6ac6e8a999a0f93100740c316d
   pub_semver:
     dependency: transitive
     description:
@@ -1134,5 +1200,9 @@ packages:
     source: hosted
     version: "2.1.1"
 sdks:
+<<<<<<< HEAD
   dart: ">=3.12.0 <4.0.0"
+=======
+  dart: ">=3.12.2 <4.0.0"
+>>>>>>> 957670e35c327a6ac6e8a999a0f93100740c316d
   flutter: ">=3.44.0"

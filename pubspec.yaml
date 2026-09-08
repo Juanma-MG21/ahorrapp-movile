@@ -17,6 +17,7 @@ dependencies:
   mobile_scanner: ^5.2.3
   image_picker: ^1.1.2
   cupertino_icons: ^1.0.8
+<<<<<<< HEAD
   speech_to_text: ^7.0.0
   permission_handler: ^11.3.1
   home_widget: ^0.9.3
@@ -25,6 +26,13 @@ dependencies:
   local_auth: ^2.3.0
   provider: ^6.1.5+1
 
+=======
+  fl_chart: ^0.68.0
+  intl: ^0.20.3
+  http: ^1.2.0
+  flutter_secure_storage: ^9.2.2
+  supabase_flutter: ^2.17.2
+>>>>>>> 957670e35c327a6ac6e8a999a0f93100740c316d
 dev_dependencies:
   flutter_test:
     sdk: flutter
