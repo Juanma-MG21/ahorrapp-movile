@@ -9,7 +9,6 @@ import 'screens/auth/biometric_access_screen.dart';
 import 'screens/auth/fast_login_screen.dart';
 import 'screens/main_screen.dart';
 import 'screens/auth/auth_gate.dart';
-import 'screens/home/home_screen.dart';
 import 'screens/gastos/modulo_gastos.dart';
 
 class AhorrApp extends StatelessWidget {
