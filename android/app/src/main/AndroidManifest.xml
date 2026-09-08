@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
 
@@ -55,26 +56,23 @@
                 android:resource="@xml/small_widget_info" />
         </receiver>
 
-        <receiver android:name=".AhorrAppMediumWidgetProvider"
-            android:exported="true">
+        <receiver android:name=".AhorrAppMediumWidgetProvider" android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data android:name="android.appwidget.provider"
                 android:resource="@xml/medium_widget_info" />
         </receiver>
-
     </application>
+    <!-- Required to query activities that can process text, see:
+         https://developer.android.com/training/package-visibility and
+         https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
 
-    <!-- Required to query activities that can process text -->
+         In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
-        <intent>
-            <action android:name="android.speech.RecognitionService" />
-        </intent>
     </queries>
-
 </manifest>
