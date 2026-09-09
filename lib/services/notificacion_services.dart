@@ -1,6 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/notificaciones.dart';
-
+// PRUEBAS
 class NotificacionesServices {
   final SupabaseClient _supabase = Supabase.instance.client;
   static const String _table = 'notificaciones';

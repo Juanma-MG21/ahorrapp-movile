@@ -1,7 +1,7 @@
 // Modelo que refleja 1 a 1 la tabla `dependientes` de tu base de
 // datos: mismos nombres de columna (en minúscula, snake_case) como
 // llaves de JSON, mismos tipos.
-//
+// PRUEBAS
 // OJO: esto es distinto al objeto que veíamos en PanelDependientes.jsx
 // (que traía `usuario_nombre` en vez de `id_usuario`, y con mayúsculas).
 // Ese es un DTO armado por una consulta con JOIN para mostrar en

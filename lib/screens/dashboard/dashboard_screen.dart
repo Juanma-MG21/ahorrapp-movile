@@ -8,7 +8,7 @@
 // Design (Scaffold, Container, Text, Column, Row, etc.). Es el
 // equivalente a importar React + los componentes HTML base a la vez.
 import 'package:flutter/material.dart';
-
+// PRUEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 // fl_chart es la librería de gráficas más usada en Flutter; cumple el
 // mismo rol que 'recharts' en el original. Hay que agregarla en
 // pubspec.yaml (ver instrucciones al final de mi respuesta).

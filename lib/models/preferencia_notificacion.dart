@@ -1,4 +1,5 @@
 // lib/models/preferencia_notificacion.dart
+//PRUEBA
 class PreferenciaNotificacion {
   final int idUsuario;
   final String tipo;
