@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../widgets/auth_widgets.dart';
@@ -13,12 +14,39 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController(text: 'manuel@correo.com');
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
   bool _rememberSession = false;
   bool _hidePassword = true;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedCredentials();
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _rememberSession = prefs.getBool('remember_me') ?? false;
+      if (_rememberSession) {
+        _emailController.text = prefs.getString('saved_email') ?? '';
+      }
+    });
+  }
+
+  Future<void> _handleRememberMe() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (_rememberSession) {
+      await prefs.setBool('remember_me', true);
+      await prefs.setString('saved_email', _emailController.text.trim());
+    } else {
+      await prefs.remove('remember_me');
+      await prefs.remove('saved_email');
+    }
+  }
 
   @override
   void dispose() {
@@ -41,6 +69,8 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       if (response.user != null) {
+        await _handleRememberMe();
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('¡Bienvenido de nuevo!')),
         );

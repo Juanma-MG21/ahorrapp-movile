@@ -1,4 +1,5 @@
-- [x] Pulido de Diseño y Solución de Errores
-    - [x] Ajustar `lib/core/theme/app_theme.dart` (Bordes y ClayGlow)
-    - [x] Limpiar `lib/screens/auth/login_screen.dart` (Quitar BottomNav antiguo)
-- [ ] Forzar limpieza de caché y recarga del proyecto
+- [x] Reparar pantalla de Biometría
+    - [x] Reemplazar `Spacer` por `SizedBox` en `biometric_access_screen.dart`
+    - [x] Actualizar colores a `AppColors.accent` para simetría visual
+    - [x] Mejorar lógica de detección de hardware biométrico
+- [ ] Guía de limpieza profunda para el emulador
