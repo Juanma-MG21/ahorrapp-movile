@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../models/deuda_model.dart';
+import '../../models/categoria_model.dart';
 import '../../services/deudas_service.dart';
+import '../../services/categorias_service.dart';
 import '../../core/network/api_client.dart';
 
 class AgregarDeudaScreen extends StatefulWidget {
@@ -16,10 +18,15 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
   final _formKey = GlobalKey<FormState>();
   final _fuenteController = TextEditingController();
   final _montoController = TextEditingController();
-  final _tasaController = TextEditingController();
   final _cuotasController = TextEditingController();
+  final _descripcionController = TextEditingController();
+
   DateTime? _fechaFin;
   bool _isSaving = false;
+
+  List<CategoriaModel> _categorias = [];
+  int? _categoriaSeleccionada;
+  bool _isLoadingCategorias = true;
 
   @override
   void initState() {
@@ -27,10 +34,31 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
     if (widget.deudaParaEditar != null) {
       final d = widget.deudaParaEditar!;
       _fuenteController.text = d.fuente;
-      _montoController.text = d.monto.toStringAsFixed(0);
-      _tasaController.text = d.tasaInteres.toString();
+      // Muestra el monto completo (sin truncar decimales); solo omite el
+      // ".00" cuando el valor es un entero exacto, para no perder precisión
+      // en montos como 1500.50 al editar.
+      _montoController.text = (d.monto % 1 == 0)
+          ? d.monto.toStringAsFixed(0)
+          : d.monto.toString();
       _cuotasController.text = d.cuotasTotal?.toString() ?? '';
+      _descripcionController.text = d.descripcion ?? '';
       _fechaFin = d.fechaFin;
+      _categoriaSeleccionada = d.idCategoria;
+    }
+    _cargarCategorias();
+  }
+
+  Future<void> _cargarCategorias() async {
+    try {
+      final categorias = await CategoriasService.obtenerCategorias();
+      if (!mounted) return;
+      setState(() {
+        _categorias = categorias.where((c) => c.activa).toList();
+        _isLoadingCategorias = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isLoadingCategorias = false);
     }
   }
 
@@ -38,9 +66,21 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
   void dispose() {
     _fuenteController.dispose();
     _montoController.dispose();
-    _tasaController.dispose();
     _cuotasController.dispose();
+    _descripcionController.dispose();
     super.dispose();
+  }
+
+  Future<void> _seleccionarFechaFin() async {
+    final fecha = await showDatePicker(
+      context: context,
+      initialDate: _fechaFin ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (fecha != null) {
+      setState(() => _fechaFin = fecha);
+    }
   }
 
   void _guardar() async {
@@ -52,11 +92,14 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
       id: widget.deudaParaEditar?.id,
       fuente: _fuenteController.text.trim(),
       monto: double.parse(_montoController.text),
-      tasaInteres: double.tryParse(_tasaController.text) ?? 0.0,
+      descripcion: _descripcionController.text.trim().isEmpty
+          ? null
+          : _descripcionController.text.trim(),
       cuotasTotal: int.tryParse(_cuotasController.text),
       cuotasPagadas: widget.deudaParaEditar?.cuotasPagadas ?? 0,
       fechaFin: _fechaFin,
       fechaInicio: widget.deudaParaEditar?.fechaInicio ?? DateTime.now(),
+      idCategoria: _categoriaSeleccionada,
       estado: widget.deudaParaEditar?.estado ?? 'pendiente',
     );
 
@@ -143,21 +186,18 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
             label: 'Monto Total',
             controller: _montoController,
             hint: '\$0',
-            keyboardType: TextInputType.number,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
             validator: (v) => (double.tryParse(v ?? '') ?? 0) <= 0 ? 'Monto inválido' : null,
           ),
           const SizedBox(height: 18),
           _buildTextField(
-            label: 'Tasa de Interés (%)',
-            controller: _tasaController,
-            hint: '0.0',
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            validator: (v) {
-              final val = double.tryParse(v ?? '');
-              if (val != null && val < 0) return 'La tasa no puede ser negativa'; // RF-06
-              return null;
-            },
+            label: 'Descripción (Opcional)',
+            controller: _descripcionController,
+            hint: 'Ej: Préstamo para el carro',
+            maxLines: 2,
           ),
+          const SizedBox(height: 18),
+          _buildCategoriaDropdown(),
           const SizedBox(height: 18),
           _buildTextField(
             label: 'Número de Cuotas (Opcional)',
@@ -165,6 +205,8 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
             hint: 'Ej: 12',
             keyboardType: TextInputType.number,
           ),
+          const SizedBox(height: 18),
+          _buildFechaFinPicker(),
         ],
       ),
     );
@@ -176,6 +218,7 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
     required String hint,
     TextInputType keyboardType = TextInputType.text,
     String? Function(String?)? validator,
+    int maxLines = 1,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -187,6 +230,7 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
           child: TextFormField(
             controller: controller,
             keyboardType: keyboardType,
+            maxLines: maxLines,
             style: const TextStyle(color: AppColors.textPrimary),
             validator: validator,
             decoration: InputDecoration(
@@ -194,6 +238,85 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
               hintStyle: const TextStyle(color: AppColors.textSecondary),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCategoriaDropdown() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Categoría (Opcional)', style: TextStyle(color: AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(color: AppColors.inset, borderRadius: BorderRadius.circular(14)),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: _isLoadingCategorias
+              ? const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 14),
+                  child: SizedBox(
+                    height: 18,
+                    width: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.textSecondary),
+                  ),
+                )
+              : DropdownButtonHideUnderline(
+                  child: DropdownButton<int?>(
+                    value: _categoriaSeleccionada,
+                    isExpanded: true,
+                    dropdownColor: AppColors.background,
+                    style: const TextStyle(color: AppColors.textPrimary),
+                    hint: const Text('Sin categoría', style: TextStyle(color: AppColors.textSecondary)),
+                    items: [
+                      const DropdownMenuItem<int?>(
+                        value: null,
+                        child: Text('Sin categoría'),
+                      ),
+                      ..._categorias.map(
+                        (c) => DropdownMenuItem<int?>(
+                          value: c.id,
+                          child: Text(c.nombre),
+                        ),
+                      ),
+                    ],
+                    onChanged: (value) => setState(() => _categoriaSeleccionada = value),
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFechaFinPicker() {
+    final texto = _fechaFin != null
+        ? '${_fechaFin!.day.toString().padLeft(2, '0')}/${_fechaFin!.month.toString().padLeft(2, '0')}/${_fechaFin!.year}'
+        : 'Sin definir';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Fecha Estimada de Fin (Opcional)', style: TextStyle(color: AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: _seleccionarFechaFin,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(color: AppColors.inset, borderRadius: BorderRadius.circular(14)),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  texto,
+                  style: TextStyle(
+                    color: _fechaFin != null ? AppColors.textPrimary : AppColors.textSecondary,
+                  ),
+                ),
+                const Icon(Icons.calendar_today, color: AppColors.textSecondary, size: 18),
+              ],
             ),
           ),
         ),
@@ -211,8 +334,8 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
           borderRadius: BorderRadius.circular(28),
         ),
         child: Center(
-          child: _isSaving 
-            ? const CircularProgressIndicator(color: Colors.white) 
+          child: _isSaving
+            ? const CircularProgressIndicator(color: Colors.white)
             : const Text('Guardar Deuda', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         ),
       ),
