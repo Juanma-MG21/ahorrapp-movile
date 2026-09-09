@@ -16,8 +16,12 @@ Future<void> mostrarFormularioPerfil(
   return showModalBottomSheet(
     context: context,
     isScrollControlled: true,
+    useSafeArea: true,
     backgroundColor: Colors.transparent,
-    builder: (ctx) => _PerfilFormSheet(provider: provider, perfil: perfil),
+    builder: (ctx) => Container(
+      margin: const EdgeInsets.only(top: 40), // Baja la vista 40 pixeles
+      child: _PerfilFormSheet(provider: provider, perfil: perfil),
+    ),
   );
 }
 
@@ -170,18 +174,18 @@ class _PerfilFormSheetState extends State<_PerfilFormSheet> {
           color: AppColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
         ),
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Center(
                 child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
+                  width: 60,
+                  height: 6,
+                  margin: const EdgeInsets.only(bottom: 24),
                   decoration: BoxDecoration(
-                    color: AppColors.borderLight,
+                    color: Colors.white.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                 ),
@@ -190,75 +194,120 @@ class _PerfilFormSheetState extends State<_PerfilFormSheet> {
                 _esEdicion ? 'Editar perfil' : 'Nuevo perfil',
                 style: const TextStyle(
                   color: AppColors.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
               const SizedBox(height: 16),
-              _Campo(label: 'Nombre', controller: _nombreCtrl),
-              const SizedBox(height: 12),
-              _Campo(label: 'Descripción (opcional)', controller: _descripcionCtrl, maxLines: 2),
+              _Campo(
+                label: 'NOMBRE DEL PERFIL',
+                controller: _nombreCtrl,
+                icon: Icons.badge_outlined,
+              ),
               const SizedBox(height: 12),
               _Campo(
-                label: 'Día de corte (1-31)',
+                label: 'DESCRIPCIÓN (OPCIONAL)',
+                controller: _descripcionCtrl,
+                maxLines: 2,
+                icon: Icons.description_outlined,
+              ),
+              const SizedBox(height: 12),
+              _Campo(
+                label: 'DÍA DE CORTE (1-31)',
                 controller: _diaCorteCtrl,
                 keyboardType: TextInputType.number,
+                icon: Icons.calendar_today_outlined,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    'PORCENTAJES',
+                    'DISTRIBUCIÓN DE PORCENTAJES',
                     style: TextStyle(
                       color: AppColors.textSecondary,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.8,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.2,
                     ),
                   ),
-                  Text(
-                    'Suma: ${_suma.round()}%',
-                    style: TextStyle(
-                      color: _sumaValida ? AppColors.success : AppColors.error,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _sumaValida ? AppColors.successSoft : AppColors.error.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      'SUMA: ${_suma.round()}%',
+                      style: TextStyle(
+                        color: _sumaValida ? AppColors.success : AppColors.error,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
-              _CampoPorcentaje(label: 'Gastos', controller: _gastosCtrl),
-              _CampoPorcentaje(label: 'Deudas', controller: _deudasCtrl),
-              _CampoPorcentaje(label: 'Imprevistos', controller: _imprevistosCtrl),
-              _CampoPorcentaje(label: 'Ahorros', controller: _ahorrosCtrl),
-              _CampoPorcentaje(label: 'Emergencia', controller: _emergenciaCtrl),
+              const SizedBox(height: 12),
+              _SeccionPorcentajes(
+                children: [
+                  _CampoPorcentaje(label: 'Gastos', controller: _gastosCtrl, color: AppPresupuestoColors.gastos),
+                  _CampoPorcentaje(label: 'Deudas', controller: _deudasCtrl, color: AppPresupuestoColors.deudas),
+                  _CampoPorcentaje(label: 'Imprevistos', controller: _imprevistosCtrl, color: AppPresupuestoColors.imprevistos),
+                  _CampoPorcentaje(label: 'Ahorros', controller: _ahorrosCtrl, color: AppPresupuestoColors.ahorros),
+                  _CampoPorcentaje(label: 'Emergencia', controller: _emergenciaCtrl, color: AppPresupuestoColors.emergencia),
+                ],
+              ),
               if (_error != null) ...[
-                const SizedBox(height: 8),
-                Text(_error!, style: const TextStyle(color: AppColors.error, fontSize: 12)),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline, color: AppColors.error, size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _error!,
+                          style: const TextStyle(color: AppColors.error, fontSize: 12, fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
+                height: 60, // Aumentado de 54 a 60
                 child: ElevatedButton(
                   onPressed: _guardando ? null : _guardar,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.accent,
                     foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    elevation: 4, // Añadida elevación para que "se vea más"
+                    shadowColor: AppColors.accent.withValues(alpha: 0.3),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      borderRadius: BorderRadius.circular(18),
                     ),
                   ),
                   child: _guardando
                       ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                          width: 28,
+                          height: 28,
+                          child: CircularProgressIndicator(strokeWidth: 3, color: Colors.black),
                         )
                       : Text(
-                          _esEdicion ? 'Guardar cambios' : 'Crear perfil',
-                          style: const TextStyle(fontWeight: FontWeight.w700),
+                          _esEdicion ? 'GUARDAR CAMBIOS' : 'CREAR PERFIL',
+                          style: const TextStyle(
+                            fontSize: 16, // Tamaño de letra aumentado
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.2,
+                          ),
                         ),
                 ),
               ),
@@ -274,49 +323,122 @@ class _Campo extends StatelessWidget {
   const _Campo({
     required this.label,
     required this.controller,
+    required this.icon,
     this.keyboardType,
     this.maxLines = 1,
   });
 
   final String label;
   final TextEditingController controller;
+  final IconData icon;
   final TextInputType? keyboardType;
   final int maxLines;
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      style: const TextStyle(color: AppColors.textPrimary),
-      decoration: InputDecoration(labelText: label),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 6),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1,
+            ),
+          ),
+        ),
+        TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          maxLines: maxLines,
+          style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600),
+          decoration: InputDecoration(
+            prefixIcon: Icon(icon, size: 20, color: AppColors.accent),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            filled: true,
+            fillColor: AppColors.background.withValues(alpha: 0.5),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SeccionPorcentajes extends StatelessWidget {
+  const _SeccionPorcentajes({required this.children});
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.background.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.borderLight, width: 1),
+      ),
+      child: Column(children: children),
     );
   }
 }
 
 class _CampoPorcentaje extends StatelessWidget {
-  const _CampoPorcentaje({required this.label, required this.controller});
+  const _CampoPorcentaje({
+    required this.label,
+    required this.controller,
+    required this.color,
+  });
   final String label;
   final TextEditingController controller;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          Expanded(
-            flex: 2,
-            child: Text(label, style: const TextStyle(color: AppColors.textPrimary, fontSize: 13)),
+          Container(
+            width: 4,
+            height: 24,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
+          const SizedBox(width: 12),
           Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+          ),
+          SizedBox(
+            width: 70,
             child: TextField(
               controller: controller,
               keyboardType: TextInputType.number,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textPrimary),
-              decoration: const InputDecoration(suffixText: '%'),
+              style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w900),
+              decoration: InputDecoration(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                suffixText: '%',
+                suffixStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                filled: true,
+                fillColor: AppColors.surfaceAlt.withValues(alpha: 0.5),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: AppColors.borderLight),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: AppColors.accent, width: 1),
+                ),
+              ),
             ),
           ),
         ],

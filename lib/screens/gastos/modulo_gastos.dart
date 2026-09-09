@@ -2,12 +2,15 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../core/theme/design_tokens.dart';
 import '../../models/gasto_model.dart';
+import '../../providers/presupuesto_provider.dart';
 import '../../services/local_parser_service.dart';
 import '../../services/widget_service.dart';
 import '../../services/gastos_service.dart';
+import '../../core/utils/presupuestos_parsing.dart'; // Para formatMonto si fuera necesario, pero ya hay _formatCurrency
 import 'agregar_gasto_screen.dart';
 
 import '../../services/qr_parser_service.dart';
@@ -623,12 +626,16 @@ class _ModuloGastosState extends State<ModuloGastos>
   }
 
   Widget _buildSummaryCard() {
+    final provider = context.watch<PresupuestoProvider>();
+    final periodo = provider.periodoActivo;
+    final double presupuesto = periodo?.montoGastos ?? 0;
+
     double totalGastos = 0;
     final filtered = _filteredGastos;
     for (var g in filtered) {
       totalGastos += g.monto;
     }
-    const double presupuesto = 0;
+    
     final double disponible = presupuesto - totalGastos;
     final double porcentaje = presupuesto > 0 ? (totalGastos / presupuesto).clamp(0.0, 1.0) : 0.0;
 
@@ -658,14 +665,14 @@ class _ModuloGastosState extends State<ModuloGastos>
                   children: [
                     const Text('PRESUPUESTO', style: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1)),
                     const SizedBox(height: 8),
-                    FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerRight, child: Text(_formatCurrency(presupuesto), style: const TextStyle(color: AppColors.accent, fontSize: 28, fontWeight: FontWeight.bold))),
+                    FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerRight, child: Text(_formatCurrency(presupuesto), style: const TextStyle(color: AppPresupuestoColors.gastos, fontSize: 28, fontWeight: FontWeight.bold))),
                   ],
                 ),
               ),
             ],
           ),
           const SizedBox(height: 20),
-          _buildProgressBar(porcentaje),
+          _buildProgressBar(porcentaje, AppPresupuestoColors.gastos),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -675,13 +682,27 @@ class _ModuloGastosState extends State<ModuloGastos>
             ],
           ),
           const SizedBox(height: 16),
-          RichText(text: TextSpan(children: [const TextSpan(text: 'Disponible: ', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)), TextSpan(text: _formatCurrency(disponible), style: const TextStyle(color: AppColors.accent, fontSize: 14, fontWeight: FontWeight.bold))])),
+          RichText(
+            text: TextSpan(
+              children: [
+                const TextSpan(text: 'Disponible: ', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+                TextSpan(
+                  text: _formatCurrency(disponible),
+                  style: TextStyle(
+                    color: disponible >= 0 ? AppPresupuestoColors.gastos : AppColors.error,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildProgressBar(double porcentaje) {
+  Widget _buildProgressBar(double porcentaje, Color color) {
     return Container(
       height: 10,
       decoration: BoxDecoration(color: AppColors.inset, borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.black.withValues(alpha: 0.3), width: 1)),
@@ -689,7 +710,7 @@ class _ModuloGastosState extends State<ModuloGastos>
         alignment: Alignment.centerLeft,
         child: FractionallySizedBox(
           widthFactor: porcentaje,
-          child: Container(decoration: BoxDecoration(gradient: const LinearGradient(colors: [AppColors.accent, Color(0xFFFFD700)]), borderRadius: BorderRadius.circular(10))),
+          child: Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [color, color.withValues(alpha: 0.7)]), borderRadius: BorderRadius.circular(10))),
         ),
       ),
     );
