@@ -59,7 +59,6 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
           _fecha = i.fechaRegistro;
           _idCategoria = i.idCategoria;
 
-          // Si el ID es nulo pero tenemos nombre (de la IA), intentamos el match
           if (_idCategoria == null && i.categoriaNombre != null) {
             final sugerida = _listaCategorias.where(
               (c) => c.nombre.toLowerCase() == i.categoriaNombre!.toLowerCase(),
@@ -112,7 +111,7 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
               children: [
                 GestureDetector(
                   onTap: () => Navigator.of(context).pop(),
-                  child: Container(color: Colors.black.withValues(alpha: 0.4 * t)),
+                  child: Container(color: Colors.black.withOpacity(0.4 * t)),
                 ),
                 Positioned.fill(
                   child: BackdropFilter(
@@ -276,9 +275,9 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
       margin: const EdgeInsets.only(bottom: 24),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF4ADE80).withValues(alpha: 0.1),
+        color: const Color(0xFF4ADE80).withOpacity(0.1),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFF4ADE80).withValues(alpha: 0.3)),
+        border: Border.all(color: const Color(0xFF4ADE80).withOpacity(0.3)),
       ),
       child: const Row(
         children: [
@@ -343,7 +342,7 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
       decoration: BoxDecoration(
         color: AppColors.inset,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.35)),
+        border: Border.all(color: Colors.black.withOpacity(0.35)),
       ),
       child: child,
     );
@@ -484,7 +483,7 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
               child: ListView.separated(
                 shrinkWrap: true,
                 itemCount: _listaCategorias.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 12),
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) => _buildCategoryCard(_listaCategorias[index]),
               ),
             ),
@@ -505,12 +504,12 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
         decoration: BoxDecoration(
           color: AppColors.background,
           borderRadius: BorderRadius.circular(18),
-          border: isSelected ? Border.all(color: const Color(0xFF4ADE80).withValues(alpha: 0.6), width: 1.5) : null,
+          border: isSelected ? Border.all(color: const Color(0xFF4ADE80).withOpacity(0.6), width: 1.5) : null,
           boxShadow: const [BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 8)],
         ),
         child: Row(
           children: [
-            Container(width: 44, height: 44, decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: color, size: 22)),
+            Container(width: 44, height: 44, decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: color, size: 22)),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -536,7 +535,7 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
         decoration: BoxDecoration(
           gradient: const LinearGradient(colors: [Color(0xFF4ADE80), Color(0xFF34D399)]),
           borderRadius: BorderRadius.circular(28),
-          boxShadow: [BoxShadow(color: const Color(0xFF4ADE80).withValues(alpha: 0.4), blurRadius: 20)],
+          boxShadow: [BoxShadow(color: const Color(0xFF4ADE80).withOpacity(0.4), blurRadius: 20)],
         ),
         child: Center(
           child: _isSaving

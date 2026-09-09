@@ -1,38 +1,45 @@
 name: ahorrapp_movil
-description: Aplicacion movil de AhorrApp.
+description: Aplicación móvil de AhorrApp.
 publish_to: "none"
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.9.0
+  sdk: ">=3.0.0 <4.0.0"   # 👈 CORREGIDO: 3.9.0 no existe
 
 dependencies:
   flutter:
     sdk: flutter
 
+  # UI y calendario
   table_calendar: ^3.2.0
-  intl: ^0.20.3                      # 👈 nuevo — antes venía transitivo de table_calendar
-  flutter_secure_storage: ^9.2.2     # 👈 nuevo — para guardar el token del login
+  cupertino_icons: ^1.0.8
 
+  # Escáner y cámara
   mobile_scanner: ^5.2.3
   image_picker: ^1.1.2
-  cupertino_icons: ^1.0.8
-<<<<<<< HEAD
-  speech_to_text: ^7.0.0
+
+  # Reconocimiento de voz y permisos
+  speech_to_text: ^6.6.0      # 👈 CORREGIDO: versión estable
   permission_handler: ^11.3.1
+
+  # Widgets en casa (iOS/Android)
   home_widget: ^0.9.3
-  supabase_flutter: ^2.8.1
-  http: ^1.1.0
+
+  # Supabase y HTTP
+  supabase_flutter: ^2.17.2
+  http: ^1.2.0                # 👈 CORREGIDO: última estable
+
+  # Autenticación local y almacenamiento seguro
   local_auth: ^2.3.0
+  flutter_secure_storage: ^9.2.2
+
+  # State management
   provider: ^6.1.5+1
 
-=======
+  # Gráficos y formateo
   fl_chart: ^0.68.0
-  intl: ^0.20.3
-  http: ^1.2.0
-  flutter_secure_storage: ^9.2.2
-  supabase_flutter: ^2.17.2
->>>>>>> 957670e35c327a6ac6e8a999a0f93100740c316d
+  intl: ^0.20.0               # 👈 CORREGIDO: 0.20.3 no existe
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

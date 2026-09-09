@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+// PRUEBA TODAVIA SE SIGUE TESTEANDO 
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -16,7 +16,7 @@ class DependientesService {
   // instancia. Cámbialo aquí una sola vez cuando pases a producción,
   // o mejor, muévelo a un archivo de configuración por entorno
   // (ver mi nota sobre esto en tus mensajes anteriores).
-  static const String _baseUrl = 'http://localhost:3000/api';
+  static const String _baseUrl = 'https://ahorrapp-react-pkj9.onrender.com/api';
 
   final FlutterSecureStorage _storage;
 

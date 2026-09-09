@@ -54,14 +54,8 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
           _idDependiente = g.idDependientes;
 
           if (g.idCategoria != null) {
-            // Gasto real que se está editando: el id ya es válido.
             _idCategoria = g.idCategoria;
           } else if (g.categoriaNombre != null) {
-            // Viene de un parser de voz/QR: solo detectó el NOMBRE de
-            // la categoría, no el id real. Intentamos encontrar una
-            // categoría real del backend con ese mismo nombre; si no
-            // hay coincidencia, queda sin seleccionar y el usuario la
-            // elige a mano.
             final sugerida = _listaCategorias.where(
                   (c) => c.nombre.toLowerCase() == g.categoriaNombre!.toLowerCase(),
             );
@@ -123,7 +117,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
               children: [
                 GestureDetector(
                   onTap: () => Navigator.of(context).pop(),
-                  child: Container(color: Colors.black.withValues(alpha: 0.4 * t)),
+                  child: Container(color: Colors.black.withOpacity(0.4 * t)),
                 ),
                 Positioned.fill(
                   child: BackdropFilter(
@@ -188,12 +182,6 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
 
       if (!mounted) return;
       setState(() => _isSaving = false);
-
-      // Devolvemos "true" para avisarle a ModuloGastos que tiene que
-      // recargar la lista completa desde el backend: crearMovimiento/
-      // updateGastos no devuelven el nombre de categoría ni de
-      // dependiente (eso solo viene del JOIN de getGastos), así que
-      // no podemos armar el card completo acá sin inventar datos.
       Navigator.pop(context, true);
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -316,7 +304,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
       decoration: BoxDecoration(
         color: AppColors.inset,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.35)),
+        border: Border.all(color: Colors.black.withOpacity(0.35)),
       ),
       child: child,
     );
@@ -478,7 +466,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
               child: ListView.separated(
                 shrinkWrap: true,
                 itemCount: _listaCategorias.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 12),
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) => _buildCategoryCard(_listaCategorias[index]),
               ),
             ),
@@ -499,12 +487,12 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
         decoration: BoxDecoration(
           color: AppColors.background,
           borderRadius: BorderRadius.circular(18),
-          border: isSelected ? Border.all(color: AppColors.accent.withValues(alpha: 0.6), width: 1.5) : null,
+          border: isSelected ? Border.all(color: AppColors.accent.withOpacity(0.6), width: 1.5) : null,
           boxShadow: const [BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 8)],
         ),
         child: Row(
           children: [
-            Container(width: 44, height: 44, decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: color, size: 22)),
+            Container(width: 44, height: 44, decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: color, size: 22)),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -538,7 +526,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
             ListView.separated(
               shrinkWrap: true,
               itemCount: _listaDependientes.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 12),
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, index) => _buildDependentCard(_listaDependientes[index]),
             ),
           ],
@@ -556,7 +544,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
         decoration: BoxDecoration(
           color: AppColors.background,
           borderRadius: BorderRadius.circular(18),
-          border: isSelected ? Border.all(color: AppColors.accent.withValues(alpha: 0.6), width: 1.5) : null,
+          border: isSelected ? Border.all(color: AppColors.accent.withOpacity(0.6), width: 1.5) : null,
           boxShadow: const [BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 8)],
         ),
         child: Row(
@@ -579,7 +567,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
         decoration: BoxDecoration(
           gradient: const LinearGradient(colors: [Color(0xFFFFD700), Color(0xFFFF8C00)]),
           borderRadius: BorderRadius.circular(28),
-          boxShadow: [BoxShadow(color: AppColors.accent.withValues(alpha: 0.4), blurRadius: 20)],
+          boxShadow: [BoxShadow(color: AppColors.accent.withOpacity(0.4), blurRadius: 20)],
         ),
         child: Center(
           child: _isSaving
