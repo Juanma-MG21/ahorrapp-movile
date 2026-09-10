@@ -10,7 +10,6 @@ import '../../providers/presupuesto_provider.dart';
 import '../../services/local_parser_service.dart';
 import '../../services/widget_service.dart';
 import '../../services/gastos_service.dart';
-// import '../../core/utils/presupuestos_parsing.dart'; // Para formatMonto si fuera necesario, pero ya hay _formatCurrency
 import 'agregar_gasto_screen.dart';
 
 import '../../services/qr_parser_service.dart';
