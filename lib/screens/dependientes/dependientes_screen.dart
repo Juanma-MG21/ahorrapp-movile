@@ -247,8 +247,17 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
                 // Navegar a la pantalla de registro de dependientes
                 Navigator.pushNamed(context, '');
               },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _amber,
+                foregroundColor: _textPrimary,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
               child: const Text('+'),
             ),
+            
           ],
         ),
       ),
