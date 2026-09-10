@@ -11,43 +11,19 @@
 // idCategoria — no hay forma de saber el id real desde el texto del QR;
 // el formulario intenta encontrar la categoría real por nombre, y si no
 // hay match, el usuario la confirma a mano.
+//
+// parse() devuelve NULL cuando no se pudo extraer un monto válido — por
+// ejemplo cuando el contenido real del QR es solo una URL de
+// verificación (caso confirmado con comprobantes reales de Nequi/
+// Daviplata), en vez de texto legible de recibo. Quien llama a este
+// parser debe tratar el null como "QR inválido, no se pudo interpretar"
+// y avisarle al usuario en vez de abrir el formulario con datos vacíos.
 
 import '../models/gasto_model.dart';
+import '../data/categoria_keywords.dart';
+
 
 class QrParserService {
-  // Palabras clave típicas de un recibo/comprobante, mapeadas a la
-  // categoría correspondiente. Se puede ampliar libremente.
-  static final Map<String, String> _mapeoCategorias = {
-    // Alimentación
-    'supermercado': 'Alimentación', 'super': 'Alimentación', 'mercado': 'Alimentación',
-    'restaurante': 'Alimentación', 'panaderia': 'Alimentación', 'panadería': 'Alimentación',
-    'cafeteria': 'Alimentación', 'cafetería': 'Alimentación', 'domicilios': 'Alimentación',
-    'rappi': 'Alimentación', 'ara': 'Alimentación', 'exito': 'Alimentación', 'éxito': 'Alimentación',
-    'd1': 'Alimentación', 'justo y bueno': 'Alimentación', 'olimpica': 'Alimentación',
-
-    // Ropa
-    'almacen': 'Ropa', 'almacén': 'Ropa', 'boutique': 'Ropa', 'calzado': 'Ropa',
-    'zara': 'Ropa', 'falabella': 'Ropa',
-
-    // Hogar
-    'arriendo': 'Hogar', 'administracion': 'Hogar', 'administración': 'Hogar',
-    'ferreteria': 'Hogar', 'ferretería': 'Hogar', 'homecenter': 'Hogar',
-    'acueducto': 'Hogar', 'energia': 'Hogar', 'energía': 'Hogar', 'gas natural': 'Hogar',
-
-    // Transporte
-    'combustible': 'Transporte', 'gasolina': 'Transporte', 'estacion de servicio': 'Transporte',
-    'estación de servicio': 'Transporte', 'peaje': 'Transporte', 'parqueadero': 'Transporte',
-    'taxi': 'Transporte', 'uber': 'Transporte', 'terminal': 'Transporte',
-
-    // Salud
-    'farmacia': 'Salud', 'droguer': 'Salud', 'clinica': 'Salud', 'clínica': 'Salud',
-    'hospital': 'Salud', 'eps': 'Salud', 'laboratorio': 'Salud',
-
-    // Entretenimiento
-    'cine': 'Entretenimiento', 'cinemark': 'Entretenimiento', 'cinepolis': 'Entretenimiento',
-    'netflix': 'Entretenimiento', 'spotify': 'Entretenimiento', 'teatro': 'Entretenimiento',
-  };
-
   // Palabras que suelen anteceder al monto real (el "total a pagar")
   // en un recibo. Si aparecen, se prioriza el número que sigue.
   static final List<String> _palabrasClaveMonto = [
@@ -60,7 +36,7 @@ class QrParserService {
         .replaceAll('ó', 'o').replaceAll('ú', 'u').replaceAll('ü', 'u');
   }
 
-  static GastoModel parse(String textoQr) {
+  static GastoModel? parse(String textoQr) {
     final textoLimpio = textoQr.trim();
     final textoNorm = _quitarAcentos(textoLimpio);
 
@@ -68,9 +44,14 @@ class QrParserService {
     final resultadoMonto = _extractAmount(textoLimpio, textoNorm);
     final double monto = resultadoMonto.valor;
 
+    // Si no se pudo extraer un monto válido, el QR no trae datos de
+    // recibo interpretables (ej: era solo una URL de verificación).
+    // No tiene sentido devolver un GastoModel con monto 0.
+    if (monto <= 0) return null;
+
     // 2. Detectar categoría por palabra clave (solo el NOMBRE)
     String categoria = 'General';
-    for (var entry in _mapeoCategorias.entries) {
+    for (var entry in mapeoCategoriasKeywords.entries) {
       if (textoNorm.contains(entry.key)) {
         categoria = entry.value;
         break;

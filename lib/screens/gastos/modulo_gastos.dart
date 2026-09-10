@@ -11,7 +11,8 @@ import '../../services/local_parser_service.dart';
 import '../../services/widget_service.dart';
 import '../../services/gastos_service.dart';
 import 'agregar_gasto_screen.dart';
-
+import '../../services/ocr_parser_service.dart';
+import '../../screens/ocr_scanner_screen.dart'; // o el path que uses para qr_scanner_screen.dart
 import '../../services/qr_parser_service.dart';
 import '../qr_scanner_screen.dart';
 
@@ -84,10 +85,10 @@ class _ModuloGastosState extends State<ModuloGastos>
       duration: const Duration(milliseconds: 350),
     );
 
-    _itemAnimations = List.generate(3, (i) {
+    _itemAnimations = List.generate(4, (i) {
       return CurvedAnimation(
         parent: _menuController,
-        curve: Interval(0.3 + i * 0.2, 1.0, curve: Curves.easeOutCubic),
+        curve: Interval(0.3 + i * 0.15, 1.0, curve: Curves.easeOutCubic),
       );
     });
 
@@ -175,6 +176,16 @@ class _ModuloGastosState extends State<ModuloGastos>
         _processQrResult(textoQr);
       }
     }
+    if (metodo == 'Escanear Recibo') {
+      final String? textoOcr = await Navigator.push<String>(
+        context,
+        MaterialPageRoute(builder: (context) => const OcrScannerScreen()),
+      );
+      if (!mounted) return;
+      if (textoOcr != null && textoOcr.trim().isNotEmpty) {
+        _processOcrResult(textoOcr);
+      }
+    }
   }
 
   void _startListening() async {
@@ -244,15 +255,45 @@ class _ModuloGastosState extends State<ModuloGastos>
     }
   }
 
-  void _processQrResult(String textoQr) async {
-    final GastoModel parsedGasto = QrParserService.parse(textoQr);
-    final resultado = await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(builder: (context) => AgregarGastoScreen(gastoParaEditar: parsedGasto)),
+void _processQrResult(String textoQr) async {
+  final GastoModel? parsedGasto = QrParserService.parse(textoQr);
+
+  if (parsedGasto == null) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('QR inválido: no se pudo extraer información del comprobante. Intenta agregarlo manualmente.'),
+      ),
     );
-    if (resultado == true) _loadGastos();
+    return;
   }
 
+  final resultado = await Navigator.push<bool>(
+    context,
+    MaterialPageRoute(builder: (context) => AgregarGastoScreen(gastoParaEditar: parsedGasto)),
+  );
+  if (resultado == true) _loadGastos();
+}
+
+void _processOcrResult(String textoOcr) async {
+  final GastoModel? parsedGasto = OcrParserService.parse(textoOcr);
+
+  if (parsedGasto == null) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('No se pudo leer el recibo. Intenta con mejor luz o agrégalo manualmente.'),
+      ),
+    );
+    return;
+  }
+
+  final resultado = await Navigator.push<bool>(
+    context,
+    MaterialPageRoute(builder: (context) => AgregarGastoScreen(gastoParaEditar: parsedGasto)),
+  );
+  if (resultado == true) _loadGastos();
+}
   void _showVoiceModal() {
     _isModalShowing = true;
     showGeneralDialog(
@@ -468,8 +509,15 @@ class _ModuloGastosState extends State<ModuloGastos>
                         _buildMenuItem(
                           label: 'Agregar manualmente',
                           icon: Icons.edit,
-                          animation: _itemAnimations[2],
+                          animation: _itemAnimations[3],
                           onTap: () => _onOptionSelected('Agregar manualmente'),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildMenuItem(
+                          label: 'Escanear Recibo',
+                          icon: Icons.document_scanner,
+                          animation: _itemAnimations[2],
+                          onTap: () => _onOptionSelected('Escanear Recibo'),
                         ),
                         const SizedBox(height: 16),
                         _buildMenuItem(

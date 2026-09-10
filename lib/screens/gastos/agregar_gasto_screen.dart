@@ -7,6 +7,7 @@ import '../../models/categoria_model.dart';
 import '../../models/dependiente_model.dart';
 import '../../services/gastos_service.dart';
 
+
 class AgregarGastoScreen extends StatefulWidget {
   final GastoModel? gastoParaEditar;
   const AgregarGastoScreen({super.key, this.gastoParaEditar});
