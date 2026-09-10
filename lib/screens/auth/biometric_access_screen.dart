@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 import '../../core/theme/design_tokens.dart';
+import '../../services/auth_service.dart';
 import '../../widgets/auth_widgets.dart';
 
 class BiometricAccessScreen extends StatefulWidget {
@@ -22,19 +23,34 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
   }
 
   Future<void> _startBiometric() async {
-    final canCheck = await auth.canCheckBiometrics;
-    final isSupported = await auth.isDeviceSupported();
-    
-    if (!canCheck || !isSupported) {
-      setState(() => _authStatus = 'Biometría no soportada en este dispositivo');
+    if (!await AuthService.instance.hasSession()) {
+      if (!mounted) return;
+      setState(() => _authStatus = 'Inicia sesión con tu correo y contraseña');
       return;
     }
-    
+
+    final canCheck = await auth.canCheckBiometrics;
+    final isSupported = await auth.isDeviceSupported();
+
+    if (!canCheck || !isSupported) {
+      setState(
+        () => _authStatus = 'Biometría no soportada en este dispositivo',
+      );
+      return;
+    }
+
     _authenticate();
   }
 
   Future<void> _authenticate() async {
     try {
+      if (!await AuthService.instance.hasSession()) {
+        if (mounted) {
+          setState(() => _authStatus = 'Tu sesión ya no está disponible');
+        }
+        return;
+      }
+
       setState(() {
         _isAuthenticating = true;
         _authStatus = 'Escaneando huella / rostro...';
@@ -42,12 +58,17 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
 
       final bool authenticated = await auth.authenticate(
         localizedReason: 'Accede de forma segura a AhorrApp',
-        options: const AuthenticationOptions(stickyAuth: true, biometricOnly: true),
+        options: const AuthenticationOptions(
+          stickyAuth: true,
+          biometricOnly: true,
+        ),
       );
 
       setState(() {
         _isAuthenticating = false;
-        _authStatus = authenticated ? 'Acceso concedido' : 'Autenticación fallida';
+        _authStatus = authenticated
+            ? 'Acceso concedido'
+            : 'Autenticación fallida';
       });
 
       if (authenticated && mounted) {
@@ -69,11 +90,26 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
         children: [
           _buildTopBar(context),
           const SizedBox(height: 50),
-          const Text('AhorrApp', style: TextStyle(color: AppColors.accent, fontSize: 32, fontWeight: FontWeight.w900)),
+          const Text(
+            'AhorrApp',
+            style: TextStyle(
+              color: AppColors.accent,
+              fontSize: 32,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
           const SizedBox(height: 80),
           _buildBiometricIcon(),
           const SizedBox(height: 40),
-          Text(_authStatus, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
+          Text(
+            _authStatus,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const SizedBox(height: 30),
           if (!_isAuthenticating)
             TextButton.icon(
@@ -85,7 +121,13 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
           const SizedBox(height: 80),
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Ingresar con contraseña', style: TextStyle(color: AppColors.blue, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Ingresar con contraseña',
+              style: TextStyle(
+                color: AppColors.blue,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
           const SizedBox(height: 20),
         ],
@@ -99,7 +141,12 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
         IconButton(
           onPressed: () => Navigator.of(context).pop(),
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-          style: IconButton.styleFrom(backgroundColor: AppColors.surface, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+          style: IconButton.styleFrom(
+            backgroundColor: AppColors.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
         ),
       ],
     );
@@ -113,11 +160,28 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
         padding: const EdgeInsets.all(35),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: _isAuthenticating ? AppColors.accent.withValues(alpha: 0.1) : AppColors.surface,
-          border: Border.all(color: _isAuthenticating ? AppColors.accent : AppColors.borderLight, width: 2),
-          boxShadow: _isAuthenticating ? [BoxShadow(color: AppColors.accent.withValues(alpha: 0.3), blurRadius: 40, spreadRadius: 5)] : [],
+          color: _isAuthenticating
+              ? AppColors.accent.withValues(alpha: 0.1)
+              : AppColors.surface,
+          border: Border.all(
+            color: _isAuthenticating ? AppColors.accent : AppColors.borderLight,
+            width: 2,
+          ),
+          boxShadow: _isAuthenticating
+              ? [
+                  BoxShadow(
+                    color: AppColors.accent.withValues(alpha: 0.3),
+                    blurRadius: 40,
+                    spreadRadius: 5,
+                  ),
+                ]
+              : [],
         ),
-        child: Icon(Icons.fingerprint_rounded, size: 100, color: _isAuthenticating ? AppColors.accent : AppColors.textSecondary),
+        child: Icon(
+          Icons.fingerprint_rounded,
+          size: 100,
+          color: _isAuthenticating ? AppColors.accent : AppColors.textSecondary,
+        ),
       ),
     );
   }

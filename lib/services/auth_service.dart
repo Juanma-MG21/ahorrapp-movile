@@ -1,5 +1,5 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:local_auth/local_auth.dart';
 import '../core/network/api_client.dart';
 
 class Usuario {
@@ -34,6 +34,7 @@ class AuthService {
 
   final ApiClient _api = ApiClient();
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final LocalAuthentication _localAuth = LocalAuthentication();
 
   static const _tokenKey = 'auth_token';
   static const _pinKey = 'user_pin_code';
@@ -48,6 +49,27 @@ class AuthService {
       return true;
     }
     return false;
+  }
+
+  Future<bool> canUseBiometricAccess() async {
+    if (!await hasSession()) return false;
+
+    try {
+      return await _localAuth.canCheckBiometrics &&
+          await _localAuth.isDeviceSupported();
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> canUsePinAccess() async {
+    return await hasSession() && await hasPinSet();
+  }
+
+  Future<String?> getToken() async {
+    if (_memoryToken != null) return _memoryToken;
+    _memoryToken = await _storage.read(key: _tokenKey);
+    return _memoryToken;
   }
 
   // --- LÓGICA DE PIN ---
@@ -73,10 +95,10 @@ class AuthService {
     required String password,
     required bool rememberSession,
   }) async {
-    final data = await _api.post('/auth/login', body: {
-      'Email': email,
-      'Password_hash': password,
-    });
+    final data = await _api.post(
+      '/auth/login',
+      body: {'Email': email, 'Password_hash': password},
+    );
 
     final token = data['token'] as String?;
     if (token == null) {
@@ -100,12 +122,44 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    await _api.post('/auth/register', body: {
-      'Nombre': nombre,
-      'Apellido': apellido,
-      'Email': email,
-      'Password_hash': password,
-    });
+    await _api.post(
+      '/auth/register',
+      body: {
+        'Nombre': nombre,
+        'Apellido': apellido,
+        'Email': email,
+        'Password_hash': password,
+      },
+    );
+  }
+
+  Future<String> forgotPassword({required String email}) async {
+    final data = await _api.post(
+      '/auth/forgot-password',
+      body: {'Email': email},
+    );
+    return data['mensaje'] as String? ?? 'Se ha enviado un correo';
+  }
+
+  Future<String> verifyResetCode({
+    required String email,
+    required String code,
+  }) async {
+    final data = await _api.post(
+      '/auth/verify-reset-code',
+      body: {'Email': email, 'code': code},
+    );
+    return data['resetToken'] as String? ?? '';
+  }
+
+  Future<void> resetPassword({
+    required String resetToken,
+    required String nuevaPassword,
+  }) async {
+    await _api.post(
+      '/auth/reset-password',
+      body: {'resetToken': resetToken, 'nuevaPassword': nuevaPassword},
+    );
   }
 
   Future<void> logout() async {

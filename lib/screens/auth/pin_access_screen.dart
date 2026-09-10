@@ -24,10 +24,21 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
   }
 
   Future<void> _checkPinStatus() async {
+    if (!await AuthService.instance.hasSession()) {
+      if (!mounted) return;
+      setState(() {
+        _isSettingPin = false;
+        _statusMessage = 'Inicia sesión con tu correo y contraseña';
+      });
+      return;
+    }
+
     final hasPin = await AuthService.instance.hasPinSet();
     setState(() {
       _isSettingPin = !hasPin;
-      _statusMessage = _isSettingPin ? 'Configura tu nuevo PIN' : 'Ingresa tu código de seguridad';
+      _statusMessage = _isSettingPin
+          ? 'Configura tu nuevo PIN'
+          : 'Ingresa tu código de seguridad';
     });
   }
 
@@ -50,6 +61,14 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
     await Future.delayed(const Duration(milliseconds: 300));
     if (!mounted) return;
 
+    if (!await AuthService.instance.hasSession()) {
+      setState(() {
+        _pin = '';
+        _statusMessage = 'Tu sesión ya no está disponible';
+      });
+      return;
+    }
+
     if (_isSettingPin) {
       if (_firstPinEntry.isEmpty) {
         setState(() {
@@ -61,7 +80,9 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
         if (_pin == _firstPinEntry) {
           await AuthService.instance.savePin(_pin);
           if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PIN configurado con éxito')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('PIN configurado con éxito')),
+          );
           Navigator.of(context).pushReplacementNamed('/home');
         } else {
           setState(() {
@@ -73,10 +94,16 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
       }
     } else {
       final isValid = await AuthService.instance.verifyPin(_pin);
+      if (!mounted) return;
       if (isValid) {
         Navigator.of(context).pushReplacementNamed('/home');
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PIN Incorrecto'), backgroundColor: AppColors.error));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('PIN Incorrecto'),
+            backgroundColor: AppColors.error,
+          ),
+        );
         setState(() => _pin = '');
       }
     }
@@ -89,9 +116,24 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
         children: [
           _buildTopBar(context),
           const SizedBox(height: 40),
-          const Text('AhorrApp', style: TextStyle(color: AppColors.accent, fontSize: 32, fontWeight: FontWeight.w900)),
+          const Text(
+            'AhorrApp',
+            style: TextStyle(
+              color: AppColors.accent,
+              fontSize: 32,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
           const SizedBox(height: 20),
-          Text(_statusMessage, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+          Text(
+            _statusMessage,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 50),
           _buildPinIndicators(),
           const SizedBox(height: 60),
@@ -99,7 +141,13 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
           const SizedBox(height: 40),
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Volver al Login', style: TextStyle(color: AppColors.blue, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Volver al Login',
+              style: TextStyle(
+                color: AppColors.blue,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
           const SizedBox(height: 20),
         ],
@@ -113,7 +161,12 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
         IconButton(
           onPressed: () => Navigator.of(context).pop(),
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-          style: IconButton.styleFrom(backgroundColor: AppColors.surface, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+          style: IconButton.styleFrom(
+            backgroundColor: AppColors.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
         ),
       ],
     );
@@ -126,12 +179,24 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
         bool isFilled = index < _pin.length;
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 12),
-          width: 18, height: 18,
+          width: 18,
+          height: 18,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: isFilled ? AppColors.accent : Colors.transparent,
-            border: Border.all(color: isFilled ? AppColors.accent : AppColors.textMuted, width: 2),
-            boxShadow: isFilled ? [BoxShadow(color: AppColors.accent.withValues(alpha: 0.3), blurRadius: 10, spreadRadius: 2)] : [],
+            border: Border.all(
+              color: isFilled ? AppColors.accent : AppColors.textMuted,
+              width: 2,
+            ),
+            boxShadow: isFilled
+                ? [
+                    BoxShadow(
+                      color: AppColors.accent.withValues(alpha: 0.3),
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                    ),
+                  ]
+                : [],
           ),
         );
       }),
@@ -142,14 +207,31 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, childAspectRatio: 1.6, mainAxisSpacing: 16, crossAxisSpacing: 16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        childAspectRatio: 1.6,
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
+      ),
       itemCount: 12,
       itemBuilder: (context, index) {
         if (index == 9) return const SizedBox.shrink();
-        if (index == 10) return _NumberButton(label: '0', onTap: () => _onNumberPressed('0'));
-        if (index == 11) return IconButton(onPressed: _onBackspace, icon: const Icon(Icons.backspace_outlined, color: Colors.white, size: 24));
+        if (index == 10)
+          return _NumberButton(label: '0', onTap: () => _onNumberPressed('0'));
+        if (index == 11)
+          return IconButton(
+            onPressed: _onBackspace,
+            icon: const Icon(
+              Icons.backspace_outlined,
+              color: Colors.white,
+              size: 24,
+            ),
+          );
         String number = (index + 1).toString();
-        return _NumberButton(label: number, onTap: () => _onNumberPressed(number));
+        return _NumberButton(
+          label: number,
+          onTap: () => _onNumberPressed(number),
+        );
       },
     );
   }
@@ -169,10 +251,23 @@ class _NumberButton extends StatelessWidget {
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.borderLight),
-          boxShadow: const [BoxShadow(color: Colors.black45, offset: Offset(4, 4), blurRadius: 8)],
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black45,
+              offset: Offset(4, 4),
+              blurRadius: 8,
+            ),
+          ],
         ),
         alignment: Alignment.center,
-        child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
     );
   }
