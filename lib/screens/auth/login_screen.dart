@@ -139,7 +139,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: IntrinsicHeight(
                     child: Column(
                       children: [
-                        const _StatusBar(),
+                        // const _StatusBar(),
                         const SizedBox(height: 26),
                         const _BrandHeader(),
                         const SizedBox(height: 22),
@@ -211,37 +211,37 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-class _StatusBar extends StatelessWidget {
-  const _StatusBar();
+// class _StatusBar extends StatelessWidget {
+//   const _StatusBar();
 
-  @override
-  Widget build(BuildContext context) {
-    return const Row(
-      children: [
-        Text(
-          '9:41',
-          style: TextStyle(
-            color: AppColors.muted,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        Spacer(),
-        Icon(
-          Icons.more_horiz_rounded,
-          color: AppColors.muted,
-          size: 20,
-        ),
-        SizedBox(width: 8),
-        Icon(
-          Icons.battery_5_bar_rounded,
-          color: AppColors.success,
-          size: 18,
-        ),
-      ],
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return const Row(
+//       children: [
+//         Text(
+//           '9:41',
+//           style: TextStyle(
+//             color: AppColors.muted,
+//             fontSize: 12,
+//             fontWeight: FontWeight.w600,
+//           ),
+//         ),
+//         Spacer(),
+//         Icon(
+//           Icons.more_horiz_rounded,
+//           color: AppColors.muted,
+//           size: 20,
+//         ),
+//         SizedBox(width: 8),
+//         Icon(
+//           Icons.battery_5_bar_rounded,
+//           color: AppColors.success,
+//           size: 18,
+//         ),
+//       ],
+//     );
+//   }
+// }
 
 class _BrandHeader extends StatelessWidget {
   const _BrandHeader();
