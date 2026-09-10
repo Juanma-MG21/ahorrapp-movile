@@ -109,10 +109,17 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
       } else {
         await DeudasService.actualizarDeuda(deuda.id!, deuda);
       }
-      if (mounted) Navigator.pop(context, true);
+
+      if (!mounted) return;
+
+      Navigator.pop(context, true);
     } on ApiException catch (e) {
+      if (!mounted) return;
+
       setState(() => _isSaving = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
     }
   }
 

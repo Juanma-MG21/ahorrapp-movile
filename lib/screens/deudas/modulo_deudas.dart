@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/design_tokens.dart';
@@ -189,7 +188,7 @@ class _ModuloDeudasState extends State<ModuloDeudas> {
             children: [
               Container(
                 width: 44, height: 44,
-                decoration: BoxDecoration(color: AppColors.error.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(color: AppColors.error.withValues(alpha: 0.1),borderRadius: BorderRadius.circular(12),),
                 child: Icon(deuda.icono, color: AppColors.error, size: 24),
               ),
               const SizedBox(width: 14),

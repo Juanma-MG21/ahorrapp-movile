@@ -4,7 +4,7 @@ import 'package:table_calendar/table_calendar.dart';
 // ---------------------------------------------------------------------------
 // Colores por tipo de movimiento financiero (mismo criterio que
 // TIPO_CONFIG en PanelMovimientos del frontend web)
-// TODO(paso 2): migrar estos colores a AppColors/design_tokens.dart
+// (paso 2): migrar estos colores a AppColors/design_tokens.dart
 // ---------------------------------------------------------------------------
 const Map<String, Color> colorPorTipo = {
   'ingreso': Colors.green,
@@ -139,7 +139,7 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
         },
         onPageChanged: (nuevoDiaFocalizado) {
           _diaFocalizado = nuevoDiaFocalizado;
-          // TODO(conexión backend): disparar fetch a
+          // (conexión backend): disparar fetch a
           // GET /api/movimientos/por-fecha del mes visible.
         },
         eventLoader: _obtenerMovimientosDelDia,

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../core/network/api_client.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../services/auth_service.dart';
@@ -21,6 +23,41 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+    _loadSavedCredentials();
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    if (!mounted) return;
+
+    setState(() {
+      _rememberSession = prefs.getBool('remember_me') ?? false;
+
+      if (_rememberSession) {
+        _emailController.text = prefs.getString('saved_email') ?? '';
+      }
+    });
+  }
+
+  Future<void> _handleRememberMe() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    if (_rememberSession) {
+      await prefs.setBool('remember_me', true);
+      await prefs.setString(
+        'saved_email',
+        _emailController.text.trim(),
+      );
+    } else {
+      await prefs.remove('remember_me');
+      await prefs.remove('saved_email');
+    }
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
@@ -39,14 +76,20 @@ class _LoginScreenState extends State<LoginScreen> {
         rememberSession: _rememberSession,
       );
 
+      await _handleRememberMe();
+
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('¡Bienvenido de nuevo!')),
+        const SnackBar(
+          content: Text('¡Bienvenido de nuevo!'),
+        ),
       );
+
       Navigator.of(context).pushReplacementNamed('/home');
     } on ApiException catch (error) {
       if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.message),
@@ -55,6 +98,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     } catch (error) {
       if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Ocurrió un error inesperado'),
@@ -62,7 +106,9 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -78,14 +124,18 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(color: AppColors.background),
+        decoration: const BoxDecoration(
+          color: AppColors.background,
+        ),
         child: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
               return SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(18, 12, 18, 0),
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  constraints: BoxConstraints(
+                    minHeight: constraints.maxHeight,
+                  ),
                   child: IntrinsicHeight(
                     child: Column(
                       children: [
@@ -104,7 +154,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             setState(() => _rememberSession = value);
                           },
                           onTogglePassword: () {
-                            setState(() => _hidePassword = !_hidePassword);
+                            setState(
+                              () => _hidePassword = !_hidePassword,
+                            );
                           },
                           onSubmit: _submit,
                           onForgotPassword: _openForgotPassword,
@@ -112,16 +164,39 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 18),
                         _QuickAccess(
                           onFingerprint: () =>
-                              Navigator.of(context).pushNamed('/biometric-access'),
-                          onPin: () => Navigator.of(context).pushNamed('/pin-access'),
+                              Navigator.of(context).pushNamed(
+                            '/biometric-access',
+                          ),
+                          onPin: () => Navigator.of(context).pushNamed(
+                            '/pin-access',
+                          ),
                         ),
                         const SizedBox(height: 16),
                         _RegisterCallout(onTap: _openRegister),
+                        const SizedBox(height: 12),
+                        TextButton.icon(
+                          onPressed: () => Navigator.of(context).pushNamed(
+                            '/fast-login',
+                          ),
+                          icon: const Icon(
+                            Icons.bolt_rounded,
+                            size: 18,
+                          ),
+                          label: const Text('Acceso rápido'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.textMuted,
+                            textStyle: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
                         const Spacer(),
                         _BottomAccessNav(
                           onRegister: _openRegister,
-                          onHelp: () =>
-                              Navigator.of(context).pushNamed('/reset-password'),
+                          onHelp: () => Navigator.of(context).pushNamed(
+                            '/reset-password',
+                          ),
                         ),
                       ],
                     ),
@@ -152,9 +227,17 @@ class _StatusBar extends StatelessWidget {
           ),
         ),
         Spacer(),
-        Icon(Icons.more_horiz_rounded, color: AppColors.muted, size: 20),
+        Icon(
+          Icons.more_horiz_rounded,
+          color: AppColors.muted,
+          size: 20,
+        ),
         SizedBox(width: 8),
-        Icon(Icons.battery_5_bar_rounded, color: AppColors.success, size: 18),
+        Icon(
+          Icons.battery_5_bar_rounded,
+          color: AppColors.success,
+          size: 18,
+        ),
       ],
     );
   }
@@ -199,7 +282,10 @@ class _BrandHeader extends StatelessWidget {
         SizedBox(height: 7),
         Text(
           'Inicia sesion para continuar',
-          style: TextStyle(color: AppColors.muted, fontSize: 12),
+          style: TextStyle(
+            color: AppColors.muted,
+            fontSize: 12,
+          ),
         ),
       ],
     );
@@ -245,14 +331,22 @@ class _LoginForm extends StatelessWidget {
             autocorrect: false,
             decoration: const InputDecoration(
               labelText: 'CORREO ELECTRONICO',
-              suffixIcon: Icon(Icons.mail_rounded, color: AppColors.textMuted),
+              suffixIcon: Icon(
+                Icons.mail_rounded,
+                color: AppColors.textMuted,
+              ),
             ),
             validator: (value) {
               final email = value?.trim() ?? '';
-              if (email.isEmpty) return 'Ingresa tu correo';
+
+              if (email.isEmpty) {
+                return 'Ingresa tu correo';
+              }
+
               if (!email.contains('@') || !email.contains('.')) {
                 return 'Ingresa un correo valido';
               }
+
               return null;
             },
           ),
@@ -278,7 +372,10 @@ class _LoginForm extends StatelessWidget {
               ),
             ),
             validator: (value) {
-              if ((value ?? '').isEmpty) return 'Ingresa tu contrasena';
+              if ((value ?? '').isEmpty) {
+                return 'Ingresa tu contrasena';
+              }
+
               return null;
             },
           ),
@@ -287,14 +384,18 @@ class _LoginForm extends StatelessWidget {
             children: [
               Checkbox(
                 value: rememberSession,
-                onChanged: (value) => onRememberChanged(value ?? false),
+                onChanged: (value) =>
+                    onRememberChanged(value ?? false),
                 activeColor: AppColors.accent,
                 checkColor: AppColors.background,
                 visualDensity: VisualDensity.compact,
               ),
               const Text(
                 'Recordar sesion',
-                style: TextStyle(color: AppColors.muted, fontSize: 12),
+                style: TextStyle(
+                  color: AppColors.muted,
+                  fontSize: 12,
+                ),
               ),
               const Spacer(),
               TextButton(
@@ -307,7 +408,10 @@ class _LoginForm extends StatelessWidget {
                 ),
                 child: const Text(
                   'Olvidaste tu contrasena?',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -325,7 +429,10 @@ class _LoginForm extends StatelessWidget {
 }
 
 class _QuickAccess extends StatelessWidget {
-  const _QuickAccess({required this.onFingerprint, required this.onPin});
+  const _QuickAccess({
+    required this.onFingerprint,
+    required this.onPin,
+  });
 
   final VoidCallback onFingerprint;
   final VoidCallback onPin;
@@ -336,15 +443,26 @@ class _QuickAccess extends StatelessWidget {
       children: [
         const Row(
           children: [
-            Expanded(child: Divider(color: AppColors.borderLight)),
+            Expanded(
+              child: Divider(
+                color: AppColors.borderLight,
+              ),
+            ),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 10),
               child: Text(
                 'o continua con',
-                style: TextStyle(color: AppColors.textMuted, fontSize: 11),
+                style: TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 11,
+                ),
               ),
             ),
-            Expanded(child: Divider(color: AppColors.borderLight)),
+            Expanded(
+              child: Divider(
+                color: AppColors.borderLight,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 18),
@@ -357,7 +475,7 @@ class _QuickAccess extends StatelessWidget {
                 onTap: onFingerprint,
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 15),
             Expanded(
               child: _AccessTile(
                 icon: Icons.pin_rounded,
@@ -385,8 +503,6 @@ class _AccessTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Réplica local del estilo "clayRaised" (ver PinAccessScreen), sin
-    // depender de app_theme.dart para evitar el conflicto de import.
     return Material(
       color: AppColors.surface,
       borderRadius: BorderRadius.circular(13),
@@ -396,13 +512,19 @@ class _AccessTile extends StatelessWidget {
         child: Container(
           height: 55,
           decoration: BoxDecoration(
-            border: Border.all(color: AppColors.borderLight),
+            border: Border.all(
+              color: AppColors.borderLight,
+            ),
             borderRadius: BorderRadius.circular(13),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: AppColors.accent, size: 24),
+              Icon(
+                icon,
+                color: AppColors.accent,
+                size: 24,
+              ),
               const SizedBox(height: 3),
               Text(
                 label,
@@ -421,7 +543,9 @@ class _AccessTile extends StatelessWidget {
 }
 
 class _RegisterCallout extends StatelessWidget {
-  const _RegisterCallout({required this.onTap});
+  const _RegisterCallout({
+    required this.onTap,
+  });
 
   final VoidCallback onTap;
 
@@ -432,7 +556,10 @@ class _RegisterCallout extends StatelessWidget {
       children: [
         const Text(
           'No tienes cuenta? ',
-          style: TextStyle(color: AppColors.muted, fontSize: 12),
+          style: TextStyle(
+            color: AppColors.muted,
+            fontSize: 12,
+          ),
         ),
         TextButton(
           onPressed: onTap,
@@ -444,7 +571,10 @@ class _RegisterCallout extends StatelessWidget {
           ),
           child: const Text(
             'Registrate',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+            ),
           ),
         ),
       ],
@@ -453,7 +583,10 @@ class _RegisterCallout extends StatelessWidget {
 }
 
 class _BottomAccessNav extends StatelessWidget {
-  const _BottomAccessNav({required this.onRegister, required this.onHelp});
+  const _BottomAccessNav({
+    required this.onRegister,
+    required this.onHelp,
+  });
 
   final VoidCallback onRegister;
   final VoidCallback onHelp;
@@ -464,7 +597,11 @@ class _BottomAccessNav extends StatelessWidget {
       height: 62,
       margin: const EdgeInsets.only(top: 6),
       decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.borderLight)),
+        border: Border(
+          top: BorderSide(
+            color: AppColors.borderLight,
+          ),
+        ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -507,8 +644,14 @@ class _BottomNavButton extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
-        child: _BottomNavItem(icon: icon, label: label),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 7,
+        ),
+        child: _BottomNavItem(
+          icon: icon,
+          label: label,
+        ),
       ),
     );
   }
@@ -527,19 +670,27 @@ class _BottomNavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? AppColors.accent : AppColors.textMuted;
+    final color = selected
+        ? AppColors.accent
+        : AppColors.textMuted;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: color, size: 22),
+        Icon(
+          icon,
+          color: color,
+          size: 22,
+        ),
         const SizedBox(height: 4),
         Text(
           label,
           style: TextStyle(
             color: color,
             fontSize: 10,
-            fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
+            fontWeight: selected
+                ? FontWeight.w800
+                : FontWeight.w500,
           ),
         ),
       ],

@@ -90,12 +90,13 @@ class AhorrosService {
     }
   }
 
-  static Future<void> registrarAbono(AhorroModel ahorro, double montoAbono) async {
-    final token = await AuthService.instance.getToken();
-    
+  static Future<void> registrarAbono(
+    AhorroModel ahorro,
+    double montoAbono,
+  ) async {
     // Calculamos el nuevo monto acumulado
     final nuevoMontoAcumulado = ahorro.montoActual + montoAbono;
-    
+
     // Creamos una copia del modelo con el saldo actualizado
     final ahorroActualizado = AhorroModel(
       id: ahorro.id,
@@ -106,13 +107,15 @@ class AhorrosService {
       estado: ahorro.estado,
     );
 
-    // Intentamos actualizar la meta directamente (esto sumará el saldo en la DB)
+    // Intentamos actualizar la meta directamente
     try {
       await actualizarAhorro(ahorro.id!, ahorroActualizado);
       debugPrint('AhorrosService: Meta actualizada con éxito tras abono');
     } catch (e) {
       debugPrint('AhorrosService: Error al actualizar meta para abono: $e');
-      throw ApiException('No se pudo actualizar el saldo de la meta. Inténtalo de nuevo.');
+      throw ApiException(
+        'No se pudo actualizar el saldo de la meta. Inténtalo de nuevo.',
+      );
     }
   }
 }

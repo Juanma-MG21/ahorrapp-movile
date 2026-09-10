@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import 'core/theme/app_theme.dart';
 import 'providers/presupuesto_provider.dart';
 import 'screens/auth/forgot_password_screen.dart';
@@ -41,8 +42,6 @@ class AhorrApp extends StatelessWidget {
           '/biometric-access': (context) => const BiometricAccessScreen(),
           '/pin-access': (context) => const PinAccessScreen(),
           '/reset-password': (context) => const ResetPasswordScreen(),
-
-          // Nuevas rutas incorporadas
           '/fast-login': (context) => const FastLoginScreen(),
           '/gastos': (context) => const ModuloGastos(),
         },

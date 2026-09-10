@@ -16,14 +16,33 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
   final LocalAuthentication auth = LocalAuthentication();
   bool _isAuthenticating = false;
   String _authStatus = 'Esperando autenticación...';
+  bool _canCheckBiometrics = false;
 
   @override
   void initState() {
     super.initState();
-    // Iniciar autenticación automáticamente al entrar
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _authenticate();
-    });
+    _checkHardware();
+  }
+
+  Future<void> _checkHardware() async {
+    try {
+      final bool canAuthenticateWithBiometrics = await auth.canCheckBiometrics;
+      final bool canAuthenticate = canAuthenticateWithBiometrics || await auth.isDeviceSupported();
+      
+      setState(() {
+        _canCheckBiometrics = canAuthenticate;
+      });
+
+      if (_canCheckBiometrics) {
+        _authenticate();
+      } else {
+        setState(() {
+          _authStatus = 'Biometría no disponible en este dispositivo';
+        });
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+    }
   }
 
   Future<void> _authenticate() async {
@@ -101,7 +120,7 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
           ),
           const SizedBox(height: 60),
           GestureDetector(
-            onTap: _isAuthenticating ? null : _authenticate,
+            onTap: (_isAuthenticating || !_canCheckBiometrics) ? null : _authenticate,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               padding: const EdgeInsets.all(30),
@@ -111,45 +130,54 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
                     ? AppColors.accent.withValues(alpha: 0.1)
                     : AppColors.surface,
                 border: Border.all(
-                  color: _isAuthenticating ? AppColors.accent : AppColors.borderLight,
+                  color: _isAuthenticating
+                      ? AppColors.accent
+                      : AppColors.borderLight,
                   width: 2,
                 ),
                 boxShadow: _isAuthenticating
                     ? [
-                  BoxShadow(
-                    color: AppColors.accent.withValues(alpha: 0.3),
-                    blurRadius: 30,
-                    spreadRadius: 5,
-                  )
-                ]
+                        BoxShadow(
+                          color: AppColors.accent.withValues(alpha: 0.3),
+                          blurRadius: 30,
+                          spreadRadius: 5,
+                        ),
+                      ]
                     : [],
               ),
               child: Icon(
                 Icons.fingerprint_rounded,
                 size: 100,
-                color: _isAuthenticating ? AppColors.accent : AppColors.textSecondary,
+                color: _isAuthenticating
+                    ? AppColors.accent
+                    : AppColors.textSecondary,
               ),
             ),
           ),
           const SizedBox(height: 40),
-          Text(
-            _authStatus,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Text(
+              _authStatus,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           const SizedBox(height: 20),
-          if (!_isAuthenticating)
+          if (!_isAuthenticating && _canCheckBiometrics)
             TextButton.icon(
               onPressed: _authenticate,
               icon: const Icon(Icons.refresh_rounded),
               label: const Text('Reintentar'),
               style: TextButton.styleFrom(foregroundColor: AppColors.accent),
             ),
-          const Spacer(),
+          
+          const SizedBox(height: 60), // En lugar de Spacer
+          
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text(
