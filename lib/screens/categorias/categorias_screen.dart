@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import '../models/categoria_model.dart';
-import '../services/categorias_service.dart';
+import '../../models/categoria_model.dart';
+import '../../services/categorias_service.dart';
 
 // ─────────────────────────────────────────────────────────────────────
 // PALETA · misma idea que en pantallas anteriores: constantes locales

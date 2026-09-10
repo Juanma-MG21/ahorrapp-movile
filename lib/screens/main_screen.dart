@@ -8,6 +8,8 @@ import 'imprevistos/modulo_imprevistos.dart';
 import 'ahorros/modulo_ahorros.dart';
 import 'deudas/modulo_deudas.dart';
 import 'presupuestos/modulo_presupuestos.dart';
+import '../screens/dependientes/dependientes_screen.dart';
+import '../screens/dashboard/dashboard_screen.dart';
 
 /// Metadata (icono + label) de cada pantalla accesible desde el menú
 /// "Más". El índice de cada _MenuItem debe corresponder al mismo
@@ -28,6 +30,7 @@ const List<_MenuItem> _itemsMas = [
   _MenuItem(icon: Icons.savings_outlined, label: 'Ahorros'),
   _MenuItem(icon: Icons.credit_card, label: 'Deudas'),
   _MenuItem(icon: Icons.calendar_month_outlined, label: 'Calendario'),
+  _MenuItem(icon: Icons.people, label: 'Dependientes')
 ];
 
 class MainScreen extends StatefulWidget {
@@ -40,7 +43,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   // Pantallas fijas del bottom nav (índices 0-3).
   final List<Widget> _pantallasPrincipales = const [
-    HomeScreen(),
+    DashboardScreen(),
     ModuloIngresos(),
     ModuloGastos(),
     ModuloPresupuestos(),
@@ -54,6 +57,7 @@ class _MainScreenState extends State<MainScreen> {
     ModuloAhorros(),
     ModuloDeudas(),
     CalendarioScreen(),
+    PanelDependientesScreen(),
   ];
 
   // 0-3 = una de las pestañas fijas. 4 = estamos mostrando algo de "Más".

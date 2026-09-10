@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/notificaciones.dart';
+import '../core/network/api_client.dart';
+
 // PRUEBAS
 class NotificacionesServices {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -23,8 +25,7 @@ class NotificacionesServices {
     try {
       await _supabase
           .from(_table)
-          .update({'leida': true})
-          .eq('id_notificacion', idNotificacion);
+          .update({'leida': true}).eq('id_notificacion', idNotificacion);
     } catch (e) {
       throw Exception('Error al marcar como leída: $e');
     }

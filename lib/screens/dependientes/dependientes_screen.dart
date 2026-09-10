@@ -2,7 +2,7 @@
 // del fetch de JS — en Dart la decodificación de JSON es una función
 // suelta, no un método del objeto de respuesta.
 import 'dart:convert';
-// PRUEBA TODAVIA SE SIGUE TESTEANDO 
+// PRUEBA TODAVIA SE SIGUE TESTEANDO
 import 'package:flutter/material.dart';
 // El paquete 'http' reemplaza al `fetch` nativo del navegador; no
 // viene incluido en Flutter por defecto, hay que declararlo en
@@ -11,22 +11,54 @@ import 'package:http/http.dart' as http;
 // Para leer el token igual que `localStorage.getItem('token')`, pero
 // de forma segura (Keychain en iOS, Keystore en Android).
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../core/network/api_client.dart';
+import '../dependientes/agregar_dependientes_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────
-// PALETA · mismos colores que tu Tailwind, ahora como constantes Dart.
-// Los saco a top-level (fuera de cualquier clase) porque solo los usa
-// este archivo; si luego los reusas en más pantallas, muévelos a tu
-// clase `Tokens` central.
+// PALETA · CAMBIO DE ESTILO: antes esta pantalla tenía su propia paleta
+// "azul oscuro + dorado" (#080c18 / #e0b855). Ahora la reemplazo por la
+// MISMA paleta que ya usa `ModuloCategoriasScreen` (slate + emerald +
+// amber + indigo + zinc), para que ambas pantallas se vean como parte
+// de la misma app cuando el usuario navegue entre ellas.
+//
+// Mantengo los MISMOS NOMBRES de rol (_bg, _card, _border, _textPrimary,
+// _textSecondary, _textMuted) porque cumplen la misma función visual;
+// solo cambia el valor hexadecimal. Sí renombré dos casos puntuales
+// para que el nombre no mienta sobre el color real:
+//   _gold (dorado) -> _amber (ámbar, el acento de Categorías)
+//   _blue (azul)   -> _indigo (índigo, el color del chip "Personal"
+//                      en Categorías;ántes aquí marcaba la relación)
+// Sigo dejando todo como `const Color`, igual que el original, porque
+// varios `BoxDecoration`/`TextStyle` de este archivo están declarados
+// con `const` y exigen que sus colores también lo sean en tiempo de
+// compilación (no admiten `Colors.white.withOpacity(...)`, que se
+// calcula en tiempo de ejecución).
 // ─────────────────────────────────────────────────────────────────────
 
-const Color _bg = Color(0xFF080c18);
-const Color _card = Color(0xFF0d1526);
-const Color _border = Color(0xFF1c2942);
-const Color _gold = Color(0xFFe0b855);
-const Color _textPrimary = Color(0xFFf4f1e8);
-const Color _textSecondary = Color(0xFF9aa6c4);
-const Color _textMuted = Color(0xFF7d8aa8);
-const Color _blue = Color(0xFF85b7eb);
+// Fondo general de la pantalla. En Categorías el Scaffold usa
+// 0xFF0f172a (un "slate-900" de Tailwind) en vez del 0xFF080c18 azul
+// casi negro que tenías antes.
+const Color _bg = Color(0xFF0f172a);
+// Superficie de las tarjetas/containers. Uso 0xFF1e293b ("slate-800"):
+// es un paso más claro que _bg, el mismo efecto visual que buscaba tu
+// `_card` original, pero dentro de la familia slate de Categorías.
+const Color _card = Color(0xFF1e293b);
+// Bordes sutiles entre secciones y alrededor de tarjetas: "slate-700".
+const Color _border = Color(0xFF334155);
+// Acento principal (antes dorado `_gold`): ahora ámbar, igual que
+// `_amber400` en Categorías. Lo uso donde antes iba el dorado
+// (iniciales del avatar).
+const Color _amber = Color(0xFFfbbf24);
+// Textos: mismos tres niveles de jerarquía que tenías, pero con los
+// tonos "zinc" que usa Categorías en vez de los tonos azulados
+// anteriores.
+const Color _textPrimary = Color(0xFFf4f4f5); // zinc-100
+const Color _textSecondary = Color(0xFFa1a1aa); // zinc-400
+const Color _textMuted = Color(0xFF71717a); // zinc-500
+// Acento secundario (antes celeste `_blue`, usado en el chip de
+// relación): ahora índigo, el mismo color que Categorías usa para su
+// chip "Personal".
+const Color _indigo = Color(0xFF818cf8);
 
 // ─────────────────────────────────────────────────────────────────────
 // MODELO · en JS trabajabas con el objeto crudo que devuelve el fetch
@@ -82,7 +114,8 @@ class PanelDependientesScreen extends StatefulWidget {
   const PanelDependientesScreen({super.key});
 
   @override
-  State<PanelDependientesScreen> createState() => _PanelDependientesScreenState();
+  State<PanelDependientesScreen> createState() =>
+      _PanelDependientesScreenState();
 }
 
 class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
@@ -124,7 +157,7 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
       // `http.get` recibe un `Uri`, no un string plano — por eso envuelvo
       // la URL en `Uri.parse(...)`. El resto es igual a tu `fetch`.
       final response = await http.get(
-        Uri.parse('http://localhost:3000/api/auth/PanelDependientes'),
+        Uri.parse(''),
         headers: {
           // Si `token` es null, esto pondría "Bearer null" como string;
           // más abajo lo puedes reforzar redirigiendo al login cuando
@@ -161,7 +194,8 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
         setState(() {
           // `data['mensaje'] as String?` + `??` (operador "si es null,
           // usa esto otro") reemplaza tu `data.mensaje || 'No se pudieron obtener los dependientes'`.
-          _error = data['mensaje'] as String? ?? 'No se pudieron obtener los dependientes';
+          _error = data['mensaje'] as String? ??
+              'No se pudieron obtener los dependientes';
         });
       }
     } catch (err) {
@@ -208,6 +242,13 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
             // `Expanded` + adentro un `SingleChildScrollView`/`GridView`
             // para que el body pueda crecer y scrollear como tu `<main>`.
             Expanded(child: _buildBody()),
+            ElevatedButton(
+              onPressed: () {
+                // Navegar a la pantalla de registro de dependientes
+                Navigator.pushNamed(context, '');
+              },
+              child: const Text('+'),
+            ),
           ],
         ),
       ),
@@ -220,7 +261,8 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
   Widget _buildHeader(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: _border))),
+      decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: _border))),
       child: Row(
         children: [
           // El `<Link to="/PanelAdmin">` de react-router-dom se traduce
@@ -242,7 +284,11 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
                 children: const [
                   Icon(Icons.arrow_back, size: 16, color: _textSecondary),
                   SizedBox(width: 8),
-                  Text('Volver al panel', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: _textSecondary)),
+                  Text('',
+                      style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: _textSecondary)),
                 ],
               ),
             ),
@@ -251,12 +297,17 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Lista de dependientes', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: _textPrimary)),
+              const Text('Lista de dependientes',
+                  style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: _textPrimary)),
               const SizedBox(height: 4),
               // Interpolación con una expresión (`${...}`, no solo un
               // nombre suelto) porque `.length` es una llamada, no una
               // variable simple.
-              Text('${_dependientes.length} registrados', style: const TextStyle(fontSize: 13, color: _textMuted)),
+              Text('${_dependientes.length} registrados',
+                  style: const TextStyle(fontSize: 13, color: _textMuted)),
             ],
           ),
         ],
@@ -272,7 +323,9 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
     if (_cargando) {
       return const Padding(
         padding: EdgeInsets.only(top: 40),
-        child: Text('Cargando dependientes...', textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: _textSecondary)),
+        child: Text('Cargando dependientes...',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: _textSecondary)),
       );
     }
 
@@ -290,7 +343,9 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
           // El `!` después de `_error` le dice al compilador "confía en
           // mí, en este punto ya sé que no es null" — válido aquí
           // porque acabamos de comprobarlo con el `if` de arriba.
-          child: Text(_error!, textAlign: TextAlign.center, style: const TextStyle(fontSize: 13, color: Colors.redAccent)),
+          child: Text(_error!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 13, color: Colors.redAccent)),
         ),
       );
     }
@@ -298,7 +353,8 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
     if (_dependientes.isEmpty) {
       return const Padding(
         padding: EdgeInsets.all(24),
-        child: Text('No hay dependientes registrados.', style: TextStyle(fontSize: 13, color: _textSecondary)),
+        child: Text('No hay dependientes registrados.',
+            style: TextStyle(fontSize: 13, color: _textSecondary)),
       );
     }
 
@@ -365,24 +421,49 @@ class _DependienteCard extends StatelessWidget {
               Container(
                 width: 40,
                 height: 40,
-                decoration: BoxDecoration(shape: BoxShape.circle, color: _gold.withOpacity(0.1)),
+                // Antes: `_gold.withOpacity(0.1)`. Ahora el avatar usa el
+                // acento ámbar de Categorías, con el mismo 10% de opacidad
+                // que tenía el dorado original.
+                decoration: BoxDecoration(
+                    shape: BoxShape.circle, color: _amber.withOpacity(0.1)),
                 alignment: Alignment.center,
-                child: Text(iniciales, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: _gold)),
+                // Mismo cambio: el texto de las iniciales pasa de dorado a ámbar.
+                child: Text(iniciales,
+                    style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: _amber)),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(dependiente.nombre, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: _textPrimary)),
-                    Text('ID ${dependiente.idDependientes}', style: const TextStyle(fontSize: 11, color: _textMuted)),
+                    Text(dependiente.nombre,
+                        style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: _textPrimary)),
+                    Text('ID ${dependiente.idDependientes}',
+                        style:
+                            const TextStyle(fontSize: 11, color: _textMuted)),
                   ],
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(color: _blue.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
-                child: Text(dependiente.relacion, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: _blue)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                // Antes: `_blue.withOpacity(0.1)`. Ahora el chip de
+                // relación usa índigo, el mismo color que Categorías usa
+                // para su chip "Personal".
+                decoration: BoxDecoration(
+                    color: _indigo.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6)),
+                child: Text(dependiente.relacion,
+                    style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: _indigo)),
               ),
             ],
           ),
@@ -401,7 +482,9 @@ class _DependienteCard extends StatelessWidget {
                 style: const TextStyle(fontSize: 13, color: _textSecondary),
                 children: [
                   const TextSpan(text: 'Dependiente de '),
-                  TextSpan(text: dependiente.usuarioNombre, style: const TextStyle(color: _textPrimary)),
+                  TextSpan(
+                      text: dependiente.usuarioNombre,
+                      style: const TextStyle(color: _textPrimary)),
                 ],
               ),
             ),
@@ -411,12 +494,14 @@ class _DependienteCard extends StatelessWidget {
             icon: Icons.badge_outlined,
             // `??` de nuevo: si `ocupacion` es null, muestra el texto
             // por defecto, igual que tu `|| 'Sin ocupacion registrada'`.
-            child: Text(dependiente.ocupacion ?? 'Sin ocupacion registrada', style: const TextStyle(fontSize: 13, color: _textSecondary)),
+            child: Text(dependiente.ocupacion ?? 'Sin ocupacion registrada',
+                style: const TextStyle(fontSize: 13, color: _textSecondary)),
           ),
           const SizedBox(height: 8),
           _detailRow(
             icon: Icons.calendar_today_outlined,
-            child: Text(dependiente.fechaNacimiento, style: const TextStyle(fontSize: 13, color: _textSecondary)),
+            child: Text(dependiente.fechaNacimiento,
+                style: const TextStyle(fontSize: 13, color: _textSecondary)),
           ),
         ],
       ),
