@@ -9,6 +9,7 @@ import 'imprevistos/modulo_imprevistos.dart';
 import 'ahorros/modulo_ahorros.dart';
 import 'deudas/modulo_deudas.dart';
 import 'presupuestos/modulo_presupuestos.dart';
+import '../services/quick_actions_service.dart';
 
 /// Metadata (icono + label) de cada pantalla accesible desde el menú
 /// "Más". El índice de cada _MenuItem debe corresponder al mismo
@@ -69,6 +70,11 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _tabPrincipal);
+    
+    // Inicializar accesos directos (RF-27)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      QuickActionsService.init(context);
+    });
   }
 
   @override

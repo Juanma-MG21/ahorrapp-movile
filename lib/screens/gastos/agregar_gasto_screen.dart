@@ -27,6 +27,8 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
   List<DependienteModel> _listaDependientes = [];
   bool _isLoadingData = true;
   bool _isSaving = false;
+  bool _showScrollIndicator = false;
+  final ScrollController _categoryScrollController = ScrollController();
 
   @override
   void initState() {
@@ -80,6 +82,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
   void dispose() {
     _montoController.dispose();
     _descriptionController.dispose();
+    _categoryScrollController.dispose();
     super.dispose();
   }
 
@@ -460,31 +463,68 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
   }
 
   Widget _buildCategorySheet() {
-    return Container(
-      decoration: const BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.navInactive, borderRadius: BorderRadius.circular(2)))),
-            const SizedBox(height: 16),
-            const Text('Seleccionar categoría', style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.55),
-              child: ListView.separated(
-                shrinkWrap: true,
-                itemCount: _listaCategorias.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 12),
-                itemBuilder: (context, index) => _buildCategoryCard(_listaCategorias[index]),
-              ),
+    return StatefulBuilder(
+      builder: (context, setSheetState) {
+        return Container(
+          decoration: const BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.navInactive, borderRadius: BorderRadius.circular(2)))),
+                const SizedBox(height: 16),
+                const Text('Seleccionar categoría', style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                Stack(
+                  alignment: Alignment.bottomCenter,
+                  children: [
+                    ConstrainedBox(
+                      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.55),
+                      child: NotificationListener<ScrollNotification>(
+                        onNotification: (scroll) {
+                          if (scroll.metrics.extentAfter > 10) {
+                            if (!_showScrollIndicator) setSheetState(() => _showScrollIndicator = true);
+                          } else {
+                            if (_showScrollIndicator) setSheetState(() => _showScrollIndicator = false);
+                          }
+                          return false;
+                        },
+                        child: ListView.separated(
+                          controller: _categoryScrollController,
+                          shrinkWrap: true,
+                          itemCount: _listaCategorias.length,
+                          separatorBuilder: (_, _) => const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            // Verificación inicial de scroll al construir
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (_categoryScrollController.hasClients) {
+                                final hasMore = _categoryScrollController.position.extentAfter > 10;
+                                if (hasMore != _showScrollIndicator) {
+                                  setSheetState(() => _showScrollIndicator = hasMore);
+                                }
+                              }
+                            });
+                            return _buildCategoryCard(_listaCategorias[index]);
+                          },
+                        ),
+                      ),
+                    ),
+                    if (_showScrollIndicator)
+                      Positioned(
+                        bottom: 0,
+                        child: _ArrowIndicator(),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      }
     );
   }
 
@@ -624,6 +664,50 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
       case 'Servicios': return const Color(0xFFFF8C4A);
       default: return AppColors.accent;
     }
+  }
+}
+
+class _ArrowIndicator extends StatefulWidget {
+  @override
+  State<_ArrowIndicator> createState() => _ArrowIndicatorState();
+}
+
+class _ArrowIndicatorState extends State<_ArrowIndicator> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000))..repeat(reverse: true);
+    _animation = Tween<double>(begin: 0, end: 8).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, _animation.value),
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: AppColors.surface.withValues(alpha: 0.8),
+              shape: BoxShape.circle,
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)],
+            ),
+            child: const Icon(Icons.keyboard_arrow_down, color: AppColors.accent, size: 24),
+          ),
+        );
+      },
+    );
   }
 }
 
