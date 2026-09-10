@@ -104,6 +104,8 @@ class AhorrosService {
       montoObjetivo: ahorro.montoObjetivo,
       montoActual: nuevoMontoAcumulado,
       fechaLimite: ahorro.fechaLimite,
+      descripcion: ahorro.descripcion,
+      idCategoria: ahorro.idCategoria,
       estado: ahorro.estado,
     );
 

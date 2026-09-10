@@ -7,7 +7,9 @@ class QuickActionsService {
   static final QuickActions _quickActions = const QuickActions();
 
   static void init(BuildContext context) {
+    debugPrint('QuickActionsService: Inicializando...');
     _quickActions.initialize((String type) {
+      debugPrint('QuickActionsService: Atajo detectado -> $type');
       if (type == 'action_gasto') {
         Navigator.push(
           context,

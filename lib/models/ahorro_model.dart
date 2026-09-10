@@ -7,6 +7,8 @@ class AhorroModel {
   final double montoObjetivo;
   final double montoActual;
   final DateTime? fechaLimite;
+  final String? descripcion;
+  final int? idCategoria;
   final String estado; // 'Activo', 'Finalizado'
 
   AhorroModel({
@@ -15,13 +17,15 @@ class AhorroModel {
     required this.montoObjetivo,
     this.montoActual = 0.0,
     this.fechaLimite,
+    this.descripcion,
+    this.idCategoria,
     this.estado = 'Activo',
   });
 
   factory AhorroModel.fromJson(Map<String, dynamic> json) {
     return AhorroModel(
       id: json['id_ahorros'] ?? json['id'] ?? json['ID_detalle'],
-      nombre: json['meta'] ?? json['nombre'] ?? json['descripcion'] ?? json['categoria'] ?? 'Sin nombre',
+      nombre: json['meta'] ?? json['nombre'] ?? json['categoria'] ?? 'Sin nombre',
       montoObjetivo: parseMonto(json['monto'] ?? json['monto_objetivo'] ?? json['objetivo'] ?? 0),
       montoActual: parseMonto(json['monto_acumulado'] ?? 
                              json['monto_actual'] ?? 
@@ -32,6 +36,8 @@ class AhorroModel {
       fechaLimite: (json['fecha_meta'] ?? json['fecha_limite'] ?? json['fecha_finalizacion']) != null 
           ? DateTime.parse((json['fecha_meta'] ?? json['fecha_limite'] ?? json['fecha_finalizacion']).toString()) 
           : null,
+      descripcion: json['descripcion'],
+      idCategoria: json['id_categoria'],
       estado: json['estado'] ?? 'Activo',
     );
   }
@@ -43,8 +49,8 @@ class AhorroModel {
       'monto_acumulado': montoActual,
       'fecha_meta': fechaLimite?.toIso8601String().split('T')[0],
       'fecha_registro': DateTime.now().toIso8601String().split('T')[0],
-      'descripcion': 'Meta de ahorro: $nombre',
-      'id_categoria': null, // Opcional según SQL
+      'descripcion': descripcion,
+      'id_categoria': idCategoria,
       'estado': estado,
     };
   }

@@ -203,6 +203,8 @@ class _ModuloAhorrosState extends State<ModuloAhorros> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(ahorro.nombre, style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold)),
+                    if (ahorro.descripcion != null)
+                      Text(ahorro.descripcion!, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11, fontStyle: FontStyle.italic)),
                     Text('Faltan ${_formatCurrency(ahorro.restante)}', style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                   ],
                 ),
