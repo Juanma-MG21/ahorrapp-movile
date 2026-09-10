@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/theme/design_tokens.dart';
+import '../services/auth_service.dart';
 import 'calendario/calendario_screen.dart';
 import 'gastos/modulo_gastos.dart';
 import 'home/home_screen.dart';
@@ -41,6 +42,8 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  late PageController _pageController;
+
   // Pantallas fijas del bottom nav (índices 0-3).
   final List<Widget> _pantallasPrincipales = const [
     DashboardScreen(),
@@ -50,8 +53,6 @@ class _MainScreenState extends State<MainScreen> {
   ];
 
   // Pantallas accesibles desde "Más", alineadas 1 a 1 con _itemsMas.
-  // Van todas dentro del mismo IndexedStack para conservar su estado
-  // (scroll, formularios sin guardar, etc.) igual que las principales.
   final List<Widget> _pantallasSecundarias = const [
     ModuloImprevistos(),
     ModuloAhorros(),
@@ -61,15 +62,32 @@ class _MainScreenState extends State<MainScreen> {
   ];
 
   // 0-3 = una de las pestañas fijas. 4 = estamos mostrando algo de "Más".
-  int _tabPrincipal = 2; // Empezamos en Gastos, igual que antes.
+  int _tabPrincipal = 2; // Empezamos en Gastos.
 
   // Cuál de _pantallasSecundarias se muestra cuando _tabPrincipal == 4.
   int _indiceSecundario = 0;
 
   bool get _mostrandoSecundaria => _tabPrincipal == 4;
 
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _tabPrincipal);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
   void _seleccionarPrincipal(int index) {
     setState(() => _tabPrincipal = index);
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
   }
 
   Future<void> _abrirMenuMas() async {
@@ -83,43 +101,57 @@ class _MainScreenState extends State<MainScreen> {
       _tabPrincipal = 4;
       _indiceSecundario = seleccion;
     });
+    _pageController.animateToPage(
+      4,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final indiceStack = _mostrandoSecundaria
-        ? _pantallasPrincipales.length + _indiceSecundario
-        : _tabPrincipal;
-
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: IndexedStack(
-        index: indiceStack,
-        children: [..._pantallasPrincipales, ..._pantallasSecundarias],
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: (index) {
+          setState(() => _tabPrincipal = index);
+        },
+        children: [
+          ..._pantallasPrincipales,
+          IndexedStack(
+            index: _indiceSecundario,
+            children: _pantallasSecundarias,
+          ),
+        ],
       ),
-      bottomNavigationBar: Container(
-        height: 70,
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.6),
-              blurRadius: 10,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          top: false,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(Icons.home_outlined, 'Inicio', 0),
-              _buildNavItem(Icons.arrow_upward, 'Ingresos', 1),
-              _buildNavItem(Icons.account_balance_wallet, 'Gastos', 2),
-              _buildNavItem(Icons.pie_chart_outline, 'Presupuestos', 3),
-              _buildMasNavItem(),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+        child: Container(
+          height: 65,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.4),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
+              ),
             ],
+          ),
+          child: SafeArea(
+            top: false,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNavItem(Icons.home_outlined, 'Inicio', 0),
+                _buildNavItem(Icons.arrow_upward, 'Ingresos', 1),
+                _buildNavItem(Icons.account_balance_wallet, 'Gastos', 2),
+                _buildNavItem(Icons.pie_chart_outline, 'Presupuestos', 3),
+                _buildMasNavItem(),
+              ],
+            ),
           ),
         ),
       ),
@@ -138,12 +170,16 @@ class _MainScreenState extends State<MainScreen> {
           children: [
             Icon(icon, color: color, size: 24),
             const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontSize: 10,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 10,
+                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                ),
+                maxLines: 1,
               ),
             ),
           ],
@@ -253,6 +289,37 @@ class _MenuMasSheet extends StatelessWidget {
                 ),
               );
             }),
+            const Divider(color: AppColors.borderLight, height: 32),
+            InkWell(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              onTap: () async {
+                await AuthService.instance.logout();
+                if (context.mounted) {
+                  Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                }
+              },
+              child: const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.logout_rounded,
+                      color: Colors.redAccent,
+                      size: 22,
+                    ),
+                    SizedBox(width: 16),
+                    Text(
+                      'Cerrar sesión',
+                      style: TextStyle(
+                        color: Colors.redAccent,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),

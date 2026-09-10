@@ -34,6 +34,17 @@ class AppColors {
   static const Color borderLight = Color(0x14FFFFFF);
 }
 
+/// Colores centralizados para las categorías de presupuesto.
+class AppPresupuestoColors {
+  const AppPresupuestoColors._();
+
+  static const Color gastos = AppColors.blue;
+  static const Color deudas = AppCategoryColors.almuerzo;
+  static const Color imprevistos = AppColors.accent;
+  static const Color ahorros = AppColors.success;
+  static const Color emergencia = AppColors.error;
+}
+
 /// Colores de íconos por categoría de gasto.
 class AppCategoryColors {
   const AppCategoryColors._();

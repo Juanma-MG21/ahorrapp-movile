@@ -3,93 +3,77 @@ import '../core/network/api_client.dart';
 import '../models/deuda_model.dart';
 import 'auth_service.dart';
 
+/// Rutas reales confirmadas contra movimientosRoutes.js:
+///   POST   /movimientos                     -> crearMovimiento (genérico)
+///   GET    /movimientos/deudas               -> getDeudas
+///   PUT    /movimientos/deudas/:id           -> updateDeudas
+///   DELETE /movimientos/deudas/:id           -> deleteDeudas
+///   PATCH  /movimientos/deudas/:id/abonar    -> abonarDeuda
+///
+/// No existe (y nunca existió) un endpoint `/deudas` a secas: los fallbacks
+/// que había antes a esa ruta apuntaban a nada, así que cualquier error real
+/// del endpoint correcto quedaba enmascarado por un 404 del endpoint falso.
 class DeudasService {
   @visibleForTesting
   static ApiClient client = ApiClient();
 
   static Future<List<DeudaModel>> obtenerDeudas() async {
     final token = await AuthService.instance.getToken();
-    final endpoints = ['/movimientos/deudas', '/deudas'];
-
-    for (final endpoint in endpoints) {
-      try {
-        final data = await client.getList(endpoint, token: token);
-        return data.map((json) => DeudaModel.fromJson(json as Map<String, dynamic>)).toList();
-      } catch (_) {
-        try {
-          final respuesta = await client.get(endpoint, token: token);
-          final List? dataEnvuelto = respuesta['deudas'] ?? respuesta['datos'] ?? respuesta['data'];
-          if (dataEnvuelto != null) {
-            return dataEnvuelto.map((json) => DeudaModel.fromJson(json as Map<String, dynamic>)).toList();
-          }
-        } catch (_) {
-          continue;
-        }
-      }
-    }
-    return [];
+    final data = await client.getList('/movimientos/deudas', token: token);
+    return data
+        .map((json) => DeudaModel.fromJson(json as Map<String, dynamic>))
+        .toList();
   }
 
   static Future<int> crearDeuda(DeudaModel deuda) async {
     final token = await AuthService.instance.getToken();
-    try {
-      // Deuda es un flujo de Salida
-      final respuesta = await client.post('/movimientos', token: token, body: {
-        'tipo_flujo': 'Salida',
-        'subtipo_modulo': 'Deuda',
-        'datos': deuda.toRequestBody(),
-      });
-      return (respuesta['id_deudas'] ?? respuesta['ID_detalle'] ?? respuesta['id']) as int;
-    } catch (_) {
-      final respuesta = await client.post('/deudas', token: token, body: deuda.toRequestBody());
-      return (respuesta['id_deudas'] ?? respuesta['id']) as int;
-    }
+    final respuesta = await client.post('/movimientos', token: token, body: {
+      'tipo_flujo': 'Salida',
+      'subtipo_modulo': 'Deuda',
+      'datos': deuda.toRequestBody(),
+    });
+    return respuesta['ID_detalle'] as int;
   }
 
   static Future<void> actualizarDeuda(int id, DeudaModel deuda) async {
     final token = await AuthService.instance.getToken();
-    try {
-      await client.put('/movimientos/deudas/$id', token: token, body: deuda.toRequestBody());
-    } catch (_) {
-      await client.put('/deudas/$id', token: token, body: deuda.toRequestBody());
-    }
+    await client.put('/movimientos/deudas/$id', token: token, body: deuda.toRequestBody());
   }
 
   static Future<bool> eliminarDeuda(int id) async {
     try {
       final token = await AuthService.instance.getToken();
-      try {
-        await client.delete('/movimientos/deudas/$id', token: token);
-      } catch (_) {
-        await client.delete('/deudas/$id', token: token);
-      }
+      await client.delete('/movimientos/deudas/$id', token: token);
       return true;
     } catch (_) {
       return false;
     }
   }
 
-  static Future<void> pagarCuota(DeudaModel deuda) async {
-    if (deuda.cuotasTotal != null && deuda.cuotasPagadas >= deuda.cuotasTotal!) {
-      throw ApiException('Todas las cuotas ya han sido pagadas.');
+  /// Registra el pago de una o más cuotas usando el endpoint dedicado del
+  /// backend (PATCH /movimientos/deudas/:id/abonar), que calcula
+  /// internamente `cuotas_pagadas` y el nuevo `estado` de forma atómica.
+  ///
+  /// Antes esto se hacía reconstruyendo manualmente todo el DeudaModel con
+  /// cuotasPagadas + 1 y mandando un PUT completo (actualizarDeuda), lo cual
+  /// duplicaba lógica que el backend ya resuelve mejor y sin condiciones de
+  /// carrera.
+  static Future<void> pagarCuota(DeudaModel deuda, {int cuotas = 1}) async {
+    if (deuda.id == null) {
+      throw ApiException('No se puede abonar una deuda sin id.');
+    }
+    if (deuda.cuotasTotal != null &&
+        deuda.cuotasPagadas + cuotas > deuda.cuotasTotal!) {
+      throw ApiException(
+        'Quedan ${deuda.cuotasTotal! - deuda.cuotasPagadas} cuota(s) por pagar.',
+      );
     }
 
-    final nuevaDeuda = DeudaModel(
-      id: deuda.id,
-      idSalida: deuda.idSalida,
-      idCategoria: deuda.idCategoria,
-      monto: deuda.monto,
-      fuente: deuda.fuente,
-      descripcion: deuda.descripcion,
-      tasaInteres: deuda.tasaInteres,
-      cuotasTotal: deuda.cuotasTotal,
-      cuotasPagadas: deuda.cuotasPagadas + 1,
-      fechaInicio: deuda.fechaInicio,
-      fechaFin: deuda.fechaFin,
-      estado: (deuda.cuotasTotal != null && deuda.cuotasPagadas + 1 >= deuda.cuotasTotal!) 
-          ? 'pagada' : 'pendiente',
+    final token = await AuthService.instance.getToken();
+    await client.patch(
+      '/movimientos/deudas/${deuda.id}/abonar',
+      token: token,
+      body: {'cuotas': cuotas},
     );
-
-    await actualizarDeuda(deuda.id!, nuevaDeuda);
   }
 }

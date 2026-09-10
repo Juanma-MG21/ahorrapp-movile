@@ -1,7 +1,9 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../models/imprevisto_model.dart';
+import '../../providers/presupuesto_provider.dart';
 import '../../services/imprevistos_service.dart';
 import '../../services/gastos_service.dart';
 import '../../services/ingresos_service.dart';
@@ -349,25 +351,69 @@ class _ModuloImprevistosState extends State<ModuloImprevistos>
   }
 
   Widget _buildSummaryCard() {
+    final provider = context.watch<PresupuestoProvider>();
+    final periodo = provider.periodoActivo;
+    final double presupuestoImprevistos = periodo?.montoImprevistos ?? 0;
+
     double total = 0;
     for (var i in _filteredImprevistos) {
       total += i.monto;
     }
+
+    final double disponible = presupuestoImprevistos - total;
+    final double porcentaje = presupuestoImprevistos > 0 ? (total / presupuestoImprevistos).clamp(0.0, 1.0) : 0.0;
+
     return _NeumorphicContainer(
       borderRadius: 24,
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('GASTO POR IMPREVISTOS', style: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('GASTO POR IMPREVISTOS', style: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1)),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  const Text('PRESUPUESTO MES', style: TextStyle(color: AppColors.textSecondary, fontSize: 9, fontWeight: FontWeight.bold)),
+                  Text(_formatCurrency(presupuestoImprevistos), style: const TextStyle(color: AppPresupuestoColors.imprevistos, fontSize: 14, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ],
+          ),
           const SizedBox(height: 8),
           Row(
             children: [
-              Expanded(child: Text(_formatCurrency(total), style: const TextStyle(color: AppColors.error, fontSize: 32, fontWeight: FontWeight.bold))),
-              const Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 32),
+              Expanded(child: Text(_formatCurrency(total), style: const TextStyle(color: AppPresupuestoColors.imprevistos, fontSize: 32, fontWeight: FontWeight.bold))),
+              const Icon(Icons.warning_amber_rounded, color: AppPresupuestoColors.imprevistos, size: 32),
+            ],
+          ),
+          const SizedBox(height: 20),
+          _buildProgressBar(porcentaje, AppPresupuestoColors.imprevistos),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('${(porcentaje * 100).toStringAsFixed(0)}% utilizado', style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+              Text('Disponible: ${_formatCurrency(disponible)}', style: TextStyle(color: disponible >= 0 ? AppPresupuestoColors.imprevistos : AppColors.error, fontSize: 11, fontWeight: FontWeight.bold)),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildProgressBar(double porcentaje, Color color) {
+    return Container(
+      height: 10,
+      decoration: BoxDecoration(color: AppColors.inset, borderRadius: BorderRadius.circular(10)),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: FractionallySizedBox(
+          widthFactor: porcentaje,
+          child: Container(decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(10))),
+        ),
       ),
     );
   }

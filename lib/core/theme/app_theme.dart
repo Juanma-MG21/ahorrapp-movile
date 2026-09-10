@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'design_tokens.dart';
 
 /// Construye el ThemeData global de la app.
-/// Los colores vienen SIEMPRE de AppColors (design_tokens.dart) — este
-/// archivo no define ningún color propio.
+/// Los colores vienen SIEMPRE de AppColors (design_tokens.dart).
 class AppTheme {
   const AppTheme._();
 
@@ -21,8 +20,14 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surfaceAlt,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-        hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 16,
+        ),
+        hintStyle: const TextStyle(
+          color: AppColors.textMuted,
+          fontSize: 13,
+        ),
         labelStyle: const TextStyle(
           color: AppColors.textSecondary,
           fontSize: 11,
@@ -31,29 +36,40 @@ class AppTheme {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.borderLight),
+          borderSide: const BorderSide(
+            color: AppColors.borderLight,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.accent, width: 1.2),
+          borderSide: const BorderSide(
+            color: AppColors.accent,
+            width: 0.8,
+          ),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.error),
+          borderSide: const BorderSide(
+            color: AppColors.error,
+          ),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.error),
+          borderSide: const BorderSide(
+            color: AppColors.error,
+          ),
         ),
       ),
       textTheme: const TextTheme(
-        bodyMedium: TextStyle(color: AppColors.textPrimary),
+        bodyMedium: TextStyle(
+          color: AppColors.textPrimary,
+        ),
       ),
     );
   }
 }
 
-// --- Decoraciones Claymorphism (heredadas de Juan, sin cambios de lógica) ---
+// --- Decoraciones Claymorphism ---
 
 BoxDecoration clayRaised({
   Color color = AppColors.surface,
@@ -63,10 +79,21 @@ BoxDecoration clayRaised({
   return BoxDecoration(
     color: color,
     borderRadius: BorderRadius.circular(radius),
-    border: border ?? Border.all(color: AppColors.borderLight, width: 1),
+    border: border ?? Border.all(
+      color: AppColors.borderLight,
+      width: 1,
+    ),
     boxShadow: const [
-      BoxShadow(color: Colors.black54, offset: Offset(6, 8), blurRadius: 16),
-      BoxShadow(color: Color(0x0DFFFFFF), offset: Offset(-4, -4), blurRadius: 12),
+      BoxShadow(
+        color: Colors.black54,
+        offset: Offset(6, 8),
+        blurRadius: 16,
+      ),
+      BoxShadow(
+        color: Color(0x0DFFFFFF),
+        offset: Offset(-4, -4),
+        blurRadius: 12,
+      ),
     ],
   );
 }
@@ -78,9 +105,17 @@ BoxDecoration claySunken({
   return BoxDecoration(
     color: color,
     borderRadius: BorderRadius.circular(radius),
-    border: Border.all(color: AppColors.borderLight, width: 1),
+    border: Border.all(
+      color: AppColors.borderLight,
+      width: 1,
+    ),
     boxShadow: const [
-      BoxShadow(color: Colors.black87, offset: Offset(2, 2), blurRadius: 6, blurStyle: BlurStyle.inner),
+      BoxShadow(
+        color: Colors.black87,
+        offset: Offset(2, 2),
+        blurRadius: 6,
+        blurStyle: BlurStyle.inner,
+      ),
     ],
   );
 }
@@ -93,7 +128,13 @@ BoxDecoration clayGlow({
     color: color,
     borderRadius: BorderRadius.circular(radius),
     boxShadow: [
-      BoxShadow(color: color.withValues(alpha: 0.45), offset: const Offset(0, 6), blurRadius: 24, spreadRadius: 1),
+      BoxShadow(
+        color: color.withValues(alpha: 0.45),
+        offset: const Offset(0, 6),
+        blurRadius: 24,
+        spreadRadius: 1,
+      ),
     ],
   );
 }
+

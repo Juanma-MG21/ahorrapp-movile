@@ -20,11 +20,11 @@ class _CategoriaVisual {
 }
 
 const Map<String, _CategoriaVisual> _categorias = {
-  'gastos': _CategoriaVisual('Gastos', AppColors.blue),
-  'deudas': _CategoriaVisual('Deudas', AppCategoryColors.almuerzo),
-  'imprevistos': _CategoriaVisual('Imprevistos', AppColors.accent),
-  'ahorros': _CategoriaVisual('Ahorros', AppColors.success),
-  'emergencia': _CategoriaVisual('Emergencia', AppColors.error),
+  'gastos': _CategoriaVisual('Gastos', AppPresupuestoColors.gastos),
+  'deudas': _CategoriaVisual('Deudas', AppPresupuestoColors.deudas),
+  'imprevistos': _CategoriaVisual('Imprevistos', AppPresupuestoColors.imprevistos),
+  'ahorros': _CategoriaVisual('Ahorros', AppPresupuestoColors.ahorros),
+  'emergencia': _CategoriaVisual('Emergencia', AppPresupuestoColors.emergencia),
 };
 
 class ModuloPresupuestos extends StatefulWidget {

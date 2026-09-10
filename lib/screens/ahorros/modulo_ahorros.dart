@@ -1,7 +1,9 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../models/ahorro_model.dart';
+import '../../providers/presupuesto_provider.dart';
 import '../../services/ahorros_service.dart';
 import 'agregar_ahorro_screen.dart';
 
@@ -104,6 +106,10 @@ class _ModuloAhorrosState extends State<ModuloAhorros> {
   }
 
   Widget _buildSummaryCard() {
+    final provider = context.watch<PresupuestoProvider>();
+    final periodo = provider.periodoActivo;
+    final double presupuestoAhorros = periodo?.montoAhorros ?? 0;
+
     double totalAhorrado = 0;
     double totalObjetivo = 0;
     for (var a in _ahorros) {
@@ -118,17 +124,29 @@ class _ModuloAhorrosState extends State<ModuloAhorros> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('TOTAL AHORRADO', style: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('TOTAL AHORRADO', style: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1)),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  const Text('META MES', style: TextStyle(color: AppColors.textSecondary, fontSize: 9, fontWeight: FontWeight.bold)),
+                  Text(_formatCurrency(presupuestoAhorros), style: const TextStyle(color: AppPresupuestoColors.ahorros, fontSize: 14, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ],
+          ),
           const SizedBox(height: 8),
           Text(_formatCurrency(totalAhorrado), style: const TextStyle(color: AppColors.textPrimary, fontSize: 32, fontWeight: FontWeight.bold)),
           const SizedBox(height: 20),
-          _buildProgressBar(progresoGeneral, Colors.purple),
+          _buildProgressBar(progresoGeneral, AppPresupuestoColors.ahorros),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('${(progresoGeneral * 100).toStringAsFixed(1)}% del objetivo total', style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-              Text('Meta: ${_formatCurrency(totalObjetivo)}', style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+              Text('Meta Global: ${_formatCurrency(totalObjetivo)}', style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
             ],
           ),
         ],
@@ -176,8 +194,8 @@ class _ModuloAhorrosState extends State<ModuloAhorros> {
             children: [
               Container(
                 width: 44, height: 44,
-                decoration: BoxDecoration(color: Colors.purple.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                child: const Icon(Icons.savings, color: Colors.purple, size: 24),
+                decoration: BoxDecoration(color: AppPresupuestoColors.ahorros.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                child: const Icon(Icons.savings, color: AppPresupuestoColors.ahorros, size: 24),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -193,7 +211,7 @@ class _ModuloAhorrosState extends State<ModuloAhorros> {
             ],
           ),
           const SizedBox(height: 16),
-          _buildProgressBar(ahorro.progreso, Colors.purple),
+          _buildProgressBar(ahorro.progreso, AppPresupuestoColors.ahorros),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

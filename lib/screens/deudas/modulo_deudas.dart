@@ -1,7 +1,8 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../models/deuda_model.dart';
+import '../../providers/presupuesto_provider.dart';
 import '../../services/deudas_service.dart';
 import 'agregar_deuda_screen.dart';
 
@@ -95,12 +96,20 @@ class _ModuloDeudasState extends State<ModuloDeudas> {
   }
 
   Widget _buildSummaryCard() {
+    final provider = context.watch<PresupuestoProvider>();
+    final periodo = provider.periodoActivo;
+    final double presupuestoDeudas = periodo?.montoDeudas ?? 0;
+
     double totalDeuda = 0;
     double totalPendiente = 0;
     for (var d in _deudas) {
       totalDeuda += d.monto;
       totalPendiente += d.montoRestante;
     }
+    
+    // El progreso en deudas puede ser complejo. 
+    // Usaremos el progreso real del pago de deudas para la barra superior, 
+    // pero compararemos contra el presupuesto mensual asignado si es necesario.
     final double progresoGeneral = totalDeuda > 0 ? (1 - (totalPendiente / totalDeuda)) : 0;
 
     return _NeumorphicContainer(
@@ -109,11 +118,23 @@ class _ModuloDeudasState extends State<ModuloDeudas> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('SALDO TOTAL PENDIENTE', style: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('SALDO TOTAL PENDIENTE', style: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1)),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  const Text('PRESUPUESTO MES', style: TextStyle(color: AppColors.textSecondary, fontSize: 9, fontWeight: FontWeight.bold)),
+                  Text(_formatCurrency(presupuestoDeudas), style: const TextStyle(color: AppPresupuestoColors.deudas, fontSize: 14, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ],
+          ),
           const SizedBox(height: 8),
-          Text(_formatCurrency(totalPendiente), style: const TextStyle(color: AppColors.error, fontSize: 32, fontWeight: FontWeight.bold)),
+          Text(_formatCurrency(totalPendiente), style: const TextStyle(color: AppPresupuestoColors.deudas, fontSize: 32, fontWeight: FontWeight.bold)),
           const SizedBox(height: 20),
-          _buildProgressBar(progresoGeneral, AppColors.error),
+          _buildProgressBar(progresoGeneral, AppPresupuestoColors.deudas),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -167,7 +188,7 @@ class _ModuloDeudasState extends State<ModuloDeudas> {
             children: [
               Container(
                 width: 44, height: 44,
-                decoration: BoxDecoration(color: AppColors.error.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(color: AppColors.error.withValues(alpha: 0.1),borderRadius: BorderRadius.circular(12),),
                 child: Icon(deuda.icono, color: AppColors.error, size: 24),
               ),
               const SizedBox(width: 14),

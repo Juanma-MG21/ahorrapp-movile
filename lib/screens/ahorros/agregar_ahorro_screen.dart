@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/network/api_client.dart';
@@ -70,10 +69,17 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
       } else {
         await AhorrosService.actualizarAhorro(ahorro.id!, ahorro);
       }
-      if (mounted) Navigator.pop(context, true);
+
+      if (!mounted) return;
+
+      Navigator.pop(context, true);
     } on ApiException catch (e) {
+      if (!mounted) return;
+
       setState(() => _isSaving = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
     }
   }
 

@@ -8,7 +8,6 @@ class DeudaModel {
   final double monto;
   final String fuente;
   final String? descripcion;
-  final double tasaInteres; // RF-06: No puede ser negativa
   final int? cuotasTotal;
   final int cuotasPagadas;
   final DateTime? fechaInicio;
@@ -22,13 +21,19 @@ class DeudaModel {
     required this.monto,
     required this.fuente,
     this.descripcion,
-    this.tasaInteres = 0.0,
     this.cuotasTotal,
     this.cuotasPagadas = 0,
     this.fechaInicio,
     this.fechaFin,
     this.estado = 'pendiente',
   });
+
+  // NOTA: el campo `tasa_interes` NO existe en la tabla `deudas` ni en el
+  // controller del backend (movimientosController.js). Se eliminó de este
+  // modelo porque era un campo fantasma: se capturaba en el formulario y se
+  // enviaba al backend, pero el backend simplemente lo ignoraba (nunca se
+  // guardaba en la DB), lo que hacía creer al usuario que el dato se había
+  // persistido cuando en realidad se perdía silenciosamente.
 
   factory DeudaModel.fromJson(Map<String, dynamic> json) {
     return DeudaModel(
@@ -38,7 +43,6 @@ class DeudaModel {
       monto: parseMonto(json['monto'] ?? 0),
       fuente: json['fuente'] ?? 'Desconocido',
       descripcion: json['descripcion'],
-      tasaInteres: parseMonto(json['tasa_interes'] ?? 0),
       cuotasTotal: json['cuotas_total'],
       cuotasPagadas: json['cuotas_pagadas'] ?? 0,
       fechaInicio: json['fecha_inicio'] != null ? DateTime.parse(json['fecha_inicio']) : null,
@@ -47,12 +51,15 @@ class DeudaModel {
     );
   }
 
+  // Body para POST /movimientos (dentro de `datos`) y PUT /movimientos/deudas/:id.
+  // Coincide exactamente con lo que crearMovimiento y updateDeudas destructuran
+  // en movimientosController.js: monto, fuente, descripcion, cuotas_total,
+  // fecha_inicio, fecha_fin, id_categoria (+ cuotas_pagadas/estado para el PUT).
   Map<String, dynamic> toRequestBody() {
     return {
       'monto': monto,
       'fuente': fuente,
       'descripcion': descripcion,
-      'tasa_interes': tasaInteres,
       'cuotas_total': cuotasTotal,
       'cuotas_pagadas': cuotasPagadas,
       'fecha_inicio': fechaInicio?.toIso8601String().split('T')[0],
@@ -69,8 +76,8 @@ class DeudaModel {
 
   double get montoRestante => monto - (monto * progresoCuotas);
 
-  String get cuotasTexto => cuotasTotal != null 
-      ? '$cuotasPagadas de $cuotasTotal cuotas' 
+  String get cuotasTexto => cuotasTotal != null
+      ? '$cuotasPagadas de $cuotasTotal cuotas'
       : 'Sin cuotas definidas';
 
   IconData get icono => Icons.credit_card;
