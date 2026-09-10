@@ -30,16 +30,13 @@ class Usuario {
 
 class AuthService {
   AuthService._internal();
+  static final AuthService instance = AuthService._internal();
 
-  @visibleForTesting
-  AuthService.test(this._api, this._storage);
-
-  static AuthService instance = AuthService._internal();
-
-  ApiClient _api = ApiClient();
-  FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final ApiClient _api = ApiClient();
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   static const _tokenKey = 'auth_token';
+  static const _pinKey = 'user_pin_code';
 
   String? _memoryToken;
 
@@ -53,11 +50,23 @@ class AuthService {
     return false;
   }
 
-  Future<String?> getToken() async {
-    if (_memoryToken != null) return _memoryToken;
-    _memoryToken = await _storage.read(key: _tokenKey);
-    return _memoryToken;
+  // --- LÓGICA DE PIN ---
+
+  Future<bool> hasPinSet() async {
+    final pin = await _storage.read(key: _pinKey);
+    return pin != null;
   }
+
+  Future<void> savePin(String pin) async {
+    await _storage.write(key: _pinKey, value: pin);
+  }
+
+  Future<bool> verifyPin(String pin) async {
+    final savedPin = await _storage.read(key: _pinKey);
+    return savedPin == pin;
+  }
+
+  // --- LÓGICA DE AUTH ---
 
   Future<Usuario> login({
     required String email,
@@ -96,34 +105,6 @@ class AuthService {
       'Apellido': apellido,
       'Email': email,
       'Password_hash': password,
-    });
-  }
-
-  Future<String> forgotPassword({required String email}) async {
-    final data = await _api.post('/auth/forgot-password', body: {
-      'Email': email,
-    });
-    return data['mensaje'] as String;
-  }
-
-  Future<String> verifyResetCode({
-    required String email,
-    required String code,
-  }) async {
-    final data = await _api.post('/auth/verify-reset-code', body: {
-      'Email': email,
-      'code': code,
-    });
-    return data['resetToken'] as String;
-  }
-
-  Future<void> resetPassword({
-    required String resetToken,
-    required String nuevaPassword,
-  }) async {
-    await _api.post('/auth/reset-password', body: {
-      'resetToken': resetToken,
-      'nuevaPassword': nuevaPassword,
     });
   }
 
