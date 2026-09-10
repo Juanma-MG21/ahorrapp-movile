@@ -17,7 +17,7 @@ class ApiException implements Exception {
 /// Centraliza URL base, headers y parseo/errores comunes, para que
 /// los servicios (AuthService, GastosService, etc.) no repitan lógica.
 class ApiClient {
-  ApiClient({String? baseUrl}) : baseUrl = baseUrl ?? _defaultBaseUrl;
+  const ApiClient({String? baseUrl}) : baseUrl = baseUrl ?? _defaultBaseUrl;
 
   static const String _defaultBaseUrl =
       'https://ahorrapp-react-pkj9.onrender.com/api';
@@ -165,4 +165,3 @@ class ApiClient {
     return decoded;
   }
 }
-

@@ -1,114 +1,24 @@
-// 'dart:convert' trae jsonDecode, el equivalente a `response.json()`
-// del fetch de JS — en Dart la decodificación de JSON es una función
-// suelta, no un método del objeto de respuesta.
-import 'dart:convert';
-// PRUEBA TODAVIA SE SIGUE TESTEANDO
 import 'package:flutter/material.dart';
-// El paquete 'http' reemplaza al `fetch` nativo del navegador; no
-// viene incluido en Flutter por defecto, hay que declararlo en
-// pubspec.yaml (ya lo agregamos la vez pasada).
-import 'package:http/http.dart' as http;
-// Para leer el token igual que `localStorage.getItem('token')`, pero
-// de forma segura (Keychain en iOS, Keystore en Android).
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../../core/network/api_client.dart';
+
+import '../../models/dependiente_model.dart';
+import '../../services/dependiente_services.dart';
+import '../../core/network/api_client.dart'; // para capturar ApiException
 import '../dependientes/agregar_dependientes_screen.dart';
 
-// ─────────────────────────────────────────────────────────────────────
-// PALETA · CAMBIO DE ESTILO: antes esta pantalla tenía su propia paleta
-// "azul oscuro + dorado" (#080c18 / #e0b855). Ahora la reemplazo por la
-// MISMA paleta que ya usa `ModuloCategoriasScreen` (slate + emerald +
-// amber + indigo + zinc), para que ambas pantallas se vean como parte
-// de la misma app cuando el usuario navegue entre ellas.
-//
-// Mantengo los MISMOS NOMBRES de rol (_bg, _card, _border, _textPrimary,
-// _textSecondary, _textMuted) porque cumplen la misma función visual;
-// solo cambia el valor hexadecimal. Sí renombré dos casos puntuales
-// para que el nombre no mienta sobre el color real:
-//   _gold (dorado) -> _amber (ámbar, el acento de Categorías)
-//   _blue (azul)   -> _indigo (índigo, el color del chip "Personal"
-//                      en Categorías;ántes aquí marcaba la relación)
-// Sigo dejando todo como `const Color`, igual que el original, porque
-// varios `BoxDecoration`/`TextStyle` de este archivo están declarados
-// con `const` y exigen que sus colores también lo sean en tiempo de
-// compilación (no admiten `Colors.white.withOpacity(...)`, que se
-// calcula en tiempo de ejecución).
-// ─────────────────────────────────────────────────────────────────────
-
-// Fondo general de la pantalla. En Categorías el Scaffold usa
-// 0xFF0f172a (un "slate-900" de Tailwind) en vez del 0xFF080c18 azul
-// casi negro que tenías antes.
+// ── PALETA (sin cambios) ──────────────────────────────────────────
 const Color _bg = Color(0xFF0f172a);
-// Superficie de las tarjetas/containers. Uso 0xFF1e293b ("slate-800"):
-// es un paso más claro que _bg, el mismo efecto visual que buscaba tu
-// `_card` original, pero dentro de la familia slate de Categorías.
 const Color _card = Color(0xFF1e293b);
-// Bordes sutiles entre secciones y alrededor de tarjetas: "slate-700".
 const Color _border = Color(0xFF334155);
-// Acento principal (antes dorado `_gold`): ahora ámbar, igual que
-// `_amber400` en Categorías. Lo uso donde antes iba el dorado
-// (iniciales del avatar).
 const Color _amber = Color(0xFFfbbf24);
-// Textos: mismos tres niveles de jerarquía que tenías, pero con los
-// tonos "zinc" que usa Categorías en vez de los tonos azulados
-// anteriores.
-const Color _textPrimary = Color(0xFFf4f4f5); // zinc-100
-const Color _textSecondary = Color(0xFFa1a1aa); // zinc-400
-const Color _textMuted = Color(0xFF71717a); // zinc-500
-// Acento secundario (antes celeste `_blue`, usado en el chip de
-// relación): ahora índigo, el mismo color que Categorías usa para su
-// chip "Personal".
+const Color _textPrimary = Color(0xFFf4f4f5);
+const Color _textSecondary = Color(0xFFa1a1aa);
+const Color _textMuted = Color(0xFF71717a);
 const Color _indigo = Color(0xFF818cf8);
 
-// ─────────────────────────────────────────────────────────────────────
-// MODELO · en JS trabajabas con el objeto crudo que devuelve el fetch
-// (`dependiente.Nombre`, etc.). En Dart es más seguro envolver ese JSON
-// en una clase con un constructor `fromJson`: si el backend cambia un
-// nombre de campo, el error aparece en un solo lugar (aquí) y no
-// desperdigado por toda la pantalla.
-// ─────────────────────────────────────────────────────────────────────
-
-class Dependiente {
-  final int idDependientes;
-  final String nombre;
-  final String relacion;
-  final String usuarioNombre;
-  final String? ocupacion; // Nullable: el backend puede mandar null.
-  final String fechaNacimiento;
-
-  const Dependiente({
-    required this.idDependientes,
-    required this.nombre,
-    required this.relacion,
-    required this.usuarioNombre,
-    required this.ocupacion,
-    required this.fechaNacimiento,
-  });
-
-  // `factory` = un constructor que, en vez de siempre crear una
-  // instancia nueva "a mano", puede decidir cómo construirla a partir
-  // de otra cosa — aquí, a partir de un `Map` (el JSON ya decodificado).
-  factory Dependiente.fromJson(Map<String, dynamic> json) {
-    return Dependiente(
-      // El backend manda `ID_dependientes` como número; lo casteamos
-      // explícitamente a `int` porque Dart es estricto con tipos
-      // (JS no distingue int/double, Dart sí).
-      idDependientes: json['ID_dependientes'] as int,
-      nombre: json['Nombre'] as String,
-      relacion: json['Relacion'] as String,
-      usuarioNombre: json['usuario_nombre'] as String,
-      // `as String?` (con el `?`) permite que el valor sea null sin
-      // que la app truene, replicando tu `dependiente.Ocupacion || 'Sin ocupacion registrada'`.
-      ocupacion: json['Ocupacion'] as String?,
-      fechaNacimiento: json['Fecha_nacimiento'] as String,
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────
-// PANTALLA · StatefulWidget porque hace fetch al montarse y guarda
-// 3 variables de estado, igual que tus 3 `useState` originales.
-// ─────────────────────────────────────────────────────────────────────
+// La clase `Dependiente` que estaba definida aquí se ELIMINA por
+// completo. Ya tienes `DependienteModel` en models/dependiente_model.dart
+// — mantener dos clases distintas para lo mismo es justo el tipo de
+// duplicación que causaba parte de los errores que veníamos arreglando.
 
 class PanelDependientesScreen extends StatefulWidget {
   const PanelDependientesScreen({super.key});
@@ -119,115 +29,105 @@ class PanelDependientesScreen extends StatefulWidget {
 }
 
 class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
-  // Instancia del almacenamiento seguro; se crea una sola vez.
-  final _storage = const FlutterSecureStorage();
-
-  // Estas tres variables son, literalmente, tus tres `useState`:
-  //   const [dependientes, setDependientes] = useState([]);
-  //   const [cargando, setCargando] = useState(true);
-  //   const [error, setError] = useState(null);
-  // La diferencia es que aquí las mutas dentro de `setState(() {...})`
-  // en vez de llamar una función "setter" generada automáticamente.
-  List<Dependiente> _dependientes = [];
+  // Ya no necesitas `_storage` aquí: `DependientesService` lee el
+  // token internamente (lo agregamos en `_token()` dentro del
+  // service). La pantalla ya no debe saber nada de tokens ni de
+  // headers — esa es justo la idea de tener un service separado.
+  List<DependienteModel> _dependientes = [];
   bool _cargando = true;
   String? _error;
 
-  // `initState` es el `useEffect(() => {...}, [])` de Flutter: se
-  // ejecuta UNA sola vez, justo cuando el widget se monta por primera
-  // vez en pantalla. El `[]` (array de dependencias vacío) de React
-  // es literalmente lo que `initState` hace por naturaleza — no hace
-  // falta declarar ninguna lista de dependencias.
   @override
   void initState() {
     super.initState();
     _getDependientes();
   }
 
-  // `Future<void>` marca que esta función es asíncrona y no devuelve
-  // ningún valor útil (equivalente a tu `async () => {...}` de JS que
-  // tampoco retorna nada). Nota que puse el guion bajo `_getDependientes`
-  // porque, al ser un método de una clase privada (`_PanelDependientesScreenState`),
-  // es buena práctica marcarlo también como privado.
   Future<void> _getDependientes() async {
+    // `setState` al inicio: si el usuario refresca (por ejemplo, al
+    // volver de agregar un dependiente), queremos que vuelva a
+    // mostrarse "Cargando..." y se limpie cualquier error anterior,
+    // en vez de quedarse pegado con el estado de la carga previa.
+    setState(() {
+      _cargando = true;
+      _error = null;
+    });
+
     try {
-      // `await` funciona igual que en JS: pausa esta función hasta que
-      // la promesa/Future se resuelva, sin bloquear el resto de la app.
-      final token = await _storage.read(key: 'token');
+      // Toda la lógica de `http.get`, headers, token y parseo de
+      // `data['ok']` que tenías aquí a mano, ahora vive dentro de
+      // `DependientesService.getDependientes()` (que a su vez usa
+      // `ApiClient`). Esta línea reemplaza como 20 líneas de tu
+      // versión anterior.
+      final lista = await DependientesService.getDependientes();
 
-      // `http.get` recibe un `Uri`, no un string plano — por eso envuelvo
-      // la URL en `Uri.parse(...)`. El resto es igual a tu `fetch`.
-      final response = await http.get(
-        Uri.parse(''),
-        headers: {
-          // Si `token` es null, esto pondría "Bearer null" como string;
-          // más abajo lo puedes reforzar redirigiendo al login cuando
-          // `token` no exista, pero lo dejo simple para igualar tu JS.
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      // `jsonDecode` convierte el texto crudo de la respuesta
-      // (`response.body`, un String) en un `Map<String, dynamic>` —
-      // el equivalente Dart de lo que `response.json()` te daba ya
-      // parseado en JS.
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-
-      // `data['ok']` puede venir como bool desde el backend; lo casteo
-      // para que el compilador lo tenga claro.
-      if (data['ok'] == true) {
-        // `data['dependientes']` llega como `List<dynamic>` (una lista
-        // de Maps sin tipar todavía). `.map(...)` reconstruye cada
-        // elemento como un `Dependiente` fuerte y tipado, y `.toList()`
-        // vuelve a convertir el resultado en una lista de verdad
-        // (en Dart, `.map()` devuelve un `Iterable` perezoso, no una
-        // lista, así que siempre hay que cerrarlo con `.toList()`).
-        final lista = (data['dependientes'] as List<dynamic>)
-            .map((item) => Dependiente.fromJson(item as Map<String, dynamic>))
-            .toList();
-
-        // `setState` es obligatorio: cambiar `_dependientes` sin esto
-        // guardaría el dato pero NO repintaría la pantalla.
-        setState(() {
-          _dependientes = lista;
-        });
-      } else {
-        setState(() {
-          // `data['mensaje'] as String?` + `??` (operador "si es null,
-          // usa esto otro") reemplaza tu `data.mensaje || 'No se pudieron obtener los dependientes'`.
-          _error = data['mensaje'] as String? ??
-              'No se pudieron obtener los dependientes';
-        });
-      }
-    } catch (err) {
-      // Cualquier error de red, de parseo, etc. cae aquí — igual que
-      // tu bloque `catch (err)`.
+      setState(() {
+        _dependientes = lista;
+      });
+    } on ApiException catch (e) {
+      // `ApiException` es justo la excepción que `ApiClient` lanza
+      // cuando `data['ok'] != true` o el status es >= 400 — trae el
+      // mensaje real del backend en `e.message`, en vez del texto
+      // fijo que tenías antes ('Error al obtener dependientes').
+      setState(() {
+        _error = e.message;
+      });
+    } catch (e) {
+      // Cualquier otro error (sin conexión, JSON raro, etc.) cae
+      // aquí, como antes.
       setState(() {
         _error = 'Error al obtener dependientes';
       });
-      // `debugPrint` es el `console.error` de Flutter: imprime en la
-      // consola de depuración sin romper la app en modo release.
-      debugPrint('$err');
+      debugPrint('$e');
     } finally {
-      // El `finally` corre siempre, haya ido bien o mal — igual que en JS.
       setState(() {
         _cargando = false;
       });
     }
   }
 
-  // Helper para las iniciales del avatar — traducción directa de tu
-  // función `getIniciales`, solo que aquí es un método de la clase.
   String _getIniciales(String? nombre) {
-    // `nombre?.isNotEmpty == true` es el equivalente a tu chequeo
-    // `nombre ? ... : '?'`: si `nombre` es null, el `?.` corta la
-    // cadena antes de tronar y el resultado completo da `null`,
-    // que NUNCA es `== true`, así que cae directo al `?` de abajo.
     if (nombre != null && nombre.isNotEmpty) {
-      // `nombre[0]` saca el primer carácter; `.toUpperCase()` es igual
-      // que en JS.
       return nombre[0].toUpperCase();
     }
     return '?';
+  }
+
+  // Nuevo: helper para mostrar `fechaNacimiento`, que en
+  // `DependienteModel` es `DateTime?` (no `String` como en tu clase
+  // vieja). Sin esto, `Text(dependiente.fechaNacimiento)` ni siquiera
+  // compilaría, porque `Text` espera un `String`.
+  String _formatFecha(DateTime? fecha) {
+    if (fecha == null) return 'Sin fecha registrada';
+    final dd = fecha.day.toString().padLeft(2, '0');
+    final mm = fecha.month.toString().padLeft(2, '0');
+    return '$dd/$mm/${fecha.year}';
+  }
+
+  // Nuevo método: se llama cuando se toca el botón "+". Antes hacía
+  // `Navigator.pushNamed(context, '/registro-dependiente')`, una ruta
+  // con nombre que probablemente no está registrada en tu
+  // `MaterialApp` (por eso "la ruta que importe" no llegaba a ningún
+  // lado). En vez de depender de rutas nombradas, navego directo a
+  // la clase del widget con `MaterialPageRoute` — más simple y no
+  // depende de que hayas registrado el string en otro archivo.
+  Future<void> _abrirAgregarDependiente() async {
+    final resultado = await Navigator.push<DependienteModel>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AgregarDependienteScreen(),
+      ),
+    );
+
+    // `AgregarDependienteScreen` hace `Navigator.pop(context, resultado)`
+    // al guardar con éxito. Si `resultado` no es null, significa que
+    // se creó/editó un dependiente — en vez de solo agregarlo a mano
+    // a la lista local, pido la lista completa de nuevo al backend:
+    // así la pantalla siempre refleja el estado real del servidor,
+    // no una copia que podría desincronizarse.
+    if (resultado != null) {
+      _getDependientes();
+    }
   }
 
   @override
@@ -239,34 +139,34 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildHeader(context),
-            // `Expanded` + adentro un `SingleChildScrollView`/`GridView`
-            // para que el body pueda crecer y scrollear como tu `<main>`.
             Expanded(child: _buildBody()),
-            ElevatedButton(
-              onPressed: () {
-                // Navegar a la pantalla de registro de dependientes
-                Navigator.pushNamed(context, '');
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _amber,
-                foregroundColor: _textPrimary,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: ElevatedButton(
+                // Antes: `Navigator.pushNamed(context, '/registro-dependiente')`.
+                // Ahora llama al método de arriba.
+                onPressed: _abrirAgregarDependiente,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(223, 187, 159, 0),
+                  foregroundColor: _textPrimary,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24, vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  '+ Agregar dependiente',
+                  style: TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
-              child: const Text('+'),
             ),
-            
           ],
         ),
       ),
     );
   }
 
-  // Separé el header en su propio método (no en un widget aparte)
-  // solo por prolijidad — podrías perfectamente extraerlo a una
-  // clase `StatelessWidget` como hicimos con `MobileHeader` antes.
   Widget _buildHeader(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(24),
@@ -274,11 +174,6 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
           border: Border(bottom: BorderSide(color: _border))),
       child: Row(
         children: [
-          // El `<Link to="/PanelAdmin">` de react-router-dom se traduce
-          // a `Navigator.pop(context)` SI esta pantalla se abrió con
-          // `Navigator.push` desde PanelAdmin (lo más común). Si en tu
-          // app usas rutas con nombre (go_router / named routes),
-          // cambiarías esto por `Navigator.pushReplacementNamed(context, '/panel-admin')`.
           GestureDetector(
             onTap: () => Navigator.of(context).pop(),
             child: Container(
@@ -288,16 +183,10 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
                 border: Border.all(color: _border),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Row(
+              child: const Row(
                 mainAxisSize: MainAxisSize.min,
-                children: const [
+                children: [
                   Icon(Icons.arrow_back, size: 16, color: _textSecondary),
-                  SizedBox(width: 8),
-                  Text('',
-                      style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: _textSecondary)),
                 ],
               ),
             ),
@@ -312,9 +201,6 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
                       fontWeight: FontWeight.w600,
                       color: _textPrimary)),
               const SizedBox(height: 4),
-              // Interpolación con una expresión (`${...}`, no solo un
-              // nombre suelto) porque `.length` es una llamada, no una
-              // variable simple.
               Text('${_dependientes.length} registrados',
                   style: const TextStyle(fontSize: 13, color: _textMuted)),
             ],
@@ -324,10 +210,6 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
     );
   }
 
-  // Este método concentra el `{cargando && ...} {error && ...} {!cargando && !error && (...)}`
-  // encadenado que tenías en JSX. En Dart, como no hay renderizado
-  // condicional "inline" tan directo, es más legible resolverlo con
-  // `if/else` normales antes de decidir qué widget devolver.
   Widget _buildBody() {
     if (_cargando) {
       return const Padding(
@@ -349,9 +231,6 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
             border: Border.all(color: Colors.red.withOpacity(0.3)),
             borderRadius: BorderRadius.circular(8),
           ),
-          // El `!` después de `_error` le dice al compilador "confía en
-          // mí, en este punto ya sé que no es null" — válido aquí
-          // porque acabamos de comprobarlo con el `if` de arriba.
           child: Text(_error!,
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 13, color: Colors.redAccent)),
@@ -367,17 +246,13 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
       );
     }
 
-    // `GridView.builder` reemplaza tu `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`.
-    // Flutter no tiene "breakpoints" automáticos como Tailwind, así que
-    // calculamos las columnas a mano según el ancho disponible con
-    // `LayoutBuilder` (el equivalente a una media query, pero en Dart).
     return LayoutBuilder(
       builder: (context, constraints) {
         int columnas = 1;
         if (constraints.maxWidth >= 1024) {
-          columnas = 3; // lg:grid-cols-3
+          columnas = 3;
         } else if (constraints.maxWidth >= 640) {
-          columnas = 2; // sm:grid-cols-2
+          columnas = 2;
         }
 
         return GridView.builder(
@@ -386,14 +261,26 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
             crossAxisCount: columnas,
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
-            // `childAspectRatio` controla alto/ancho de cada card; lo
-            // ajusté a ojo para que quepan las 3 líneas de detalle.
             childAspectRatio: 1.1,
           ),
           itemCount: _dependientes.length,
           itemBuilder: (context, index) => _DependienteCard(
             dependiente: _dependientes[index],
             iniciales: _getIniciales(_dependientes[index].nombre),
+            fechaFormateada: _formatFecha(_dependientes[index].fechaNacimiento),
+            // Tocar la card abre el mismo formulario, pero en modo
+            // "editar" (pasando el dependiente actual).
+            onTap: () async {
+              final resultado = await Navigator.push<DependienteModel>(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AgregarDependienteScreen(
+                    dependienteParaEditar: _dependientes[index],
+                  ),
+                ),
+              );
+              if (resultado != null) _getDependientes();
+            },
           ),
         );
       },
@@ -401,124 +288,108 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────
-// CARD · la extraje a su propio StatelessWidget (igual que hicimos con
-// StatCard en el dashboard) porque no depende del estado de la
-// pantalla, solo de los datos que recibe — más fácil de reusar y testear.
-// ─────────────────────────────────────────────────────────────────────
-
 class _DependienteCard extends StatelessWidget {
-  final Dependiente dependiente;
+  final DependienteModel dependiente;
   final String iniciales;
-  const _DependienteCard({required this.dependiente, required this.iniciales});
+  final String fechaFormateada;
+  final VoidCallback onTap;
+
+  const _DependienteCard({
+    required this.dependiente,
+    required this.iniciales,
+    required this.fechaFormateada,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: _card,
-        border: Border.all(color: _border),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Encabezado: avatar + nombre + chip de relación.
-          Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                // Antes: `_gold.withOpacity(0.1)`. Ahora el avatar usa el
-                // acento ámbar de Categorías, con el mismo 10% de opacidad
-                // que tenía el dorado original.
-                decoration: BoxDecoration(
-                    shape: BoxShape.circle, color: _amber.withOpacity(0.1)),
-                alignment: Alignment.center,
-                // Mismo cambio: el texto de las iniciales pasa de dorado a ámbar.
-                child: Text(iniciales,
-                    style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: _amber)),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(dependiente.nombre,
-                        style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: _textPrimary)),
-                    Text('ID ${dependiente.idDependientes}',
-                        style:
-                            const TextStyle(fontSize: 11, color: _textMuted)),
-                  ],
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: _card,
+          border: Border.all(color: _border),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                      shape: BoxShape.circle, color: _amber.withOpacity(0.1)),
+                  alignment: Alignment.center,
+                  child: Text(iniciales,
+                      style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: _amber)),
                 ),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                // Antes: `_blue.withOpacity(0.1)`. Ahora el chip de
-                // relación usa índigo, el mismo color que Categorías usa
-                // para su chip "Personal".
-                decoration: BoxDecoration(
-                    color: _indigo.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(6)),
-                child: Text(dependiente.relacion,
-                    style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: _indigo)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Divider(color: _border, height: 1),
-          const SizedBox(height: 12),
-          // Fila "Dependiente de <usuario>" — uso `Expanded` en el
-          // `Text` para que el nombre largo no desborde la card.
-          _detailRow(
-            icon: Icons.people_outline,
-            child: Text.rich(
-              // `TextSpan` permite mezclar dos estilos dentro del mismo
-              // texto (el "Dependiente de" en gris, el nombre en claro),
-              // igual que tu `<span>Dependiente de <span className="...">{nombre}</span></span>`.
-              TextSpan(
-                style: const TextStyle(fontSize: 13, color: _textSecondary),
-                children: [
-                  const TextSpan(text: 'Dependiente de '),
-                  TextSpan(
-                      text: dependiente.usuarioNombre,
-                      style: const TextStyle(color: _textPrimary)),
-                ],
-              ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(dependiente.nombre,
+                          style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: _textPrimary)),
+                      // `dependiente.id` es `int?` en el modelo nuevo,
+                      // así que uso `?? '-'` para no mostrar "null" en
+                      // pantalla si por algún motivo llegara sin id.
+                      Text('ID ${dependiente.id ?? "-"}',
+                          style: const TextStyle(
+                              fontSize: 11, color: _textMuted)),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                      color: _indigo.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(6)),
+                  // `relacion` es `String?` en el modelo nuevo (antes
+                  // era `String` obligatorio) — con `?? 'Sin relación'`
+                  // cubrimos el caso null.
+                  child: Text(dependiente.relacion ?? 'Sin relación',
+                      style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: _indigo)),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 8),
-          _detailRow(
-            icon: Icons.badge_outlined,
-            // `??` de nuevo: si `ocupacion` es null, muestra el texto
-            // por defecto, igual que tu `|| 'Sin ocupacion registrada'`.
-            child: Text(dependiente.ocupacion ?? 'Sin ocupacion registrada',
-                style: const TextStyle(fontSize: 13, color: _textSecondary)),
-          ),
-          const SizedBox(height: 8),
-          _detailRow(
-            icon: Icons.calendar_today_outlined,
-            child: Text(dependiente.fechaNacimiento,
-                style: const TextStyle(fontSize: 13, color: _textSecondary)),
-          ),
-        ],
+            const SizedBox(height: 12),
+            const Divider(color: _border, height: 1),
+            const SizedBox(height: 12),
+            // La fila "Dependiente de <usuario>" se eliminó: ese dato
+            // (`usuarioNombre`) no existe en `DependienteModel`. Ver
+            // nota abajo de la respuesta sobre esto.
+            _detailRow(
+              icon: Icons.badge_outlined,
+              child: Text(dependiente.ocupacion ?? 'Sin ocupación registrada',
+                  style:
+                      const TextStyle(fontSize: 13, color: _textSecondary)),
+            ),
+            const SizedBox(height: 8),
+            _detailRow(
+              icon: Icons.calendar_today_outlined,
+              child: Text(fechaFormateada,
+                  style:
+                      const TextStyle(fontSize: 13, color: _textSecondary)),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  // Pequeño helper repetido 3 veces en el original (ícono + texto);
-  // en vez de copiar el `Row` tres veces, lo armo una sola vez aquí.
   Widget _detailRow({required IconData icon, required Widget child}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,

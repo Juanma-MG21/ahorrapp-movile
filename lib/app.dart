@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'core/theme/app_theme.dart';
@@ -21,12 +22,6 @@ class AhorrApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        // Se crea una sola vez y vive mientras la app esté abierta.
-        // Si en el futuro quieres que se recargue justo al hacer login
-        // (para no arrastrar datos de una sesión anterior), muévelo a
-        // un ChangeNotifierProvider más abajo en el árbol (ej. dentro
-        // de MainScreen) o llama a provider.cargar() de nuevo tras el
-        // login.
         ChangeNotifierProvider(create: (_) => PresupuestoProvider()),
       ],
       child: MaterialApp(
@@ -34,6 +29,15 @@ class AhorrApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.dark(),
         home: const AuthGate(),
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('es', 'CO'),
+          Locale('es'),
+        ],
         routes: {
           '/home': (context) => const MainScreen(),
           '/login': (context) => const LoginScreen(),

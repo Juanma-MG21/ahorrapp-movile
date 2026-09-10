@@ -1,18 +1,12 @@
 import 'dart:convert';
-// PRUEBA TODAVIA SE SIGUE TESTEANDO 
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import '../../models/categoria_model.dart';
+import '../../models/categorias_model.dart';
 import '../../services/categorias_service.dart';
-
-// ─────────────────────────────────────────────────────────────────────
-// PALETA · misma idea que en pantallas anteriores: constantes locales
-// que aproximan los colores de Tailwind que usabas (amber, emerald,
-// orange, indigo, zinc, slate). Si ya tienes una paleta compartida
-// (como el `Tokens` del dashboard), reemplaza estas por esas.
-// ─────────────────────────────────────────────────────────────────────
+import 'agregar_categorias_screen.dart'; // ajusta la ruta si la carpeta es distinta
 
 const Color _emerald400 = Color(0xFF34d399);
 const Color _emerald500 = Color(0xFF10b981);
@@ -38,17 +32,9 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
   final _service = CategoriasService();
   final _storage = const FlutterSecureStorage();
 
-  List<CategoriaData> _categorias = [];
-  // Nombre del usuario leído de storage — reemplaza tu
-  // `JSON.parse(localStorage.getItem('usuario'))` de arriba del
-  // archivo. Lo guardo como estado porque leerlo es async (`await`),
-  // así que no puede ir en una variable de nivel de archivo como en JS.
+  // Antes: `List<CategoriaData>`. Cambiado a `CategoriaModel`.
+  List<CategoriaModel> _categorias = [];
   String? _nombreUsuario;
-
-  // Nota: `menuOpen` del original quedó comentado como "agregado pero
-  // no revisado" y no se usaba en ninguna parte visible del JSX, así
-  // que no lo traigo aquí — si luego lo necesitas (por ejemplo para un
-  // menú de opciones), lo agregamos con su propósito claro.
 
   @override
   void initState() {
@@ -63,19 +49,9 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
     try {
       final data = jsonDecode(crudo) as Map<String, dynamic>;
       setState(() => _nombreUsuario = data['nombre'] as String?);
-    } catch (_) {
-      // Igual que tu `catch { usuario = null }`: si el JSON está mal
-      // formado, simplemente nos quedamos sin nombre, sin tronar la app.
-    }
+    } catch (_) {}
   }
 
-  // `Future.wait` es el `Promise.all` de Dart: lanza las 5 llamadas al
-  // mismo tiempo (no una tras otra) y espera a que TODAS terminen
-  // antes de seguir. El resultado es una `List` en el mismo orden en
-  // que pusiste los Futures, por eso puedo desestructurarla con
-  // índices `[0]`, `[1]`, etc. — Dart no tiene destructuring posicional
-  // como `const [a, b] = arr` de JS para listas de tipos distintos
-  // aquí, así que la leo por índice.
   Future<void> _cargarCategoriasCombinadas() async {
     try {
       final resultados = await Future.wait([
@@ -92,11 +68,6 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
       final imprevistos = resultados[3];
       final deudas = resultados[4];
 
-      // `firstWhere` es el `.find()` de Dart, pero EXIGE un
-      // `orElse` si hay chance de no encontrar nada (a diferencia de
-      // `.find()`, que devuelve `undefined` sin quejarse). Aquí
-      // devuelvo un Map vacío `{}` como "no encontrado", y luego uso
-      // `['clave'] as num? ?? 0` para leerlo de forma segura.
       final combinadas = gastos.map((cat) {
         final ing = ingresos.firstWhere((c) => c['id'] == cat['id'], orElse: () => {});
         final aho = ahorros.firstWhere((c) => c['id'] == cat['id'], orElse: () => {});
@@ -109,33 +80,22 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
             (imp['total_imprevistos'] as num? ?? 0) +
             (deu['total_deudas'] as num? ?? 0);
 
-        // Uso `CategoriaData.fromJson` sobre el Map de gastos (que trae
-        // id/nombre/descripcion/activa/es_global) y luego `copyWith`
-        // para clavarle el total ya sumado.
-        return CategoriaData.fromJson(cat).copyWith(totalMovimientos: total);
+        // Antes: `CategoriaData.fromJson(...)`.
+        return CategoriaModel.fromJson(cat).copyWith(totalMovimientos: total);
       }).toList();
 
       setState(() => _categorias = combinadas);
     } catch (error) {
-      // `debugPrint` = tu `console.error`.
       debugPrint('Error al cargar categorías combinadas: $error');
     }
   }
 
-  // Getters: se calculan solos cada vez que los lees, no hace falta
-  // guardarlos como estado aparte — igual de "derivados" que tus
-  // constantes `activas`/`inactivas` dentro del render de React.
-  List<CategoriaData> get _activas => _categorias.where((c) => c.activa).toList();
-  List<CategoriaData> get _inactivas => _categorias.where((c) => !c.activa).toList();
+  List<CategoriaModel> get _activas => _categorias.where((c) => c.activa).toList();
+  List<CategoriaModel> get _inactivas => _categorias.where((c) => !c.activa).toList();
 
   String _formatMoney(num valor) {
     return NumberFormat.currency(locale: 'es_CO', symbol: '\$', decimalDigits: 0).format(valor);
   }
-
-  // ── Toast / Alert / Confirm ─────────────────────────────────────
-  // Flutter no tiene un `alert()`/`confirm()` de navegador; los
-  // simulamos con SnackBar (para el toast) y AlertDialog (para
-  // mensajes bloqueantes y confirmaciones).
 
   void _mostrarToast(String mensaje) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(mensaje)));
@@ -152,10 +112,6 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
     );
   }
 
-  // Devuelve `true`/`false` según el botón que toque el usuario —
-  // reemplaza tu `window.confirm(...)`, que en JS devuelve el bool
-  // directamente porque BLOQUEA el hilo; aquí, como todo es async,
-  // hay que `await` este método para obtener la respuesta.
   Future<bool> _confirmar(String mensaje) async {
     final resultado = await showDialog<bool>(
       context: context,
@@ -168,66 +124,18 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
         ],
       ),
     );
-    // Si el usuario cierra el diálogo tocando fuera (sin elegir botón),
-    // `resultado` llega `null`; el `?? false` lo trata como "canceló".
     return resultado ?? false;
   }
 
-  // ── Handlers CRUD ────────────────────────────────────────────────
-
-  Future<void> _handleAgregar(String nombre, String descripcion) async {
-    if (nombre.trim().isEmpty) {
-      await _mostrarAlerta('El nombre es obligatorio');
-      return;
-    }
-    try {
-      final respuesta = await _service.crearCategoria(nombre: nombre.trim(), descripcion: descripcion.trim());
-      if (respuesta['ok'] == true) {
-        _mostrarToast('Categoría registrada correctamente');
-        setState(() {
-          _categorias = [
-            ..._categorias,
-            CategoriaData(
-              id: respuesta['id'] as int,
-              nombre: nombre.trim(),
-              descripcion: descripcion.trim(),
-              activa: true,
-              esGlobal: false,
-              sistema: false,
-            ),
-          ];
-        });
-        if (mounted) Navigator.of(context).pop(); // cierra el modal
-      } else {
-        await _mostrarAlerta(respuesta['mensaje'] as String? ?? 'Error al crear la categoría');
-      }
-    } catch (error) {
-      await _mostrarAlerta('Error al crear la categoría');
-    }
-  }
-
-  Future<void> _handleGuardarEdicion(CategoriaData original, String nombre, String descripcion) async {
-    if (nombre.trim().isEmpty) {
-      await _mostrarAlerta('El nombre es obligatorio');
-      return;
-    }
-    try {
-      final respuesta = await _service.editarCategoria(original.id, nombre: nombre.trim(), descripcion: descripcion.trim());
-      if (respuesta['ok'] == true) {
-        _mostrarToast('Categoría actualizada correctamente');
-        setState(() {
-          _categorias = _categorias
-              .map((c) => c.id == original.id ? c.copyWith(nombre: nombre.trim(), descripcion: descripcion.trim()) : c)
-              .toList();
-        });
-        if (mounted) Navigator.of(context).pop();
-      } else {
-        await _mostrarAlerta(respuesta['mensaje'] as String? ?? 'Error al editar la categoría');
-      }
-    } catch (error) {
-      await _mostrarAlerta('Error al editar la categoría');
-    }
-  }
+  // ── CRUD que sigue viviendo en esta pantalla ──────────────────────
+  // `_handleAgregar` y `_handleGuardarEdicion` YA NO EXISTEN AQUÍ:
+  // esa lógica ahora vive dentro de `AgregarCategoriaScreen`
+  // (`_guardarCategoria`, en ese archivo). Esta pantalla solo necesita
+  // abrir esa pantalla y, cuando vuelva con un resultado `true`,
+  // recargar la lista — igual que hicimos con dependientes.
+  //
+  // Deshabilitar/habilitar SÍ se quedan aquí, porque son acciones que
+  // se disparan directo desde la lista, sin pasar por un formulario.
 
   Future<void> _handleDeshabilitar(int id) async {
     final confirma = await _confirmar('¿Seguro que deseas deshabilitar esta categoría?');
@@ -264,35 +172,48 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
     }
   }
 
-  // ── Modales ──────────────────────────────────────────────────────
+  // ── Navegación al formulario (reemplaza los antiguos modales) ────
 
-  void _abrirModalAgregar() {
-    showDialog(context: context, builder: (context) => _FormularioCategoria(titulo: '🧩 Nueva Categoría', onGuardar: _handleAgregar));
+  // Antes: `_abrirModalAgregar` abría un `Dialog`. Ahora navega a la
+  // pantalla completa. `Navigator.push<bool>` tipa el resultado que
+  // esperamos recibir: `AgregarCategoriaScreen` hace
+  // `Navigator.pop(context, true)` cuando guarda con éxito.
+  Future<void> _abrirAgregarCategoria() async {
+    final guardado = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (context) => const AgregarCategoriaScreen()),
+    );
+
+    // Si volvió con `true`, algo se creó — recargamos desde el
+    // backend en vez de intentar armar el objeto a mano aquí (como
+    // hacía el `_handleAgregar` viejo), para que el total de
+    // movimientos y demás datos calculados vengan siempre frescos.
+    if (guardado == true) {
+      _cargarCategoriasCombinadas();
+    }
   }
 
-  void _abrirModalEditar(CategoriaData cat) {
-    showDialog(
-      context: context,
-      builder: (context) => _FormularioCategoria(
-        titulo: '✏️ Editar Categoría',
-        nombreInicial: cat.nombre,
-        descripcionInicial: cat.descripcion ?? '',
-        onGuardar: (nombre, descripcion) => _handleGuardarEdicion(cat, nombre, descripcion),
+  Future<void> _abrirEditarCategoria(CategoriaModel cat) async {
+    final guardado = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AgregarCategoriaScreen(categoriaParaEditar: cat),
       ),
     );
+
+    if (guardado == true) {
+      _cargarCategoriasCombinadas();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0f172a), // aproximación plana del radial-gradient de fondo
+      backgroundColor: const Color(0xFF0f172a),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // Reemplaza tu <HeaderModulos section="Categorías" />. Si ya
-            // tienes ese componente portado a Flutter, cámbialo por ese
-            // widget aquí en vez de este título simple.
             const Text('Categorías', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white)),
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
@@ -320,9 +241,6 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
         border: Border.all(color: Colors.white.withOpacity(0.1)),
         gradient: LinearGradient(colors: [_emerald500.withOpacity(0.2), _emerald500.withOpacity(0.03)]),
       ),
-      // `Wrap` en vez de `Row` fijo, para que en pantallas angostas el
-      // botón caiga debajo del contador en vez de desbordarse — tu
-      // versión web resolvía esto con `flex-col sm:flex-row`.
       child: Wrap(
         alignment: WrapAlignment.spaceBetween,
         crossAxisAlignment: WrapCrossAlignment.center,
@@ -336,8 +254,10 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
               Text('${_activas.length}', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: Colors.white)),
             ],
           ),
+          // El botón "+ Agregar Categoría" que pediste — ya existía en
+          // tu código, solo cambié a qué método llama.
           ElevatedButton(
-            onPressed: _abrirModalAgregar,
+            onPressed: _abrirAgregarCategoria,
             style: ElevatedButton.styleFrom(
               backgroundColor: _emerald400,
               foregroundColor: _slate950,
@@ -378,9 +298,6 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
                     child: Text('No hay categorías activas.', style: TextStyle(fontSize: 13, color: _zinc500, fontStyle: FontStyle.italic)),
                   )
                 else
-                  // `LayoutBuilder` hace de "media query": decide layout
-                  // según el ancho disponible, igual que tu `md:hidden` /
-                  // `hidden md:block` de Tailwind.
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final esAncho = constraints.maxWidth >= 768;
@@ -401,7 +318,6 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
     );
   }
 
-  // Vista "card" para pantallas angostas (equivalente al `grid md:hidden`).
   Widget _tarjetasActivas() {
     return Column(
       children: _activas.map((cat) {
@@ -450,7 +366,7 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
                 const SizedBox(height: 14),
                 Row(
                   children: [
-                    Expanded(child: _botonEditar(() => _abrirModalEditar(cat))),
+                    Expanded(child: _botonEditar(() => _abrirEditarCategoria(cat))),
                     const SizedBox(width: 8),
                     Expanded(child: _botonDeshabilitar(() => _handleDeshabilitar(cat.id))),
                   ],
@@ -463,12 +379,9 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
     );
   }
 
-  // Vista tabla para pantallas anchas (equivalente al `hidden md:block` + <table>).
   Widget _tablaActivas() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      // `DataTable` es el widget nativo de Flutter para tablas con
-      // encabezado y filas; reemplaza tu `<table><thead>...<tbody>`.
       child: DataTable(
         columns: const [
           DataColumn(label: Text('Nombre', style: TextStyle(color: _zinc500, fontWeight: FontWeight.w700))),
@@ -487,7 +400,7 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
               cat.esSistemaOGlobal
                   ? const SizedBox.shrink()
                   : Row(mainAxisSize: MainAxisSize.min, children: [
-                      _botonEditar(() => _abrirModalEditar(cat)),
+                      _botonEditar(() => _abrirEditarCategoria(cat)),
                       const SizedBox(width: 8),
                       _botonDeshabilitar(() => _handleDeshabilitar(cat.id)),
                     ]),
@@ -498,7 +411,7 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
     );
   }
 
-  Widget _tarjetaInactiva(CategoriaData cat) {
+  Widget _tarjetaInactiva(CategoriaModel cat) {
     return Opacity(
       opacity: 0.7,
       child: Container(
@@ -557,117 +470,5 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────
-// FORMULARIO (modal) · lo separé en su propio StatefulWidget porque
-// necesita sus PROPIOS TextEditingController — si lo dejara como
-// método dentro de la pantalla, cada `setState` de la pantalla
-// recrearía los controllers y perderías lo que el usuario escribió.
-// ─────────────────────────────────────────────────────────────────────
-
-class _FormularioCategoria extends StatefulWidget {
-  final String titulo;
-  final String nombreInicial;
-  final String descripcionInicial;
-  // Función que este formulario llama al guardar; la pantalla decide
-  // si eso significa "crear" o "editar" (se la pasamos distinta en
-  // cada caso desde `_abrirModalAgregar` / `_abrirModalEditar`).
-  final Future<void> Function(String nombre, String descripcion) onGuardar;
-
-  const _FormularioCategoria({
-    required this.titulo,
-    this.nombreInicial = '',
-    this.descripcionInicial = '',
-    required this.onGuardar,
-  });
-
-  @override
-  State<_FormularioCategoria> createState() => _FormularioCategoriaState();
-}
-
-class _FormularioCategoriaState extends State<_FormularioCategoria> {
-  // `TextEditingController` es el equivalente Dart de tu
-  // `value={formNombre} onChange={e => setFormNombre(e.target.value)}`:
-  // en vez de guardar el texto en una variable de estado y
-  // reescribirla en cada tecla, el controller "es" el texto del campo
-  // y tú lo lees cuando lo necesitas (`.text`).
-  late final TextEditingController _nombreCtrl;
-  late final TextEditingController _descCtrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _nombreCtrl = TextEditingController(text: widget.nombreInicial);
-    _descCtrl = TextEditingController(text: widget.descripcionInicial);
-  }
-
-  // Los controllers reservan recursos nativos; hay que liberarlos
-  // manualmente cuando el widget se destruye — Dart/Flutter no tiene
-  // garbage collector para esto como sí lo tiene JS con sus closures.
-  @override
-  void dispose() {
-    _nombreCtrl.dispose();
-    _descCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: const Color(0xF2020617),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(widget.titulo, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _amber400)),
-            const SizedBox(height: 16),
-            const Text('NOMBRE *', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _zinc400, letterSpacing: 1)),
-            const SizedBox(height: 6),
-            TextField(
-              controller: _nombreCtrl,
-              style: const TextStyle(color: _zinc100),
-              decoration: _decoracionInput('Ej: Ropa, Mascotas...'),
-            ),
-            const SizedBox(height: 16),
-            const Text('DESCRIPCIÓN', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _zinc400, letterSpacing: 1)),
-            const SizedBox(height: 6),
-            TextField(
-              controller: _descCtrl,
-              style: const TextStyle(color: _zinc100),
-              decoration: _decoracionInput('Descripción opcional'),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancelar', style: TextStyle(color: _zinc400)),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: () => widget.onGuardar(_nombreCtrl.text, _descCtrl.text),
-                  style: ElevatedButton.styleFrom(backgroundColor: _emerald400, foregroundColor: _slate950),
-                  child: const Text('Guardar', style: TextStyle(fontWeight: FontWeight.w700)),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  InputDecoration _decoracionInput(String hint) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: const TextStyle(color: _zinc500),
-      filled: true,
-      fillColor: Colors.white.withOpacity(0.1),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-    );
-  }
-}
+// La clase `_FormularioCategoria` (el Dialog viejo) se ELIMINÓ por
+// completo — ya no se usa en ningún lado de este archivo.
