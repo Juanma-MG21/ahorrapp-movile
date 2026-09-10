@@ -64,7 +64,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     try {
       await AuthService.instance.register(
-        nombre: '${_nombreController.text.trim()} ${_apellidoController.text.trim()}',
+        nombre: _nombreController.text.trim(),
+        apellido: _apellidoController.text.trim(),
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
@@ -113,6 +114,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   label: 'CONTRASEÑA',
                   hide: _hidePassword,
                   onToggle: () => setState(() => _hidePassword = !_hidePassword),
+                  onChanged: (_) => setState(() {}),
                 ),
                 const SizedBox(height: 8),
                 _StrengthMeter(value: _passwordStrength, label: _passwordStrengthText, color: _passwordStrengthColor),
@@ -162,9 +164,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildPasswordField({required TextEditingController controller, required String label, required bool hide, required VoidCallback onToggle, bool isConfirm = false}) {
+  Widget _buildPasswordField({required TextEditingController controller, required String label, required bool hide, required VoidCallback onToggle, ValueChanged<String>? onChanged, bool isConfirm = false}) {
     return TextFormField(
       controller: controller,
+      onChanged: onChanged,
       obscureText: hide,
       decoration: InputDecoration(
         labelText: label,

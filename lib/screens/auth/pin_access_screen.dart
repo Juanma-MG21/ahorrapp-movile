@@ -37,8 +37,8 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
     setState(() {
       _isSettingPin = !hasPin;
       _statusMessage = _isSettingPin
-          ? 'Configura tu nuevo PIN'
-          : 'Ingresa tu código de seguridad';
+          ? 'Configura un PIN para confirmar acciones sensibles'
+          : 'Confirma la acción con tu PIN';
     });
   }
 
@@ -81,9 +81,9 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
           await AuthService.instance.savePin(_pin);
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('PIN configurado con éxito')),
+            const SnackBar(content: Text('PIN configurado para confirmar acciones')),
           );
-          Navigator.of(context).pushReplacementNamed('/home');
+          Navigator.of(context).pop(true);
         } else {
           setState(() {
             _pin = '';
@@ -96,7 +96,7 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
       final isValid = await AuthService.instance.verifyPin(_pin);
       if (!mounted) return;
       if (isValid) {
-        Navigator.of(context).pushReplacementNamed('/home');
+        Navigator.of(context).pop(true);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -142,7 +142,7 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text(
-              'Volver al Login',
+              'Cancelar',
               style: TextStyle(
                 color: AppColors.blue,
                 fontWeight: FontWeight.bold,
@@ -216,9 +216,10 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
       itemCount: 12,
       itemBuilder: (context, index) {
         if (index == 9) return const SizedBox.shrink();
-        if (index == 10)
+        if (index == 10) {
           return _NumberButton(label: '0', onTap: () => _onNumberPressed('0'));
-        if (index == 11)
+        }
+        if (index == 11) {
           return IconButton(
             onPressed: _onBackspace,
             icon: const Icon(
@@ -227,6 +228,7 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
               size: 24,
             ),
           );
+        }
         String number = (index + 1).toString();
         return _NumberButton(
           label: number,

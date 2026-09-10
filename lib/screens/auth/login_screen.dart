@@ -21,7 +21,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _hidePassword = true;
   bool _isLoading = false;
   bool _canUseBiometric = false;
-  bool _canUsePin = false;
 
   @override
   void initState() {
@@ -40,11 +39,9 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     final canUseBiometric = await AuthService.instance.canUseBiometricAccess();
-    final canUsePin = await AuthService.instance.canUsePinAccess();
     if (!mounted) return;
     setState(() {
       _canUseBiometric = canUseBiometric;
-      _canUsePin = canUsePin;
     });
   }
 
@@ -115,7 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
           const SizedBox(height: 40),
           _buildLoginForm(),
           const SizedBox(height: 32),
-          if (_canUseBiometric || _canUsePin) ...[
+          if (_canUseBiometric) ...[
             const SizedBox(height: 30),
             _buildQuickAccess(),
           ],
@@ -164,9 +161,12 @@ class _LoginScreenState extends State<LoginScreen> {
               suffixIcon: Icon(Icons.mail_rounded, size: 20),
             ),
             validator: (value) {
-              if ((value ?? '').isEmpty) return 'Ingresa tu correo';
-              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value!))
+              if ((value ?? '').isEmpty) {
+                return 'Ingresa tu correo';
+              }
+              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value!)) {
                 return 'Email inválido';
+              }
               return null;
             },
           ),
@@ -260,15 +260,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   label: 'Biometría',
                   onTap: () =>
                       Navigator.of(context).pushNamed('/biometric-access'),
-                ),
-              ),
-            if (_canUseBiometric && _canUsePin) const SizedBox(width: 16),
-            if (_canUsePin)
-              Expanded(
-                child: _AccessTile(
-                  icon: Icons.pin_rounded,
-                  label: 'PIN',
-                  onTap: () => Navigator.of(context).pushNamed('/pin-access'),
                 ),
               ),
           ],

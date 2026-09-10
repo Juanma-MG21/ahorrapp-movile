@@ -62,10 +62,6 @@ class AuthService {
     }
   }
 
-  Future<bool> canUsePinAccess() async {
-    return await hasSession() && await hasPinSet();
-  }
-
   Future<String?> getToken() async {
     if (_memoryToken != null) return _memoryToken;
     _memoryToken = await _storage.read(key: _tokenKey);

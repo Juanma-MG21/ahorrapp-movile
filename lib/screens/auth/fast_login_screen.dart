@@ -51,8 +51,6 @@ class _FastLoginScreenState extends State<FastLoginScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _AccessBtn(icon: Icons.fingerprint_rounded, label: "Huella", onTap: () => Navigator.of(context).pushNamed('/biometric-access')),
-              const SizedBox(width: 30),
-              _AccessBtn(icon: Icons.pin_rounded, label: "PIN", onTap: () => Navigator.of(context).pushNamed('/pin-access')),
             ],
           ),
           const SizedBox(height: 80),
