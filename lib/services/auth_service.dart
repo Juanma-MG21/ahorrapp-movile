@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../core/network/api_client.dart';
@@ -26,6 +28,16 @@ class Usuario {
       roles: json['roles'],
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'nombre': nombre,
+      'apellido': apellido,
+      'email': email,
+      'roles': roles,
+    };
+  }
 }
 
 class AuthService {
@@ -40,8 +52,10 @@ class AuthService {
   FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   static const _tokenKey = 'auth_token';
+  static const _userKey = 'auth_user';
 
   String? _memoryToken;
+  Usuario? _memoryUser;
 
   Future<bool> hasSession() async {
     if (_memoryToken != null) return true;
@@ -59,6 +73,28 @@ class AuthService {
     return _memoryToken;
   }
 
+  /// Devuelve el usuario actual: primero de memoria, y si no está
+  /// disponible (por ejemplo, la app se acaba de abrir), lo recupera
+  /// de secure storage sin llamadas a la API. Devuelve null si no hay
+  /// usuario cacheado (p. ej. la sesión se guardó sin "recordar sesión").
+  Future<Usuario?> getCurrentUser() async {
+    if (_memoryUser != null) return _memoryUser;
+
+    final stored = await _storage.read(key: _userKey);
+    if (stored == null) return null;
+
+    try {
+      final json = jsonDecode(stored) as Map<String, dynamic>;
+      _memoryUser = Usuario.fromJson(json);
+      return _memoryUser;
+    } catch (e) {
+      // Datos corruptos o formato inesperado: no bloqueamos el flujo,
+      // simplemente no hay nombre de usuario disponible para mostrar.
+      debugPrint('No se pudo leer el usuario cacheado: $e');
+      return null;
+    }
+  }
+
   Future<Usuario> login({
     required String email,
     required String password,
@@ -74,15 +110,20 @@ class AuthService {
       throw ApiException('El servidor no devolvió un token de sesión');
     }
 
+    final usuario = Usuario.fromJson(data['usuario'] as Map<String, dynamic>);
+
     _memoryToken = token;
+    _memoryUser = usuario;
 
     if (rememberSession) {
       await _storage.write(key: _tokenKey, value: token);
+      await _storage.write(key: _userKey, value: jsonEncode(usuario.toJson()));
     } else {
       await _storage.delete(key: _tokenKey);
+      await _storage.delete(key: _userKey);
     }
 
-    return Usuario.fromJson(data['usuario'] as Map<String, dynamic>);
+    return usuario;
   }
 
   Future<void> register({
@@ -129,6 +170,8 @@ class AuthService {
 
   Future<void> logout() async {
     _memoryToken = null;
+    _memoryUser = null;
     await _storage.delete(key: _tokenKey);
+    await _storage.delete(key: _userKey);
   }
 }

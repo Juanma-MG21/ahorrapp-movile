@@ -1,18 +1,48 @@
 import 'package:flutter/material.dart';
+import 'package:local_auth/local_auth.dart';
 import '../../core/theme/design_tokens.dart';
+import '../../services/auth_service.dart';
 import '../../widgets/auth_widgets.dart';
-import 'auth_gate.dart';
 
-class FastLoginScreen extends StatelessWidget {
-  const FastLoginScreen({
-    this.userName,
-    this.userEmail,
-    super.key,
-  });
+class FastLoginScreen extends StatefulWidget {
+  const FastLoginScreen({super.key});
 
-  /// Nombre y correo del usuario de la sesión guardada.
-  final String? userName;
-  final String? userEmail;
+  @override
+  State<FastLoginScreen> createState() => _FastLoginScreenState();
+}
+
+class _FastLoginScreenState extends State<FastLoginScreen> {
+  final LocalAuthentication auth = LocalAuthentication();
+  String? _displayName;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+    // El intento automático se delega a BiometricAccessScreen, que ya
+    // valida sesión, maneja errores y re-confirma la sesión tras el
+    // escaneo. Así evitamos duplicar (y debilitar) esa lógica aquí.
+    _tryAutoBiometric();
+  }
+
+  Future<void> _loadUser() async {
+    final usuario = await AuthService.instance.getCurrentUser();
+    if (!mounted) return;
+    setState(() {
+      _displayName = usuario != null ? '${usuario.nombre} ${usuario.apellido}'.trim() : '';
+    });
+  }
+
+  Future<void> _tryAutoBiometric() async {
+    if (!await AuthService.instance.hasSession()) return;
+
+    final canCheck = await auth.canCheckBiometrics;
+    final isSupported = await auth.isDeviceSupported();
+    if (!canCheck || !isSupported) return;
+
+    if (!mounted) return;
+    Navigator.of(context).pushReplacementNamed('/biometric-access');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +51,6 @@ class FastLoginScreen extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const SizedBox(height: 30),
-
           const Text(
             'AhorrApp',
             style: TextStyle(
@@ -30,23 +59,9 @@ class FastLoginScreen extends StatelessWidget {
               fontWeight: FontWeight.w900,
             ),
           ),
-
           const SizedBox(height: 50),
-
-          // Avatar del usuario
-          Container(
-            width: 90,
-            height: 90,
-            decoration: _clayCircle(),
-            child: const Icon(
-              Icons.person_rounded,
-              size: 50,
-              color: Colors.white,
-            ),
-          ),
-
+          _buildAvatar(),
           const SizedBox(height: 20),
-
           const Text(
             '¡Bienvenido de vuelta!',
             style: TextStyle(
@@ -55,157 +70,90 @@ class FastLoginScreen extends StatelessWidget {
               fontWeight: FontWeight.w900,
             ),
           ),
-
-          const SizedBox(height: 6),
-
+          const SizedBox(height: 8),
           Text(
-            userName ?? 'Tu cuenta',
+            _displayName ?? '',
             style: const TextStyle(
               color: AppColors.accent,
               fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
           ),
-
-          if (userEmail != null) ...[
-            const SizedBox(height: 2),
-            Text(
-              userEmail!,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 13,
-              ),
-            ),
-          ],
-
           const SizedBox(height: 60),
-
-          // Botones de acceso rápido
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _FastAccessButton(
+              _AccessBtn(
                 icon: Icons.fingerprint_rounded,
-                label: 'Huella',
-                onTap: () => Navigator.of(context).pushNamed(
-                  '/biometric-access',
-                ),
-              ),
-              const SizedBox(width: 30),
-              _FastAccessButton(
-                icon: Icons.pin_rounded,
-                label: 'PIN',
-                onTap: () => Navigator.of(context).pushNamed(
-                  '/pin-access',
-                ),
+                label: "Huella",
+                onTap: () =>
+                    Navigator.of(context).pushNamed('/biometric-access'),
               ),
             ],
           ),
-
-          const SizedBox(height: 60),
-
+          const SizedBox(height: 80),
           TextButton(
-            onPressed: () {
-              // Navega nuevamente al flujo de autenticación.
-              // Si "usar otra cuenta" debe cerrar la sesión guardada,
-              // primero deberá ejecutarse el logout de AuthService.
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(
-                  builder: (_) => const AuthGate(),
-                ),
-                (route) => false,
-              );
-            },
+            onPressed: () =>
+                Navigator.of(context).pushReplacementNamed('/login'),
             child: const Text(
               'Usar otra cuenta',
-              style: TextStyle(
-                color: AppColors.accent,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold),
             ),
           ),
-
-          const SizedBox(height: 20),
         ],
       ),
     );
   }
+
+  Widget _buildAvatar() {
+    return Container(
+      width: 100,
+      height: 100,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        shape: BoxShape.circle,
+        border: Border.all(color: AppColors.accent, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.accent.withValues(alpha: 0.2),
+            blurRadius: 20,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: const Icon(Icons.person_rounded, size: 60, color: Colors.white),
+    );
+  }
 }
 
-/// Estilo claymorphism circular para el avatar.
-BoxDecoration _clayCircle() {
-  return BoxDecoration(
-    shape: BoxShape.circle,
-    color: AppColors.surface,
-    border: Border.all(
-      color: AppColors.borderLight,
-      width: 1,
-    ),
-    boxShadow: const [
-      BoxShadow(
-        color: Colors.black54,
-        offset: Offset(6, 8),
-        blurRadius: 16,
-      ),
-      BoxShadow(
-        color: Color(0x0DFFFFFF),
-        offset: Offset(-4, -4),
-        blurRadius: 12,
-      ),
-    ],
-  );
-}
-
-class _FastAccessButton extends StatelessWidget {
+class _AccessBtn extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-
-  const _FastAccessButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
+  const _AccessBtn({required this.icon, required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Material(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              width: 75,
-              height: 75,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: AppColors.borderLight,
-                  width: 1,
-                ),
-              ),
-              child: Icon(
-                icon,
-                color: AppColors.accent,
-                size: 34,
-              ),
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.borderLight),
+              boxShadow: const [
+                BoxShadow(color: Colors.black45, offset: Offset(4, 4), blurRadius: 10),
+              ],
             ),
+            child: Icon(icon, color: AppColors.accent, size: 36),
           ),
         ),
-
-        const SizedBox(height: 10),
-
-        Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        const SizedBox(height: 12),
+        Text(label, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
       ],
     );
   }
