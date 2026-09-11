@@ -37,14 +37,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     final email = _emailController.text.trim();
 
     try {
-      final mensaje = await AuthService.instance.forgotPassword(
-        email: email,
-      );
+      final mensaje = await AuthService.instance.forgotPassword(email: email);
 
       if (!mounted) return;
 
       setState(() {
-        _isLoading = false;
         _email = email;
         _step = 1;
       });
@@ -54,12 +51,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       );
     } on ApiException catch (e) {
       if (!mounted) return;
-
-      setState(() => _isLoading = false);
-
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
+        SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
       );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No se pudo enviar el código: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -76,20 +80,25 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
       if (!mounted) return;
 
-      setState(() => _isLoading = false);
-
       Navigator.of(context).pushNamed(
         '/reset-password',
         arguments: resetToken,
       );
     } on ApiException catch (e) {
       if (!mounted) return;
-
-      setState(() => _isLoading = false);
-
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
+        SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
       );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No se pudo verificar el código: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -99,43 +108,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              IconButton(
-                onPressed: () => Navigator.of(context).pop(),
-                icon: const Icon(Icons.arrow_back_rounded),
-                color: Colors.white,
-                style: IconButton.styleFrom(
-                  backgroundColor: AppColors.surfaceAlt,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'Recuperar acceso',
-                style: TextStyle(
-                  color: AppColors.accent,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 42),
+          _buildTopBar(context),
+          const SizedBox(height: 34),
           Icon(
-            _step == 0
-                ? Icons.alternate_email_rounded
-                : Icons.pin_rounded,
+            _step == 0 ? Icons.alternate_email_rounded : Icons.pin_rounded,
             color: AppColors.blue,
             size: 44,
           ),
           const SizedBox(height: 28),
           Text(
-            _step == 0
-                ? 'Olvidaste tu contrasena?'
-                : 'Revisa tu correo',
+            _step == 0 ? '¿Olvidaste tu contraseña?' : 'Revisa tu correo',
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: Colors.white,
@@ -160,12 +142,36 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           const SizedBox(height: 26),
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),
-            child: _step == 0
-                ? _buildEmailStep()
-                : _buildCodeStep(),
+            child: _step == 0 ? _buildEmailStep() : _buildCodeStep(),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTopBar(BuildContext context) {
+    return Row(
+      children: [
+        IconButton(
+          onPressed: () => Navigator.of(context).pop(),
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          style: IconButton.styleFrom(
+            backgroundColor: AppColors.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        const Text(
+          'Recuperar acceso',
+          style: TextStyle(
+            color: AppColors.accent,
+            fontSize: 16,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ],
     );
   }
 
@@ -181,21 +187,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.done,
             decoration: const InputDecoration(
-              labelText: 'CORREO ELECTRONICO',
-              suffixIcon: Icon(
-                Icons.mail_rounded,
-                color: AppColors.textMuted,
-              ),
+              labelText: 'CORREO ELECTRÓNICO',
+              suffixIcon: Icon(Icons.mail_rounded, color: AppColors.textMuted),
             ),
             validator: (value) {
               final email = value?.trim() ?? '';
 
-              if (email.isEmpty) {
-                return 'Ingresa tu correo';
-              }
+              if (email.isEmpty) return 'Ingresa tu correo';
 
-              if (!email.contains('@') || !email.contains('.')) {
-                return 'Ingresa un correo valido';
+              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
+                return 'Ingresa un correo válido';
               }
 
               return null;
@@ -214,19 +215,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           style: OutlinedButton.styleFrom(
             minimumSize: const Size.fromHeight(52),
             foregroundColor: AppColors.textSecondary,
-            side: const BorderSide(
-              color: AppColors.borderLight,
-            ),
+            side: const BorderSide(color: AppColors.borderLight),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
             ),
             backgroundColor: AppColors.surfaceAlt,
           ),
           child: const Text(
-            'Volver al inicio de sesion',
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
-            ),
+            'Volver al inicio de sesión',
+            style: TextStyle(fontWeight: FontWeight.w800),
           ),
         ),
       ],
@@ -246,18 +243,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             textInputAction: TextInputAction.done,
             decoration: const InputDecoration(
               labelText: 'CÓDIGO DE VERIFICACIÓN',
-              suffixIcon: Icon(
-                Icons.pin_rounded,
-                color: AppColors.textMuted,
-              ),
+              suffixIcon: Icon(Icons.pin_rounded, color: AppColors.textMuted),
             ),
             validator: (value) {
               final code = value?.trim() ?? '';
-
-              if (code.isEmpty) {
-                return 'Ingresa el código';
-              }
-
+              if (code.isEmpty) return 'Ingresa el código';
               return null;
             },
           ),
@@ -271,28 +261,18 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         const SizedBox(height: 14),
         TextButton(
           onPressed: _isLoading ? null : _enviarCodigo,
-          style: TextButton.styleFrom(
-            foregroundColor: AppColors.blue,
-          ),
+          style: TextButton.styleFrom(foregroundColor: AppColors.blue),
           child: const Text(
             'Reenviar código',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-            ),
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
           ),
         ),
         const SizedBox(height: 6),
         TextButton(
-          onPressed: _isLoading
-              ? null
-              : () => setState(() => _step = 0),
+          onPressed: _isLoading ? null : () => setState(() => _step = 0),
           child: const Text(
             'Corregir correo',
-            style: TextStyle(
-              color: AppColors.muted,
-              fontSize: 12,
-            ),
+            style: TextStyle(color: AppColors.muted, fontSize: 12),
           ),
         ),
       ],
@@ -317,9 +297,7 @@ class _ProgressDots extends StatelessWidget {
           height: 7,
           margin: const EdgeInsets.symmetric(horizontal: 3),
           decoration: BoxDecoration(
-            color: active
-                ? AppColors.accent
-                : const Color(0xFF334057),
+            color: active ? AppColors.accent : const Color(0xFF334057),
             borderRadius: BorderRadius.circular(8),
           ),
         );
