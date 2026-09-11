@@ -21,6 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _rememberSession = false;
   bool _hidePassword = true;
   bool _isLoading = false;
+  bool _canUseBiometric = false;
 
   @override
   void initState() {
@@ -30,27 +31,26 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _loadSavedCredentials() async {
     final prefs = await SharedPreferences.getInstance();
-
     if (!mounted) return;
-
     setState(() {
       _rememberSession = prefs.getBool('remember_me') ?? false;
-
       if (_rememberSession) {
         _emailController.text = prefs.getString('saved_email') ?? '';
       }
+    });
+
+    final canUseBiometric = await AuthService.instance.canUseBiometricAccess();
+    if (!mounted) return;
+    setState(() {
+      _canUseBiometric = canUseBiometric;
     });
   }
 
   Future<void> _handleRememberMe() async {
     final prefs = await SharedPreferences.getInstance();
-
     if (_rememberSession) {
       await prefs.setBool('remember_me', true);
-      await prefs.setString(
-        'saved_email',
-        _emailController.text.trim(),
-      );
+      await prefs.setString('saved_email', _emailController.text.trim());
     } else {
       await prefs.remove('remember_me');
       await prefs.remove('saved_email');
