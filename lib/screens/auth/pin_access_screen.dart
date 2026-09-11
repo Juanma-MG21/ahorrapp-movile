@@ -1,18 +1,19 @@
-
-// !NOTAS
-//? 1
-//Ninguna de las dos versiones conecta esto al backend real.
-//Ambas siguen usando el PIN de prueba '1234' de forma simulada
-//(Future.delayed + comparación local).
-//A diferencia de ForgotPasswordScreen y ResetPasswordScreen,
-//que ya usan AuthService, esta pantalla todavía no llama a Render/Supabase.
-
 import 'package:flutter/material.dart';
-
 import '../../core/theme/design_tokens.dart';
+import '../../services/auth_service.dart';
 import '../../widgets/auth_widgets.dart';
-import 'auth_gate.dart';
 
+/// Pantalla de segunda verificación por PIN. Se usa con push + await
+/// desde flujos ya autenticados que requieren confirmar la identidad
+/// del usuario antes de una acción sensible (cambiar contraseña,
+/// editar datos personales, etc.):
+///
+///   final ok = await Navigator.of(context).push<bool>(
+///     MaterialPageRoute(builder: (_) => const PinAccessScreen()),
+///   );
+///   if (ok == true) { ...continuar con la acción sensible... }
+///
+/// No navega a '/home': siempre resuelve con Navigator.pop(true/false).
 class PinAccessScreen extends StatefulWidget {
   const PinAccessScreen({super.key});
 
@@ -23,51 +24,100 @@ class PinAccessScreen extends StatefulWidget {
 class _PinAccessScreenState extends State<PinAccessScreen> {
   String _pin = '';
   final int _pinLength = 4;
+  bool _isSettingPin = false;
+  String _firstPinEntry = '';
+  String _statusMessage = 'Cargando...';
+
+  @override
+  void initState() {
+    super.initState();
+    _checkPinStatus();
+  }
+
+  Future<void> _checkPinStatus() async {
+    if (!await AuthService.instance.hasSession()) {
+      if (!mounted) return;
+      setState(() {
+        _isSettingPin = false;
+        _statusMessage = 'Inicia sesión con tu correo y contraseña';
+      });
+      return;
+    }
+
+    final hasPin = await AuthService.instance.hasPinSet();
+    if (!mounted) return;
+    setState(() {
+      _isSettingPin = !hasPin;
+      _statusMessage = _isSettingPin
+          ? 'Configura un PIN para confirmar acciones sensibles'
+          : 'Confirma la acción con tu PIN';
+    });
+  }
 
   void _onNumberPressed(String number) {
     if (_pin.length < _pinLength) {
-      setState(() {
-        _pin += number;
-      });
-
+      setState(() => _pin += number);
       if (_pin.length == _pinLength) {
-        _verifyPin();
+        _processPin();
       }
     }
   }
 
   void _onBackspace() {
     if (_pin.isNotEmpty) {
-      setState(() {
-        _pin = _pin.substring(0, _pin.length - 1);
-      });
+      setState(() => _pin = _pin.substring(0, _pin.length - 1));
     }
   }
 
-  Future<void> _verifyPin() async {
-    // Simulación de verificación
-    await Future.delayed(const Duration(milliseconds: 500));
-
+  Future<void> _processPin() async {
+    await Future.delayed(const Duration(milliseconds: 300));
     if (!mounted) return;
 
-    if (_pin == '1234') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('PIN Correcto. Bienvenido!'),
-        ),
-      );
-
-      Navigator.of(context).pushReplacementNamed('/home');
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('PIN Incorrecto. Intenta de nuevo.'),
-        ),
-      );
-
+    // Chequeo defensivo: la sesión pudo expirar mientras el usuario
+    // tecleaba el PIN.
+    if (!await AuthService.instance.hasSession()) {
       setState(() {
         _pin = '';
+        _statusMessage = 'Tu sesión ya no está disponible';
       });
+      return;
+    }
+
+    if (_isSettingPin) {
+      if (_firstPinEntry.isEmpty) {
+        setState(() {
+          _firstPinEntry = _pin;
+          _pin = '';
+          _statusMessage = 'Confirma tu nuevo PIN';
+        });
+      } else if (_pin == _firstPinEntry) {
+        await AuthService.instance.savePin(_pin);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('PIN configurado para confirmar acciones')),
+        );
+        Navigator.of(context).pop(true);
+      } else {
+        setState(() {
+          _pin = '';
+          _firstPinEntry = '';
+          _statusMessage = 'Los PIN no coinciden. Intenta de nuevo';
+        });
+      }
+    } else {
+      final isValid = await AuthService.instance.verifyPin(_pin);
+      if (!mounted) return;
+      if (isValid) {
+        Navigator.of(context).pop(true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('PIN Incorrecto'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        setState(() => _pin = '');
+      }
     }
   }
 
@@ -76,147 +126,38 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
     return AuthPageShell(
       child: Column(
         children: [
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              IconButton(
-                onPressed: () => Navigator.of(context).pop(),
-                icon: const Icon(Icons.arrow_back_rounded),
-                color: Colors.white,
-                style: IconButton.styleFrom(
-                  backgroundColor: AppColors.surfaceAlt,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          _buildTopBar(context),
           const SizedBox(height: 40),
           const Text(
             'AhorrApp',
             style: TextStyle(
               color: AppColors.accent,
-              fontSize: 30,
+              fontSize: 32,
               fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
-            'Ingresa tu PIN',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'Usa tu código de seguridad para entrar',
-            style: TextStyle(
-              color: AppColors.muted,
-              fontSize: 14,
+          Text(
+            _statusMessage,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 50),
-
-          // Indicadores de PIN
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(_pinLength, (index) {
-              final isFilled = index < _pin.length;
-
-              return Container(
-                margin: const EdgeInsets.symmetric(horizontal: 12),
-                width: 20,
-                height: 20,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isFilled
-                      ? AppColors.accent
-                      : Colors.transparent,
-                  border: Border.all(
-                    color: isFilled
-                        ? AppColors.accent
-                        : AppColors.textMuted,
-                    width: 2,
-                  ),
-                  boxShadow: isFilled
-                      ? [
-                          BoxShadow(
-                            color: AppColors.accent.withValues(
-                              alpha: 0.4,
-                            ),
-                            blurRadius: 10,
-                            spreadRadius: 2,
-                          ),
-                        ]
-                      : [],
-                ),
-              );
-            }),
-          ),
-
+          _buildPinIndicators(),
           const SizedBox(height: 60),
-
-          // Teclado numérico
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate:
-                const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              childAspectRatio: 1.5,
-              mainAxisSpacing: 20,
-              crossAxisSpacing: 20,
-            ),
-            itemCount: 12,
-            itemBuilder: (context, index) {
-              if (index == 9) {
-                return const SizedBox.shrink();
-              }
-
-              if (index == 10) {
-                return _NumberButton(
-                  label: '0',
-                  onTap: () => _onNumberPressed('0'),
-                );
-              }
-
-              if (index == 11) {
-                return IconButton(
-                  onPressed: _onBackspace,
-                  icon: const Icon(
-                    Icons.backspace_outlined,
-                    color: Colors.white,
-                    size: 28,
-                  ),
-                );
-              }
-
-              final number = (index + 1).toString();
-
-              return _NumberButton(
-                label: number,
-                onTap: () => _onNumberPressed(number),
-              );
-            },
-          ),
-
+          _buildNumpad(),
           const SizedBox(height: 40),
-
           TextButton(
-            onPressed: () => Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(
-                builder: (_) => const AuthGate(),
-              ),
-              (route) => false,
-            ),
+            onPressed: () => Navigator.of(context).pop(false),
             child: const Text(
-              'Ingresar con contraseña',
+              'Cancelar',
               style: TextStyle(
                 color: AppColors.blue,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),
@@ -225,21 +166,98 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
       ),
     );
   }
+
+  Widget _buildTopBar(BuildContext context) {
+    return Row(
+      children: [
+        IconButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          style: IconButton.styleFrom(
+            backgroundColor: AppColors.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPinIndicators() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(_pinLength, (index) {
+        bool isFilled = index < _pin.length;
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 12),
+          width: 18,
+          height: 18,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isFilled ? AppColors.accent : Colors.transparent,
+            border: Border.all(
+              color: isFilled ? AppColors.accent : AppColors.textMuted,
+              width: 2,
+            ),
+            boxShadow: isFilled
+                ? [
+                    BoxShadow(
+                      color: AppColors.accent.withValues(alpha: 0.3),
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                    ),
+                  ]
+                : [],
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _buildNumpad() {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        childAspectRatio: 1.6,
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
+      ),
+      itemCount: 12,
+      itemBuilder: (context, index) {
+        if (index == 9) return const SizedBox.shrink();
+        if (index == 10) {
+          return _NumberButton(label: '0', onTap: () => _onNumberPressed('0'));
+        }
+        if (index == 11) {
+          return IconButton(
+            onPressed: _onBackspace,
+            icon: const Icon(
+              Icons.backspace_outlined,
+              color: Colors.white,
+              size: 24,
+            ),
+          );
+        }
+        String number = (index + 1).toString();
+        return _NumberButton(
+          label: number,
+          onTap: () => _onNumberPressed(number),
+        );
+      },
+    );
+  }
 }
 
 class _NumberButton extends StatelessWidget {
-  const _NumberButton({
-    required this.label,
-    required this.onTap,
-  });
-
   final String label;
   final VoidCallback onTap;
+  const _NumberButton({required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    // Réplica local del estilo "clayRaised" de app_theme.dart,
-    // usando solo AppColors para evitar depender de app_theme.dart.
     return Material(
       color: AppColors.surface,
       borderRadius: BorderRadius.circular(16),
@@ -249,20 +267,12 @@ class _NumberButton extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: AppColors.borderLight,
-              width: 1,
-            ),
+            border: Border.all(color: AppColors.borderLight),
             boxShadow: const [
               BoxShadow(
-                color: Colors.black54,
-                offset: Offset(6, 8),
-                blurRadius: 16,
-              ),
-              BoxShadow(
-                color: Color(0x0DFFFFFF),
-                offset: Offset(-4, -4),
-                blurRadius: 12,
+                color: Colors.black45,
+                offset: Offset(4, 4),
+                blurRadius: 8,
               ),
             ],
           ),
@@ -271,8 +281,8 @@ class _NumberButton extends StatelessWidget {
             label,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 26,
-              fontWeight: FontWeight.w700,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ),

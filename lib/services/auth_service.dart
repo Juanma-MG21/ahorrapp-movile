@@ -53,9 +53,11 @@ class AuthService {
 
   static const _tokenKey = 'auth_token';
   static const _userKey = 'auth_user';
+  static const _pinKey = 'auth_pin';
 
   String? _memoryToken;
   Usuario? _memoryUser;
+  String? _memoryPin;
 
   Future<bool> hasSession() async {
     if (_memoryToken != null) return true;
@@ -93,6 +95,35 @@ class AuthService {
       debugPrint('No se pudo leer el usuario cacheado: $e');
       return null;
     }
+  }
+
+  /// PIN local del dispositivo, usado como segunda verificación para
+  /// confirmar acciones sensibles (cambiar contraseña, editar datos
+  /// personales, etc.) sobre una sesión ya autenticada. No se envía al
+  /// backend: vive solo en secure storage, igual que el token.
+  Future<bool> hasPinSet() async {
+    if (_memoryPin != null) return true;
+    final stored = await _storage.read(key: _pinKey);
+    if (stored != null) {
+      _memoryPin = stored;
+      return true;
+    }
+    return false;
+  }
+
+  Future<void> savePin(String pin) async {
+    _memoryPin = pin;
+    await _storage.write(key: _pinKey, value: pin);
+  }
+
+  Future<bool> verifyPin(String pin) async {
+    final stored = _memoryPin ?? await _storage.read(key: _pinKey);
+    return stored != null && stored == pin;
+  }
+
+  Future<void> clearPin() async {
+    _memoryPin = null;
+    await _storage.delete(key: _pinKey);
   }
 
   Future<Usuario> login({
@@ -171,7 +202,9 @@ class AuthService {
   Future<void> logout() async {
     _memoryToken = null;
     _memoryUser = null;
+    _memoryPin = null;
     await _storage.delete(key: _tokenKey);
     await _storage.delete(key: _userKey);
+    await _storage.delete(key: _pinKey);
   }
 }

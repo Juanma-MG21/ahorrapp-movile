@@ -24,10 +24,12 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _hidePassword = true;
   bool _isLoading = false;
 
-  // Gates para los accesos rápidos: solo tiene sentido ofrecerlos si
-  // hay una sesión guardada que restaurar (si no, mandan a un callejón
-  // sin salida en BiometricAccessScreen / PinAccessScreen).
-  bool _hasSession = false;
+  // Gate para el acceso rápido por huella: solo tiene sentido ofrecerlo
+  // si hay una sesión guardada que restaurar (si no, manda a un
+  // callejón sin salida en BiometricAccessScreen).
+  // Nota: '/pin-access' ya no vive aquí — es una segunda verificación
+  // para acciones sensibles (cambiar contraseña, editar datos
+  // personales), no un método de login rápido.
   bool _canUseBiometric = false;
 
   @override
@@ -54,7 +56,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (!mounted) return;
     setState(() {
-      _hasSession = hasSession;
       _canUseBiometric = hasSession && canCheck && isSupported;
     });
   }
@@ -154,7 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
           _buildBrandHeader(),
           const SizedBox(height: 32),
           _buildLoginForm(),
-          if (_canUseBiometric || _hasSession) ...[
+          if (_canUseBiometric) ...[
             const SizedBox(height: 24),
             _buildQuickAccess(),
           ],
@@ -296,23 +297,13 @@ class _LoginScreenState extends State<LoginScreen> {
         const SizedBox(height: 18),
         Row(
           children: [
-            if (_canUseBiometric)
-              Expanded(
-                child: _AccessTile(
-                  icon: Icons.fingerprint_rounded,
-                  label: 'Huella',
-                  onTap: () => Navigator.of(context).pushNamed('/biometric-access'),
-                ),
+            Expanded(
+              child: _AccessTile(
+                icon: Icons.fingerprint_rounded,
+                label: 'Huella',
+                onTap: () => Navigator.of(context).pushNamed('/biometric-access'),
               ),
-            if (_canUseBiometric && _hasSession) const SizedBox(width: 15),
-            if (_hasSession)
-              Expanded(
-                child: _AccessTile(
-                  icon: Icons.pin_rounded,
-                  label: 'PIN',
-                  onTap: () => Navigator.of(context).pushNamed('/pin-access'),
-                ),
-              ),
+            ),
           ],
         ),
       ],
