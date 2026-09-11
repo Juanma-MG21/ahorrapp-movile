@@ -12,9 +12,10 @@ import '../../services/widget_service.dart';
 import '../../services/gastos_service.dart';
 import 'agregar_gasto_screen.dart';
 import '../../services/ocr_parser_service.dart';
-import '../../screens/ocr_scanner_screen.dart'; // o el path que uses para qr_scanner_screen.dart
 import '../../services/qr_parser_service.dart';
-import '../qr_scanner_screen.dart';
+
+import '../scanners/ocr_scanner_screen.dart';
+import '../scanners/qr_scanner_screen.dart';
 
 class ModuloGastos extends StatefulWidget {
   final stt.SpeechToText? speechInstance;

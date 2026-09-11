@@ -22,7 +22,7 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
   DateTime? _fechaLimite;
   int? _selectedCategoriaId;
   List<CategoriaModel> _categorias = [];
-  bool _isLoadingCategorias = true;
+  // bool _isLoadingCategorias = true;
   bool _isSaving = false;
   bool _showScrollIndicator = false;
   final ScrollController _categoryScrollController = ScrollController();
@@ -45,11 +45,11 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
       final cats = await CategoriasService.obtenerCategorias();
       setState(() {
         _categorias = cats;
-        _isLoadingCategorias = false;
+        // _isLoadingCategorias = false;
       });
     } catch (e) {
       debugPrint('Error cargando categorías: $e');
-      setState(() => _isLoadingCategorias = false);
+      // setState(() => _isLoadingCategorias = false);
     }
   }
 

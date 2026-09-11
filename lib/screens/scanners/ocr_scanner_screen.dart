@@ -1,24 +1,11 @@
-// lib/screens/ocr_scanner_screen.dart
-//
-// Pantalla de escaneo de recibos por OCR (RF-23). A diferencia de
-// QrScannerScreen, no hay una cámara en vivo dentro de la app: se usa
-// image_picker para lanzar la cámara nativa, y una vez capturada la
-// foto se corre reconocimiento de texto (google_mlkit_text_recognition)
-// sobre ella. Igual que QrScannerScreen, esta pantalla NO sabe nada de
-// "Gasto": solo devuelve el texto crudo reconocido con Navigator.pop().
-// Quien la llama decide qué hacer con ese texto (hoy: OcrParserService).
-//
-// Dependencias nuevas en pubspec.yaml:
-//   google_mlkit_text_recognition: ^0.13.0  (o la última estable)
-
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
-import '../core/theme/design_tokens.dart';
-import '../widgets/scanner/scanner_shared_ui.dart';
+import '../../core/theme/design_tokens.dart';
+import '../../widgets/scanner/scanner_shared_ui.dart';
 
 class OcrScannerScreen extends StatefulWidget {
   const OcrScannerScreen({super.key});

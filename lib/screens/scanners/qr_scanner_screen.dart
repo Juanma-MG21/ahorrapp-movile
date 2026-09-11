@@ -1,25 +1,10 @@
-// lib/screens/qr_scanner_screen.dart
-//
-// Pantalla de escaneo de QR. A propósito NO sabe nada de "Gasto" ni de
-// Supabase: su única responsabilidad es mostrar la cámara y, al
-// detectar un código, devolver el texto crudo con Navigator.pop().
-// Quien la llama (ModuloGastos) decide qué hacer con ese texto — hoy
-// lo manda a QrParserService, pero mañana podría usarse para Ingresos
-// u otro módulo sin tocar esta pantalla.
-//
-// La UI (header, marco de esquinas, botones circulares) vive en
-// widgets/scanner/scanner_shared_ui.dart, compartida con OcrScannerScreen.
-//
-// Dependencias en pubspec.yaml:
-//   mobile_scanner: ^5.2.3
-//   image_picker: ^1.1.2
-
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../core/theme/design_tokens.dart';
-import '../widgets/scanner/scanner_shared_ui.dart';
+import '../../widgets/scanner/scanner_shared_ui.dart';
+import'../../core/theme/design_tokens.dart';
+
 
 class QrScannerScreen extends StatefulWidget {
   const QrScannerScreen({super.key});
