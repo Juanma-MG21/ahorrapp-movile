@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 import '../../core/theme/design_tokens.dart';
-import '../../widgets/auth_widgets.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/auth_widgets.dart';
 import 'auth_gate.dart';
 
 class BiometricAccessScreen extends StatefulWidget {
@@ -15,46 +15,55 @@ class BiometricAccessScreen extends StatefulWidget {
 class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
   final LocalAuthentication auth = LocalAuthentication();
   bool _isAuthenticating = false;
-  String _authStatus = 'Esperando autenticación...';
-  bool _canCheckBiometrics = false;
+  String _authStatus = 'Cargando...';
 
   @override
   void initState() {
     super.initState();
-    _checkHardware();
+    _startBiometric();
   }
 
-  Future<void> _checkHardware() async {
-    try {
-      final bool canAuthenticateWithBiometrics = await auth.canCheckBiometrics;
-      final bool canAuthenticate = canAuthenticateWithBiometrics || await auth.isDeviceSupported();
-      
-      setState(() {
-        _canCheckBiometrics = canAuthenticate;
-      });
-
-      if (_canCheckBiometrics) {
-        _authenticate();
-      } else {
-        setState(() {
-          _authStatus = 'Biometría no disponible en este dispositivo';
-        });
-      }
-    } catch (e) {
-      debugPrint(e.toString());
+  // Paso 1 (de V2): antes de pedir biometría, confirmamos que exista
+  // una sesión guardada. Si no hay sesión, no tiene sentido molestar
+  // al usuario con el prompt de huella/rostro.
+  Future<void> _startBiometric() async {
+    if (!await AuthService.instance.hasSession()) {
+      if (!mounted) return;
+      setState(() => _authStatus = 'Inicia sesión con tu correo y contraseña');
+      return;
     }
+
+    final canCheck = await auth.canCheckBiometrics;
+    final isSupported = await auth.isDeviceSupported();
+
+    if (!mounted) return;
+
+    if (!canCheck || !isSupported) {
+      setState(() => _authStatus = 'Biometría no soportada en este dispositivo');
+      return;
+    }
+
+    _authenticate();
   }
 
   Future<void> _authenticate() async {
-    bool authenticated = false;
     try {
+      // Doble chequeo (de V2): protege contra condiciones de carrera
+      // si el usuario se ausentó y volvió antes de tocar el ícono.
+      if (!await AuthService.instance.hasSession()) {
+        if (mounted) {
+          setState(() => _authStatus = 'Tu sesión ya no está disponible');
+        }
+        return;
+      }
+
       setState(() {
         _isAuthenticating = true;
-        _authStatus = 'Escaneando huella/rostro...';
+        _authStatus = 'Escaneando huella / rostro...';
       });
 
-      authenticated = await auth.authenticate(
-        localizedReason: 'Escanea tu huella para acceder a AhorrApp',
+      final bool authenticated = await auth.authenticate(
+        localizedReason: 'Accede de forma segura a AhorrApp',
         options: const AuthenticationOptions(
           stickyAuth: true,
           biometricOnly: true,
@@ -63,26 +72,21 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
 
       setState(() {
         _isAuthenticating = false;
-        _authStatus = authenticated ? 'Acceso concedido' : 'Acceso denegado';
+        _authStatus = authenticated ? 'Acceso concedido' : 'Autenticación fallida';
       });
 
       if (authenticated && mounted) {
-        // La huella es correcta, pero eso solo confirma que es el dueño
-        // del dispositivo. Antes de dejarlo entrar, confirmamos que
-        // sigue habiendo una sesión guardada y válida en AuthService.
+        // Chequeo final (de V1): el escaneo pudo tardar varios segundos,
+        // así que volvemos a confirmar que la sesión siga viva antes de
+        // navegar. Si ya no es válida, dejamos que AuthGate decida el
+        // flujo correcto en vez de forzar '/home' sin sesión real.
         final tieneSesion = await AuthService.instance.hasSession();
 
         if (!mounted) return;
 
         if (tieneSesion) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('¡Bienvenido!')),
-          );
           Navigator.of(context).pushReplacementNamed('/home');
         } else {
-          // No hay sesión válida (por ejemplo, expiró). Mandamos a
-          // AuthGate para que decida qué pantalla mostrar (login, etc.)
-          // en vez de forzar '/home' sin sesión real.
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Tu sesión expiró, inicia sesión nuevamente'),
@@ -90,15 +94,14 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
           );
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (_) => const AuthGate()),
-                (route) => false,
+            (route) => false,
           );
         }
       }
     } catch (e) {
-      debugPrint(e.toString());
       setState(() {
         _isAuthenticating = false;
-        _authStatus = 'Error al autenticar: ${e.toString()}';
+        _authStatus = 'Error: $e';
       });
     }
   }
@@ -109,7 +112,8 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const SizedBox(height: 40),
+          _buildTopBar(context),
+          const SizedBox(height: 50),
           const Text(
             'AhorrApp',
             style: TextStyle(
@@ -118,75 +122,90 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 60),
-          GestureDetector(
-            onTap: (_isAuthenticating || !_canCheckBiometrics) ? null : _authenticate,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              padding: const EdgeInsets.all(30),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _isAuthenticating
-                    ? AppColors.accent.withValues(alpha: 0.1)
-                    : AppColors.surface,
-                border: Border.all(
-                  color: _isAuthenticating
-                      ? AppColors.accent
-                      : AppColors.borderLight,
-                  width: 2,
-                ),
-                boxShadow: _isAuthenticating
-                    ? [
-                        BoxShadow(
-                          color: AppColors.accent.withValues(alpha: 0.3),
-                          blurRadius: 30,
-                          spreadRadius: 5,
-                        ),
-                      ]
-                    : [],
-              ),
-              child: Icon(
-                Icons.fingerprint_rounded,
-                size: 100,
-                color: _isAuthenticating
-                    ? AppColors.accent
-                    : AppColors.textSecondary,
-              ),
-            ),
-          ),
+          const SizedBox(height: 80),
+          _buildBiometricIcon(),
           const SizedBox(height: 40),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Text(
-              _authStatus,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
+          Text(
+            _authStatus,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 20),
-          if (!_isAuthenticating && _canCheckBiometrics)
+          const SizedBox(height: 30),
+          if (!_isAuthenticating)
             TextButton.icon(
               onPressed: _authenticate,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Reintentar'),
+              label: const Text('Intentar de nuevo'),
               style: TextButton.styleFrom(foregroundColor: AppColors.accent),
             ),
-          
-          const SizedBox(height: 60), // En lugar de Spacer
-          
+          const SizedBox(height: 80),
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text(
-              'Usar contraseña',
-              style: TextStyle(color: AppColors.blue, fontWeight: FontWeight.bold),
+              'Ingresar con contraseña',
+              style: TextStyle(
+                color: AppColors.blue,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           const SizedBox(height: 20),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTopBar(BuildContext context) {
+    return Row(
+      children: [
+        IconButton(
+          onPressed: () => Navigator.of(context).pop(),
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          style: IconButton.styleFrom(
+            backgroundColor: AppColors.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBiometricIcon() {
+    return GestureDetector(
+      onTap: _isAuthenticating ? null : _authenticate,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.all(35),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: _isAuthenticating
+              ? AppColors.accent.withValues(alpha: 0.1)
+              : AppColors.surface,
+          border: Border.all(
+            color: _isAuthenticating ? AppColors.accent : AppColors.borderLight,
+            width: 2,
+          ),
+          boxShadow: _isAuthenticating
+              ? [
+                  BoxShadow(
+                    color: AppColors.accent.withValues(alpha: 0.3),
+                    blurRadius: 40,
+                    spreadRadius: 5,
+                  ),
+                ]
+              : [],
+        ),
+        child: Icon(
+          Icons.fingerprint_rounded,
+          size: 100,
+          color: _isAuthenticating ? AppColors.accent : AppColors.textSecondary,
+        ),
       ),
     );
   }
