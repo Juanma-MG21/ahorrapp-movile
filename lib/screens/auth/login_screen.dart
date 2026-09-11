@@ -21,7 +21,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _rememberSession = false;
   bool _hidePassword = true;
   bool _isLoading = false;
-  bool _canUseBiometric = false;
 
   @override
   void initState() {
@@ -39,11 +38,6 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     });
 
-    final canUseBiometric = await AuthService.instance.canUseBiometricAccess();
-    if (!mounted) return;
-    setState(() {
-      _canUseBiometric = canUseBiometric;
-    });
   }
 
   Future<void> _handleRememberMe() async {
