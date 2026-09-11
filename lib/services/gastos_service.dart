@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../core/network/api_client.dart';
 import '../models/gasto_model.dart';
-import '../models/categoria_model.dart';
+import '../models/categorias_model.dart';
 import '../models/dependiente_model.dart';
 import 'auth_service.dart';
 

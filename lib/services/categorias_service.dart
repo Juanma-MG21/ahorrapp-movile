@@ -2,11 +2,10 @@ import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
-import '../models/categoria_model.dart';
+import '../models/categorias_model.dart';
 
 class CategoriasService {
-  static const String _baseUrl =
-      'https://ahorrapp-react-pkj9.onrender.com/api';
+  static const String _baseUrl = 'https://ahorrapp-react-pkj9.onrender.com/api';
 
   final FlutterSecureStorage _storage;
 
@@ -57,8 +56,7 @@ class CategoriasService {
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception(
-        _obtenerMensajeError(decoded) ??
-            'Error HTTP ${response.statusCode}',
+        _obtenerMensajeError(decoded) ?? 'Error HTTP ${response.statusCode}',
       );
     }
 
@@ -102,13 +100,11 @@ class CategoriasService {
   // CATEGORÍAS
   // ============================================================
 
-Future<List<CategoriaModel>> getCategorias() async {
-  final data = await _getLista('/categorias');
+  Future<List<CategoriaModel>> getCategorias() async {
+    final data = await _getLista('/categorias');
 
-  return data
-      .map((json) => CategoriaModel.fromJson(json))
-      .toList();
-}
+    return data.map((json) => CategoriaModel.fromJson(json)).toList();
+  }
 
   // ============================================================
   // MOVIMIENTOS POR CATEGORÍA
@@ -220,8 +216,7 @@ Future<List<CategoriaModel>> getCategorias() async {
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception(
-        _obtenerMensajeError(decoded) ??
-            'Error HTTP ${response.statusCode}',
+        _obtenerMensajeError(decoded) ?? 'Error HTTP ${response.statusCode}',
       );
     }
 

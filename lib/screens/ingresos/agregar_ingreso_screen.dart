@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../models/ingreso_model.dart';
-import '../../models/categoria_model.dart';
+import '../../models/categorias_model.dart';
 import '../../services/ingresos_service.dart';
 import '../../core/network/api_client.dart';
 

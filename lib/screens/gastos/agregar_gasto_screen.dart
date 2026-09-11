@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/network/api_client.dart';
 import '../../models/gasto_model.dart';
-import '../../models/categoria_model.dart';
+import '../../models/categorias_model.dart';
 import '../../models/dependiente_model.dart';
 import '../../services/gastos_service.dart';
 

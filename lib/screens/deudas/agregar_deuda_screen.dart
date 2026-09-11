@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../models/deuda_model.dart';
-import '../../models/categoria_model.dart';
+import '../../models/categorias_model.dart';
 import '../../services/deudas_service.dart';
 import '../../services/categorias_service.dart';
 import '../../core/network/api_client.dart';
