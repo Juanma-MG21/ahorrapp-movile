@@ -421,25 +421,86 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
     }
   }
 
+  void _showCalendarSheet() => _showNeumorphicSheet(_buildCalendarSheet());
+
+  // Mismo calendario propio (grid de 7 columnas dentro de un bottom sheet)
+  // que usan gastos, ingresos, imprevistos y deudas, en vez del
+  // showDatePicker nativo de Flutter que se usaba antes acá — así los 5
+  // formularios financieros se ven y se sienten igual.
+  Widget _buildCalendarSheet() {
+    final base = _fechaLimite ?? DateTime.now();
+    final year = base.year;
+    final month = base.month;
+    final daysInMonth = DateTime(year, month + 1, 0).day;
+    final offset = DateTime(year, month, 1).weekday - 1;
+
+    const List<String> meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+    return Container(
+      decoration: const BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.navInactive, borderRadius: BorderRadius.circular(2)))),
+            const SizedBox(height: 16),
+            Text('${meses[month - 1]} $year', style: const TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 18),
+            Row(children: ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'].map((d) => Expanded(child: Center(child: Text(d, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11))))).toList()),
+            const SizedBox(height: 10),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 7, childAspectRatio: 1),
+              itemCount: offset + daysInMonth,
+              itemBuilder: (context, index) {
+                if (index < offset) return const SizedBox.shrink();
+                final day = index - offset + 1;
+                final dayDate = DateTime(year, month, day);
+                final isSelected = _fechaLimite != null &&
+                    day == _fechaLimite!.day &&
+                    month == _fechaLimite!.month &&
+                    year == _fechaLimite!.year;
+                final isPast = dayDate.isBefore(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day));
+                return GestureDetector(
+                  onTap: isPast ? null : () { setState(() => _fechaLimite = dayDate); Navigator.pop(context); },
+                  child: Opacity(
+                    opacity: isPast ? 0.25 : 1.0,
+                    child: Container(
+                      margin: const EdgeInsets.all(3),
+                      decoration: isSelected
+                          ? const BoxDecoration(shape: BoxShape.circle, gradient: RadialGradient(colors: [Color(0xFFFFD700), AppColors.accent]))
+                          : const BoxDecoration(color: AppColors.background, shape: BoxShape.circle),
+                      child: Center(child: Text('$day', style: TextStyle(color: isSelected ? Colors.black : AppColors.textPrimary, fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500))),
+                    ),
+                  ),
+                );
+              },
+            ),
+            if (_fechaLimite != null) ...[
+              const SizedBox(height: 12),
+              Center(
+                child: TextButton(
+                  onPressed: () { setState(() => _fechaLimite = null); Navigator.pop(context); },
+                  child: const Text('Quitar fecha', style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildFechaField() {
     return Container(
       decoration: BoxDecoration(color: AppColors.inset, borderRadius: BorderRadius.circular(14)),
       child: InkWell(
-        onTap: () async {
-          final date = await showDatePicker(
-            context: context,
-            initialDate: _fechaLimite ?? DateTime.now(),
-            firstDate: DateTime.now(),
-            lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
-            builder: (context, child) => Theme(
-              data: Theme.of(context).copyWith(
-                colorScheme: const ColorScheme.dark(primary: AppColors.accent, onPrimary: Colors.black, surface: AppColors.surface, onSurface: AppColors.textPrimary),
-              ),
-              child: child!,
-            ),
-          );
-          if (date != null) setState(() => _fechaLimite = date);
-        },
+        onTap: _showCalendarSheet,
+        borderRadius: BorderRadius.circular(14),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
@@ -447,6 +508,8 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
               const Icon(Icons.calendar_today, color: AppColors.accent, size: 20),
               const SizedBox(width: 10),
               Text(_fechaLimite == null ? 'Seleccionar fecha' : _formatFecha(_fechaLimite!), style: TextStyle(color: _fechaLimite == null ? AppColors.textSecondary : AppColors.textPrimary)),
+              const Spacer(),
+              const Icon(Icons.expand_more, color: AppColors.textSecondary, size: 20),
             ],
           ),
         ),

@@ -3,121 +3,80 @@ import '../core/network/api_client.dart';
 import '../models/ahorro_model.dart';
 import 'auth_service.dart';
 
+/// Rutas reales confirmadas contra movimientosRoutes.js:
+///   POST   /movimientos                    -> crearMovimiento (genérico)
+///   GET    /movimientos/ahorros            -> getAhorros
+///   PUT    /movimientos/ahorros/:id        -> updateAhorros
+///   DELETE /movimientos/ahorros/:id        -> deleteAhorros
+///   PATCH  /movimientos/ahorros/:id/abonar -> abonarAhorro
+///
+/// No existen (y nunca existieron) endpoints `/ahorros`, `/metas` o
+/// `/metas-ahorro`: los fallbacks que había antes a esas rutas apuntaban a
+/// nada, así que cualquier error real del endpoint correcto (ej. una
+/// validación del backend) quedaba enmascarado por un 404 del endpoint
+/// falso, y el usuario veía un mensaje de error genérico sin sentido.
 class AhorrosService {
   @visibleForTesting
   static ApiClient client = ApiClient();
 
   static Future<List<AhorroModel>> obtenerAhorros() async {
-    final token = await AuthService.instance.getToken();
-    
-    // Lista de endpoints a probar en orden de probabilidad
-    final endpoints = [
-      '/movimientos/ahorros',
-      '/ahorros',
-      '/metas',
-      '/metas-ahorro',
-      '/movimientos', // Como último recurso, traer todo y filtrar
-    ];
-
-    for (final endpoint in endpoints) {
-      try {
-        final data = await client.getList(endpoint, token: token);
-        debugPrint('AhorrosService: Datos recibidos de $endpoint: $data');
-        if (data.isNotEmpty) {
-          var listado = data.map((json) => AhorroModel.fromJson(json as Map<String, dynamic>)).toList();
-          // Filtramos registros que no tengan el formato de una Meta real
-          // (evitamos que abonos o movimientos huérfanos salgan como tarjetas)
-          return listado.where((a) => a.nombre != 'Abono a meta' && a.montoObjetivo > 0).toList();
-        }
-      } catch (e) {
-        try {
-          final respuesta = await client.get(endpoint, token: token);
-          debugPrint('AhorrosService: Respuesta envuelta de $endpoint: $respuesta');
-          final List? dataEnvuelto = respuesta['ahorros'] ?? 
-                                     respuesta['metas'] ?? 
-                                     respuesta['datos'] ?? 
-                                     respuesta['data'] ??
-                                     respuesta['movimientos'];
-          if (dataEnvuelto != null && dataEnvuelto.isNotEmpty) {
-            return dataEnvuelto.map((json) => AhorroModel.fromJson(json as Map<String, dynamic>)).toList();
-          }
-        } catch (_) {
-          continue;
-        }
-      }
+    try {
+      final token = await AuthService.instance.getToken();
+      final data = await client.getList('/movimientos/ahorros', token: token);
+      return data
+          .map((json) => AhorroModel.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (_) {
+      // Si falla, la pantalla simplemente muestra la lista vacía.
+      return [];
     }
-    return [];
   }
 
   static Future<int> crearAhorro(AhorroModel ahorro) async {
     final token = await AuthService.instance.getToken();
-    try {
-      // Intento 1: Patrón /movimientos (Envoltorio)
-      final respuesta = await client.post('/movimientos', token: token, body: {
-        'tipo_flujo': 'Entrada',
-        'subtipo_modulo': 'Ahorro',
-        'datos': ahorro.toJson(),
-      });
-      return (respuesta['id_ahorros'] ?? respuesta['ID_detalle'] ?? respuesta['id']) as int;
-    } catch (e) {
-      // Intento 2: POST directo a /ahorros (Plano)
-      // Si el primero dio 500, probamos este como fallback
-      final respuesta = await client.post('/ahorros', token: token, body: ahorro.toJson());
-      return (respuesta['id_ahorros'] ?? respuesta['id']) as int;
-    }
+    final respuesta = await client.post('/movimientos', token: token, body: {
+      'tipo_flujo': 'Entrada',
+      'subtipo_modulo': 'Ahorro',
+      'datos': ahorro.toJson(),
+    });
+    return respuesta['ID_detalle'] as int;
   }
 
   static Future<void> actualizarAhorro(int id, AhorroModel ahorro) async {
     final token = await AuthService.instance.getToken();
-    try {
-      await client.put('/movimientos/ahorros/$id', token: token, body: ahorro.toJson());
-    } catch (_) {
-      await client.put('/ahorros/$id', token: token, body: ahorro.toJson());
-    }
+    await client.put('/movimientos/ahorros/$id', token: token, body: ahorro.toJson());
   }
 
   static Future<bool> eliminarAhorro(int id) async {
     try {
       final token = await AuthService.instance.getToken();
-      try {
-        await client.delete('/movimientos/ahorros/$id', token: token);
-      } catch (_) {
-        await client.delete('/ahorros/$id', token: token);
-      }
+      await client.delete('/movimientos/ahorros/$id', token: token);
       return true;
     } catch (_) {
       return false;
     }
   }
 
-  static Future<void> registrarAbono(
-    AhorroModel ahorro,
-    double montoAbono,
-  ) async {
-    // Calculamos el nuevo monto acumulado
-    final nuevoMontoAcumulado = ahorro.montoActual + montoAbono;
-
-    // Creamos una copia del modelo con el saldo actualizado
-    final ahorroActualizado = AhorroModel(
-      id: ahorro.id,
-      nombre: ahorro.nombre,
-      montoObjetivo: ahorro.montoObjetivo,
-      montoActual: nuevoMontoAcumulado,
-      fechaLimite: ahorro.fechaLimite,
-      descripcion: ahorro.descripcion,
-      idCategoria: ahorro.idCategoria,
-      estado: ahorro.estado,
-    );
-
-    // Intentamos actualizar la meta directamente
-    try {
-      await actualizarAhorro(ahorro.id!, ahorroActualizado);
-      debugPrint('AhorrosService: Meta actualizada con éxito tras abono');
-    } catch (e) {
-      debugPrint('AhorrosService: Error al actualizar meta para abono: $e');
-      throw ApiException(
-        'No se pudo actualizar el saldo de la meta. Inténtalo de nuevo.',
-      );
+  /// Registra un abono usando el endpoint dedicado del backend
+  /// (PATCH /movimientos/ahorros/:id/abonar), que valida atómicamente que
+  /// el abono no exceda la meta, deja constancia en el historial
+  /// (abonos_ahorro, usado por /api/reportes/ahorros) y dispara la
+  /// notificación de "meta alcanzada" cuando corresponde.
+  ///
+  /// Antes esto se hacía calculando el nuevo monto_acumulado en el cliente
+  /// y sobrescribiendo todo el registro con un PUT (actualizarAhorro), lo
+  /// que se saltaba esa validación, el historial de abonos y la
+  /// notificación, además de ser vulnerable a condiciones de carrera.
+  static Future<void> registrarAbono(AhorroModel ahorro, double montoAbono) async {
+    if (ahorro.id == null) {
+      throw ApiException('No se puede abonar un ahorro sin id.');
     }
+
+    final token = await AuthService.instance.getToken();
+    await client.patch(
+      '/movimientos/ahorros/${ahorro.id}/abonar',
+      token: token,
+      body: {'monto': montoAbono},
+    );
   }
 }

@@ -10,6 +10,10 @@ class AhorroModel {
   final String? descripcion;
   final int? idCategoria;
   final String estado; // 'Activo', 'Finalizado'
+  // Fecha de creación de la meta (columna fecha_registro de `ahorros`,
+  // que GET /movimientos/ahorros expone como "fecha"). No se estaba
+  // leyendo antes, aunque el backend siempre la devuelve.
+  final DateTime? fechaRegistro;
 
   AhorroModel({
     this.id,
@@ -20,6 +24,7 @@ class AhorroModel {
     this.descripcion,
     this.idCategoria,
     this.estado = 'Activo',
+    this.fechaRegistro,
   });
 
   factory AhorroModel.fromJson(Map<String, dynamic> json) {
@@ -39,6 +44,7 @@ class AhorroModel {
       descripcion: json['descripcion'],
       idCategoria: json['id_categoria'],
       estado: json['estado'] ?? 'Activo',
+      fechaRegistro: json['fecha'] != null ? DateTime.tryParse(json['fecha'].toString()) : null,
     );
   }
 

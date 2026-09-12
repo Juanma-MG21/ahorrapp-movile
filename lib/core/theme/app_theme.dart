@@ -65,6 +65,27 @@ class AppTheme {
           color: AppColors.textPrimary,
         ),
       ),
+      // Sin esto, cualquier SnackBar que no fije backgroundColor a mano
+      // (la gran mayoría en la app) hereda el estilo claro por defecto de
+      // Material 3 (basado en colorScheme.inverseSurface, que para un
+      // ColorScheme.dark es un color CLARO) y se ve como un flash blanco
+      // encima de toda la UI oscura. Esto afectaba prácticamente todos los
+      // formularios (auth, gastos, ingresos, ahorros, deudas, imprevistos,
+      // presupuestos) y el scanner.
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: AppColors.surfaceAlt,
+        contentTextStyle: const TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 14,
+        ),
+        actionTextColor: AppColors.accent,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          side: const BorderSide(color: AppColors.borderLight),
+        ),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      ),
     );
   }
 }
