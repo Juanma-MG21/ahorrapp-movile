@@ -12,7 +12,7 @@ class DependientesService {
   }
 
   static Future<List<DependienteModel>> getDependientes() async {
-    final data = await _api.get('/auth/PanelDependientes', token: await _token());
+    final data = await _api.get('/dependientes', token: await _token());
 
     return (data['dependientes'] as List<dynamic>)
         .map((item) => DependienteModel.fromJson(item as Map<String, dynamic>))
