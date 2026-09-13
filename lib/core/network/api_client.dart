@@ -36,12 +36,12 @@ class ApiClient {
 
   /// POST genérico. [path] empieza con '/', ej: '/auth/login'.
   Future<Map<String, dynamic>> post(
-      String path, {
-        Map<String, dynamic>? body,
-        String? token,
-      }) {
+    String path, {
+    Map<String, dynamic>? body,
+    String? token,
+  }) {
     return _send(
-          () => http.post(
+      () => http.post(
         _uri(path),
         headers: _headers(token: token),
         body: jsonEncode(body ?? {}),
@@ -51,19 +51,17 @@ class ApiClient {
 
   /// GET genérico. Para endpoints que responden { ok, ... }.
   Future<Map<String, dynamic>> get(String path, {String? token}) {
-    return _send(
-          () => http.get(_uri(path), headers: _headers(token: token)),
-    );
+    return _send(() => http.get(_uri(path), headers: _headers(token: token)));
   }
 
   /// PUT genérico.
   Future<Map<String, dynamic>> put(
-      String path, {
-        Map<String, dynamic>? body,
-        String? token,
-      }) {
+    String path, {
+    Map<String, dynamic>? body,
+    String? token,
+  }) {
     return _send(
-          () => http.put(
+      () => http.put(
         _uri(path),
         headers: _headers(token: token),
         body: jsonEncode(body ?? {}),
@@ -74,17 +72,17 @@ class ApiClient {
   /// DELETE genérico. Para endpoints que responden { ok, ... }.
   Future<Map<String, dynamic>> delete(String path, {String? token}) {
     return _send(
-          () => http.delete(_uri(path), headers: _headers(token: token)),
+      () => http.delete(_uri(path), headers: _headers(token: token)),
     );
   }
 
   Future<Map<String, dynamic>> patch(
-      String path, {
-        Map<String, dynamic>? body,
-        String? token,
-      }) {
+    String path, {
+    Map<String, dynamic>? body,
+    String? token,
+  }) {
     return _send(
-          () => http.patch(
+      () => http.patch(
         _uri(path),
         headers: _headers(token: token),
         body: jsonEncode(body ?? {}),
@@ -133,10 +131,9 @@ class ApiClient {
   }
 
   Future<Map<String, dynamic>> _send(
-      Future<http.Response> Function() request,
-      ) async {
+    Future<http.Response> Function() request,
+  ) async {
     late final http.Response response;
-
     try {
       response = await request().timeout(const Duration(seconds: 45));
     } on TimeoutException {
@@ -162,12 +159,63 @@ class ApiClient {
     final bool ok = decoded['ok'] == true;
 
     if (!ok || response.statusCode >= 400) {
-      final mensaje = decoded['mensaje'] as String? ??
+      final mensaje =
+          decoded['mensaje'] as String? ??
           'Ocurrió un error inesperado (código ${response.statusCode})';
       throw ApiException(mensaje, statusCode: response.statusCode);
     }
 
     return decoded;
   }
-}
 
+  Future<Map<String, dynamic>> postRaw(
+    String path, {
+    required Map<String, dynamic> body,
+    String? token,
+  }) async {
+    try {
+      final response = await http
+          .post(
+            _uri(path),
+            headers: _headers(token: token),
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 45));
+
+      try {
+        final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+
+        if (response.statusCode >= 400 && decoded['mensaje'] != null) {
+          throw ApiException(
+            decoded['mensaje'] as String,
+            statusCode: response.statusCode,
+          );
+        }
+
+        if (response.statusCode >= 400) {
+          throw ApiException(
+            'Error del servidor (${response.statusCode})',
+            statusCode: response.statusCode,
+          );
+        }
+
+        return decoded;
+      } catch (error) {
+        if (error is ApiException) rethrow;
+        throw ApiException(
+          'Respuesta inesperada del servidor al iniciar sesión con Google.',
+          statusCode: response.statusCode,
+        );
+      }
+    } on TimeoutException {
+      throw ApiException(
+        'El servidor está tardando demasiado en responder. Puede estar iniciándose; inténtalo de nuevo en unos segundos.',
+      );
+    } catch (error) {
+      if (error is ApiException) rethrow;
+      throw ApiException(
+        'No se pudo conectar con el servidor (${error.toString()}). Revisa tu conexión.',
+      );
+    }
+  }
+}

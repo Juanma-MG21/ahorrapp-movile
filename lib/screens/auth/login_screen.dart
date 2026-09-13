@@ -102,6 +102,38 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isLoading = true);
+
+    try {
+      await AuthService.instance.loginWithGoogle();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('¡Bienvenido con Google!')));
+      Navigator.of(context).pushReplacementNamed('/home');
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.message),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No fue posible iniciar sesión con Google'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AuthPageShell(
@@ -112,6 +144,10 @@ class _LoginScreenState extends State<LoginScreen> {
           const SizedBox(height: 40),
           _buildLoginForm(),
           const SizedBox(height: 32),
+          if (AuthService.instance.isGoogleAuthConfigured) ...[
+            _buildGoogleButton(),
+            const SizedBox(height: 18),
+          ],
           if (_canUseBiometric) ...[
             const SizedBox(height: 30),
             _buildQuickAccess(),
@@ -164,7 +200,9 @@ class _LoginScreenState extends State<LoginScreen> {
               if ((value ?? '').isEmpty) {
                 return 'Ingresa tu correo';
               }
-              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value!)) {
+              if (!RegExp(
+                r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+              ).hasMatch(value!)) {
                 return 'Email inválido';
               }
               return null;
@@ -230,6 +268,31 @@ class _LoginScreenState extends State<LoginScreen> {
             onPressed: _submit,
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildGoogleButton() {
+    return SizedBox(
+      height: 54,
+      child: OutlinedButton.icon(
+        onPressed: _isLoading ? null : _handleGoogleSignIn,
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: AppColors.borderLight),
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 18),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+          ),
+        ),
+        icon: const Icon(Icons.g_mobiledata_rounded, color: Colors.white),
+        label: const Text(
+          'Continuar con Google',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
       ),
     );
   }
