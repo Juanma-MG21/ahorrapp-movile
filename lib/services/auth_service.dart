@@ -37,6 +37,7 @@ class AuthService {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   final LocalAuthentication _localAuth = LocalAuthentication();
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  Future<void>? _googleInitialization;
 
   static const _tokenKey = 'auth_token';
   static const _pinKey = 'user_pin_code';
@@ -153,8 +154,18 @@ class AuthService {
       'GOOGLE_WEB_CLIENT_ID',
       defaultValue: '',
     );
+    final googleServerClientId = const String.fromEnvironment(
+      'GOOGLE_SERVER_CLIENT_ID',
+      defaultValue: '',
+    );
 
-    await _googleSignIn.initialize(clientId: googleClientId.isNotEmpty ? googleClientId : null);
+    _googleInitialization ??= _googleSignIn.initialize(
+      clientId: googleClientId.isNotEmpty ? googleClientId : null,
+      serverClientId: googleServerClientId.isNotEmpty
+          ? googleServerClientId
+          : null,
+    );
+    await _googleInitialization;
 
     final account = await _googleSignIn.authenticate();
     final idToken = account.authentication.idToken;
