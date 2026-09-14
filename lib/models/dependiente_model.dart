@@ -34,4 +34,25 @@ class DependienteModel {
       pesoEconomico: json['Peso_economico'] ?? 1,
     );
   }
+
+  // Aportado por Santiago: lo necesita `actualizarDependiente` en el
+  // servicio para convertir el objeto Dart de vuelta a un Map que
+  // `jsonEncode` pueda mandar como body del PUT. Usa claves en
+  // minúscula/snake_case porque así las espera el backend Express
+  // al RECIBIR datos (distinto a como las ENVÍA, que es con
+  // mayúscula inicial — asimetría típica si el controller no
+  // normaliza el nombrado).
+  //
+  // OJO: esto asume que el endpoint PUT realmente espera esas claves
+  // en snake_case. Falta verificarlo contra dependientes_service.dart
+  // (o el controller real) cuando lo revisemos.
+  Map<String, dynamic> toJson() {
+    return {
+      'nombre': nombre,
+      'relacion': relacion,
+      'ocupacion': ocupacion,
+      'fecha_nacimiento': fechaNacimiento?.toIso8601String(),
+      'peso_economico': pesoEconomico,
+    };
+  }
 }

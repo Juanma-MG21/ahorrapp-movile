@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'core/theme/app_theme.dart';
@@ -34,6 +35,18 @@ class AhorrApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.dark(),
         home: const AuthGate(),
+        // Aportado por Santiago: localización en español para widgets
+        // nativos de Flutter (selectores de fecha, menú de selección
+        // de texto, etc.), que sin esto se muestran en inglés.
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('es', 'CO'),
+          Locale('es'),
+        ],
         routes: {
           '/home': (context) => const MainScreen(),
           '/login': (context) => const LoginScreen(),
