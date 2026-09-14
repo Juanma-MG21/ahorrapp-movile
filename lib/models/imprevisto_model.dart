@@ -9,6 +9,8 @@ class ImprevistoModel {
   final String? descripcion;
   final DateTime fecha;
   final String? categoriaNombre;
+  final int? idDependientes;
+  final String? dependienteNombre;
 
   ImprevistoModel({
     this.id,
@@ -17,27 +19,39 @@ class ImprevistoModel {
     this.descripcion,
     required this.fecha,
     this.categoriaNombre,
+    this.idDependientes,
+    this.dependienteNombre,
   });
 
   /// Mapea una fila de GET /api/movimientos/imprevistos.
+  /// OJO: el backend llama a este campo `causa` (columna real de la tabla
+  /// `imprevistos`), no `descripcion` — antes se leía la clave equivocada
+  /// y el texto siempre llegaba null.
   factory ImprevistoModel.fromJson(Map<String, dynamic> json) {
     return ImprevistoModel(
       id: json['id'],
       idCategoria: json['id_categoria'],
       monto: parseMonto(json['monto']),
-      descripcion: json['descripcion'],
+      descripcion: json['causa'],
       fecha: DateTime.parse(json['fecha']),
       categoriaNombre: json['categoria'],
+      idDependientes: json['id_dependientes'],
+      dependienteNombre: json['dependiente'],
     );
   }
 
   /// Arma el objeto "datos" para POST /movimientos y PUT /movimientos/imprevistos/:id.
+  /// El backend espera la clave `causa` (ver movimientosController.js,
+  /// crearMovimiento/updateImprevistos: `const { monto, causa, ... } = ...`).
+  /// Antes se mandaba 'descripcion', que el backend simplemente ignora al
+  /// desestructurar el body, así que `causa` siempre se guardaba null.
   Map<String, dynamic> toRequestBody() {
     return {
       'monto': monto,
-      'descripcion': descripcion,
+      'causa': descripcion,
       'fecha_registro': fecha.toIso8601String().split('T')[0],
       'id_categoria': idCategoria,
+      'id_dependientes': idDependientes,
     };
   }
 

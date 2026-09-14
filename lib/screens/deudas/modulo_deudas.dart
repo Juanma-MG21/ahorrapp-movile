@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/design_tokens.dart';
+import '../../core/network/api_client.dart';
 import '../../models/deuda_model.dart';
 import '../../providers/presupuesto_provider.dart';
 import '../../services/deudas_service.dart';
@@ -242,26 +243,50 @@ class _ModuloDeudasState extends State<ModuloDeudas> {
   }
 
   void _confirmarPagoCuota(DeudaModel deuda) {
+    bool isProcessing = false;
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.background,
-        title: const Text('Registrar pago', style: TextStyle(color: AppColors.textPrimary)),
-        content: Text('¿Confirmas el pago de la siguiente cuota a ${deuda.fuente}?', style: const TextStyle(color: AppColors.textSecondary)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
-          ElevatedButton(
-            onPressed: () async {
-              await DeudasService.pagarCuota(deuda);
-              if (context.mounted) {
-                Navigator.pop(context);
-                _loadDeudas();
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
-            child: const Text('Confirmar'),
-          ),
-        ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: AppColors.background,
+          title: const Text('Registrar pago', style: TextStyle(color: AppColors.textPrimary)),
+          content: Text('¿Confirmas el pago de la siguiente cuota a ${deuda.fuente}?', style: const TextStyle(color: AppColors.textSecondary)),
+          actions: [
+            TextButton(onPressed: isProcessing ? null : () => Navigator.pop(context), child: const Text('Cancelar')),
+            ElevatedButton(
+              onPressed: isProcessing
+                  ? null
+                  : () async {
+                      setDialogState(() => isProcessing = true);
+                      try {
+                        await DeudasService.pagarCuota(deuda);
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                          _loadDeudas();
+                        }
+                      } on ApiException catch (e) {
+                        setDialogState(() => isProcessing = false);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
+                          );
+                        }
+                      } catch (e) {
+                        setDialogState(() => isProcessing = false);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('No se pudo registrar el pago'), backgroundColor: AppColors.error),
+                          );
+                        }
+                      }
+                    },
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
+              child: isProcessing
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : const Text('Confirmar'),
+            ),
+          ],
+        ),
       ),
     );
   }

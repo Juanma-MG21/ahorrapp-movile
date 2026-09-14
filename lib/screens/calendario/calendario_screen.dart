@@ -10,10 +10,10 @@ const Color dorado = Color(0xFFE0B855);
 
 // Colores por tipo de movimiento (mismo criterio que el frontend)
 const Map<String, Color> colorPorTipo = {
-  'ingreso': Colors.green,
-  'gasto': Colors.amber,
-  'imprevisto': Colors.red,
-  'ahorro': Colors.purple,
+  'ingreso': AppMovimientoColors.ingreso,
+  'gasto': AppMovimientoColors.gasto,
+  'imprevisto': AppMovimientoColors.imprevisto,
+  'ahorro': AppMovimientoColors.ahorro,
 };
 
 // ---------------------------------------------------------------------------
@@ -76,22 +76,24 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: fondoOscuro,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: fondoOscuro,
+        backgroundColor: AppColors.background,
         centerTitle: true,
         elevation: 0,
-        title: Text(
+        title: const Text(
           'Calendario',
-          style: TextStyle(color: dorado, fontWeight: FontWeight.bold),
+          style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold),
         ),
       ),
-      body: Column(
-        children: [
-          _buildTarjetaTitulo(),
-          _buildCalendario(),
-        ],
-      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
+          : Column(
+              children: [
+                _buildTarjetaTitulo(),
+                _buildCalendario(),
+              ],
+            ),
     );
   }
 
@@ -99,6 +101,10 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
   // Tarjeta con resumen del mes (ejemplo estático)
   // -------------------------------------------------------------------------
   Widget _buildTarjetaTitulo() {
+    final resumen = _resumenDelMes();
+    final texto = '${resumen['ingreso']} ingresos, ${resumen['gasto']} gastos, '
+        '${resumen['ahorro']} ahorros, ${resumen['imprevisto']} imprevistos';
+
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
@@ -107,7 +113,7 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: dorado.withOpacity(0.3)),
       ),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
@@ -118,7 +124,7 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             '2 ingresos, 3 gastos, 3 ahorros, 1 imprevisto',
             style: TextStyle(color: Colors.white, fontSize: 16),
@@ -136,8 +142,8 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        color: fondoTarjeta,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: TableCalendar(
         firstDay: DateTime(2020),
@@ -171,7 +177,7 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
             shape: BoxShape.circle,
           ),
           selectedDecoration: BoxDecoration(
-            color: dorado,
+            color: AppColors.accent,
             shape: BoxShape.circle,
           ),
           selectedTextStyle: const TextStyle(color: Color(0xFF0f172a)),
@@ -193,8 +199,8 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
 
         // Estilo de los días de la semana
         daysOfWeekStyle: const DaysOfWeekStyle(
-          weekdayStyle: TextStyle(color: Colors.white54),
-          weekendStyle: TextStyle(color: Colors.white38),
+          weekdayStyle: TextStyle(color: AppColors.textSecondary),
+          weekendStyle: TextStyle(color: AppColors.textMuted),
         ),
 
         // Personalización de marcadores (puntitos debajo del día)

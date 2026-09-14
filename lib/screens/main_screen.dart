@@ -76,6 +76,11 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _tabPrincipal);
+    
+    // Inicializar accesos directos (RF-27)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      QuickActionsService.init(context);
+    });
   }
 
   @override

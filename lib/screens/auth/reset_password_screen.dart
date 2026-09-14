@@ -39,7 +39,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('El enlace de recuperación no es válido. Solicítalo de nuevo.'),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: AppColors.error,
         ),
       );
       return;
@@ -54,26 +54,31 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       );
 
       if (!mounted) return;
-      setState(() => _isLoading = false);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Contrasena actualizada con exito')),
+        const SnackBar(content: Text('Contraseña actualizada con éxito')),
       );
 
-      // Volver al login despues de cambiar la clave
+      // Volver al login después de cambiar la clave
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const AuthGate()),
-            (route) => false,
+        (route) => false,
       );
     } on ApiException catch (error) {
       if (!mounted) return;
-      setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error.message),
-          backgroundColor: Colors.redAccent,
+        SnackBar(content: Text(error.message), backgroundColor: AppColors.error),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo actualizar la contraseña'),
+          backgroundColor: AppColors.error,
         ),
       );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -90,7 +95,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 icon: const Icon(Icons.arrow_back_rounded),
                 color: Colors.white,
                 style: IconButton.styleFrom(
-                  backgroundColor: AppColors.surfaceAlt,
+                  backgroundColor: AppColors.surface,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -98,7 +103,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               ),
               const SizedBox(width: 8),
               const Text(
-                'Nueva contrasena',
+                'Nueva contraseña',
                 style: TextStyle(
                   color: AppColors.accent,
                   fontSize: 16,
@@ -125,7 +130,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           ),
           const SizedBox(height: 10),
           const Text(
-            'Asegurate de usar una clave segura que no hayas usado antes',
+            'Asegúrate de usar una clave segura que no hayas usado antes',
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.muted, fontSize: 12, height: 1.4),
           ),
@@ -139,7 +144,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   obscureText: _hidePassword,
                   textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
-                    labelText: 'NUEVA CONTRASENA',
+                    labelText: 'NUEVA CONTRASEÑA',
                     suffixIcon: IconButton(
                       onPressed: () => setState(() => _hidePassword = !_hidePassword),
                       icon: Icon(
@@ -150,7 +155,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     ),
                   ),
                   validator: (value) {
-                    if ((value ?? '').length < 8) return 'Minimo 8 caracteres';
+                    if ((value ?? '').length < 8) return 'Mínimo 8 caracteres';
                     return null;
                   },
                 ),
@@ -159,8 +164,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   controller: _confirmPasswordController,
                   obscureText: _hideConfirmPassword,
                   textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) => _submit(),
                   decoration: InputDecoration(
-                    labelText: 'CONFIRMAR CONTRASENA',
+                    labelText: 'CONFIRMAR CONTRASEÑA',
                     suffixIcon: IconButton(
                       onPressed: () => setState(() => _hideConfirmPassword = !_hideConfirmPassword),
                       icon: Icon(
@@ -180,7 +186,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           ),
           const SizedBox(height: 24),
           PrimaryAuthButton(
-            label: 'Actualizar contrasena',
+            label: 'Actualizar contraseña',
             isLoading: _isLoading,
             onPressed: _submit,
           ),

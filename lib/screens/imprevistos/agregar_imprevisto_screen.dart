@@ -28,6 +28,8 @@ class _AgregarImprevistoScreenState extends State<AgregarImprevistoScreen> {
   List<CategoriaModel> _listaCategorias = [];
   bool _isLoadingData = true;
   bool _isSaving = false;
+  bool _showScrollIndicator = false;
+  final ScrollController _categoryScrollController = ScrollController();
 
   @override
   void initState() {
@@ -69,6 +71,7 @@ class _AgregarImprevistoScreenState extends State<AgregarImprevistoScreen> {
   void dispose() {
     _montoController.dispose();
     _descripcionController.dispose();
+    _categoryScrollController.dispose();
     super.dispose();
   }
 
@@ -454,9 +457,9 @@ class _AgregarImprevistoScreenState extends State<AgregarImprevistoScreen> {
                 itemBuilder: (context, index) => _buildCategoryCard(_listaCategorias[index]),
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      }
     );
   }
 
@@ -534,6 +537,50 @@ class _AgregarImprevistoScreenState extends State<AgregarImprevistoScreen> {
       case 'Otros': return Icons.report_problem;
       default: return Icons.warning_amber_rounded;
     }
+  }
+}
+
+class _ArrowIndicator extends StatefulWidget {
+  @override
+  State<_ArrowIndicator> createState() => _ArrowIndicatorState();
+}
+
+class _ArrowIndicatorState extends State<_ArrowIndicator> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000))..repeat(reverse: true);
+    _animation = Tween<double>(begin: 0, end: 8).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, _animation.value),
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: AppColors.surface.withValues(alpha: 0.8),
+              shape: BoxShape.circle,
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)],
+            ),
+            child: const Icon(Icons.keyboard_arrow_down, color: AppColors.error, size: 24),
+          ),
+        );
+      },
+    );
   }
 }
 

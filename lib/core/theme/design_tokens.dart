@@ -54,6 +54,18 @@ class AppCategoryColors {
   static const Color transporte = Color(0xFF60A5FA);
 }
 
+/// Colores de los puntos marcadores en CalendarioScreen, uno por tipo de
+/// movimiento (ingreso/gasto/imprevisto/ahorro). Antes vivían hardcodeados
+/// como Colors.green/amber/red/purple directamente en calendario_screen.dart.
+class AppMovimientoColors {
+  const AppMovimientoColors._();
+
+  static const Color ingreso = AppColors.success;
+  static const Color gasto = AppColors.accent;
+  static const Color imprevisto = AppColors.error;
+  static const Color ahorro = Color(0xFFA8A2FF);
+}
+
 class AppRadius {
   const AppRadius._();
 

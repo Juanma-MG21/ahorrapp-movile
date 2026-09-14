@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -137,7 +138,11 @@ class ApiClient {
     late final http.Response response;
 
     try {
-      response = await request();
+      response = await request().timeout(const Duration(seconds: 45));
+    } on TimeoutException {
+      throw ApiException(
+        'El servidor está tardando demasiado en responder. Puede estar iniciándose; inténtalo de nuevo en unos segundos.',
+      );
     } catch (e) {
       throw ApiException(
         'No se pudo conectar con el servidor ($e). Revisa tu conexión.',
