@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/network/api_client.dart';
@@ -18,16 +17,16 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _localAuth = LocalAuthentication();
 
   bool _rememberSession = false;
   bool _hidePassword = true;
   bool _isLoading = false;
 
-  // Gate para el acceso rápido por huella: solo tiene sentido ofrecerlo
-  // si hay una sesión guardada que restaurar (si no, manda a un
-  // callejón sin salida en BiometricAccessScreen).
-  // Nota: '/pin-access' ya no vive aquí — es una segunda verificación
+  // Gate para el acceso rápido por huella: viene de
+  // AuthService.canUseBiometricAccess(), que ya valida sesión guardada
+  // y soporte del dispositivo (si no, mandaría a un callejón sin salida
+  // en BiometricAccessScreen).
+  // Nota: '/pin-access' no vive aquí — es una segunda verificación
   // para acciones sensibles (cambiar contraseña, editar datos
   // personales), no un método de login rápido.
   bool _canUseBiometric = false;
@@ -48,15 +47,15 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     });
 
-    // AuthService no expone (ni debería) chequeos de hardware biométrico;
-    // eso es responsabilidad de la UI, igual que en BiometricAccessScreen.
-    final hasSession = await AuthService.instance.hasSession();
-    final canCheck = await _localAuth.canCheckBiometrics;
-    final isSupported = await _localAuth.isDeviceSupported();
+    // Decisión de equipo: el chequeo de hardware biométrico ahora vive
+    // centralizado en AuthService.canUseBiometricAccess(), para que
+    // cualquier pantalla (incluida BiometricAccessScreen) use la misma
+    // regla sin duplicar lógica.
+    final canUseBiometric = await AuthService.instance.canUseBiometricAccess();
 
     if (!mounted) return;
     setState(() {
-      _canUseBiometric = hasSession && canCheck && isSupported;
+      _canUseBiometric = canUseBiometric;
     });
   }
 
@@ -114,6 +113,39 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // --- Aportado por Manuel: login con Google. ---
+  // Requiere que AuthService exponga `loginWithGoogle()` e
+  // `isGoogleAuthConfigured`; si aún no existen al fusionar
+  // auth_service.dart, esta parte quedará marcando error hasta agregarlos.
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isLoading = true);
+
+    try {
+      await AuthService.instance.loginWithGoogle();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('¡Bienvenido con Google!')),
+      );
+      Navigator.of(context).pushReplacementNamed('/home');
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message), backgroundColor: AppColors.error),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No fue posible iniciar sesión con Google'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   void _openRegister() => Navigator.of(context).pushNamed('/register');
 
   void _openForgotPassword() =>
@@ -155,6 +187,10 @@ class _LoginScreenState extends State<LoginScreen> {
           _buildBrandHeader(),
           const SizedBox(height: 32),
           _buildLoginForm(),
+          if (AuthService.instance.isGoogleAuthConfigured) ...[
+            const SizedBox(height: 20),
+            _buildGoogleButton(),
+          ],
           if (_canUseBiometric) ...[
             const SizedBox(height: 24),
             _buildQuickAccess(),
@@ -277,6 +313,29 @@ class _LoginScreenState extends State<LoginScreen> {
           const SizedBox(height: 14),
           PrimaryAuthButton(label: 'Iniciar sesión', isLoading: _isLoading, onPressed: _submit),
         ],
+      ),
+    );
+  }
+
+  // --- Aportado por Manuel, adaptado a la paleta/espaciado de V1. ---
+  Widget _buildGoogleButton() {
+    return SizedBox(
+      height: 54,
+      child: OutlinedButton.icon(
+        onPressed: _isLoading ? null : _handleGoogleSignIn,
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: AppColors.borderLight),
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 18),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+          ),
+        ),
+        icon: const Icon(Icons.g_mobiledata_rounded, color: Colors.white),
+        label: const Text(
+          'Continuar con Google',
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+        ),
       ),
     );
   }

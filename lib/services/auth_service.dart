@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:local_auth/local_auth.dart';
 import '../core/network/api_client.dart';
 
 class Usuario {
@@ -51,6 +53,12 @@ class AuthService {
   ApiClient _api = ApiClient();
   FlutterSecureStorage _storage = const FlutterSecureStorage();
 
+  // Aportados por Manuel: soporte de biometría (chequeo movido aquí por
+  // decisión de equipo) y login con Google.
+  final LocalAuthentication _localAuth = LocalAuthentication();
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  Future<void>? _googleInitialization;
+
   static const _tokenKey = 'auth_token';
   static const _userKey = 'auth_user';
   static const _pinKey = 'auth_pin';
@@ -67,6 +75,21 @@ class AuthService {
       return true;
     }
     return false;
+  }
+
+  /// Decisión de equipo: el chequeo de hardware biométrico vive aquí
+  /// (antes vivía en la UI, en LoginScreen). Centraliza la regla de
+  /// "solo ofrecer biometría si hay sesión guardada y el dispositivo
+  /// la soporta" para que cualquier pantalla la reutilice igual.
+  Future<bool> canUseBiometricAccess() async {
+    if (!await hasSession()) return false;
+
+    try {
+      return await _localAuth.canCheckBiometrics &&
+          await _localAuth.isDeviceSupported();
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<String?> getToken() async {
@@ -171,11 +194,92 @@ class AuthService {
     });
   }
 
+  // --- Aportado por Manuel: login con Google. ---
+  bool get isGoogleAuthConfigured {
+    return const String.fromEnvironment(
+          'GOOGLE_WEB_CLIENT_ID',
+          defaultValue: '',
+        ).isNotEmpty ||
+        const String.fromEnvironment(
+          'GOOGLE_SERVER_CLIENT_ID',
+          defaultValue: '',
+        ).isNotEmpty;
+  }
+
+  Future<Usuario> loginWithGoogle() async {
+    if (!isGoogleAuthConfigured) {
+      throw ApiException(
+        'Google Sign-In no está configurado para este proyecto. Añade un client ID válido antes de habilitarlo.',
+      );
+    }
+
+    final googleClientId = const String.fromEnvironment(
+      'GOOGLE_WEB_CLIENT_ID',
+      defaultValue: '',
+    );
+    final googleServerClientId = const String.fromEnvironment(
+      'GOOGLE_SERVER_CLIENT_ID',
+      defaultValue: '',
+    );
+
+    _googleInitialization ??= _googleSignIn.initialize(
+      clientId: googleClientId.isNotEmpty ? googleClientId : null,
+      serverClientId:
+          googleServerClientId.isNotEmpty ? googleServerClientId : null,
+    );
+    await _googleInitialization;
+
+    final account = await _googleSignIn.authenticate();
+    final idToken = account.authentication.idToken;
+
+    if (idToken == null || idToken.isEmpty) {
+      throw ApiException(
+        'No se pudo obtener el token de sesión de Google. Intenta nuevamente.',
+      );
+    }
+
+    final data = await _api.postRaw(
+      '/auth/google',
+      body: {
+        'idToken': idToken,
+        'provider': 'google',
+      },
+    );
+
+    final token = data['token'] as String? ?? data['accessToken'] as String?;
+    if (token == null || token.isEmpty) {
+      throw ApiException(
+        'El servidor no devolvió un token válido para la sesión de Google.',
+      );
+    }
+
+    final usuarioData = data['usuario'] as Map<String, dynamic>? ??
+        data['user'] as Map<String, dynamic>?;
+
+    if (usuarioData == null) {
+      throw ApiException(
+        'El servidor no devolvió la información del usuario autenticado.',
+      );
+    }
+
+    final usuario = Usuario.fromJson(usuarioData);
+
+    // Mismo criterio de persistencia que el login con email/contraseña:
+    // guardamos token y usuario cacheado para que getCurrentUser()
+    // funcione igual sin importar el método de login usado.
+    _memoryToken = token;
+    _memoryUser = usuario;
+    await _storage.write(key: _tokenKey, value: token);
+    await _storage.write(key: _userKey, value: jsonEncode(usuario.toJson()));
+
+    return usuario;
+  }
+
   Future<String> forgotPassword({required String email}) async {
     final data = await _api.post('/auth/forgot-password', body: {
       'Email': email,
     });
-    return data['mensaje'] as String;
+    return data['mensaje'] as String? ?? 'Se ha enviado un correo';
   }
 
   Future<String> verifyResetCode({
@@ -186,7 +290,7 @@ class AuthService {
       'Email': email,
       'code': code,
     });
-    return data['resetToken'] as String;
+    return data['resetToken'] as String? ?? '';
   }
 
   Future<void> resetPassword({
@@ -203,6 +307,13 @@ class AuthService {
     _memoryToken = null;
     _memoryUser = null;
     _memoryPin = null;
+
+    try {
+      await _googleSignIn.signOut();
+    } catch (_) {
+      // El estado de sesión de Google no es crítico para cerrar la app.
+    }
+
     await _storage.delete(key: _tokenKey);
     await _storage.delete(key: _userKey);
     await _storage.delete(key: _pinKey);

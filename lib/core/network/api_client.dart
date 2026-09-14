@@ -169,5 +169,58 @@ class ApiClient {
 
     return decoded;
   }
-}
 
+  /// POST especial para flujos como login con Google, donde el backend
+  /// puede devolver estructuras algo distintas al { ok, mensaje } estándar.
+  /// Aportado por Manuel para el flujo de autenticación con Google.
+  Future<Map<String, dynamic>> postRaw(
+      String path, {
+        required Map<String, dynamic> body,
+        String? token,
+      }) async {
+    try {
+      final response = await http
+          .post(
+        _uri(path),
+        headers: _headers(token: token),
+        body: jsonEncode(body),
+      )
+          .timeout(const Duration(seconds: 45));
+
+      try {
+        final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+
+        if (response.statusCode >= 400 && decoded['mensaje'] != null) {
+          throw ApiException(
+            decoded['mensaje'] as String,
+            statusCode: response.statusCode,
+          );
+        }
+
+        if (response.statusCode >= 400) {
+          throw ApiException(
+            'Error del servidor (${response.statusCode})',
+            statusCode: response.statusCode,
+          );
+        }
+
+        return decoded;
+      } catch (error) {
+        if (error is ApiException) rethrow;
+        throw ApiException(
+          'Respuesta inesperada del servidor al iniciar sesión con Google.',
+          statusCode: response.statusCode,
+        );
+      }
+    } on TimeoutException {
+      throw ApiException(
+        'El servidor está tardando demasiado en responder. Puede estar iniciándose; inténtalo de nuevo en unos segundos.',
+      );
+    } catch (error) {
+      if (error is ApiException) rethrow;
+      throw ApiException(
+        'No se pudo conectar con el servidor (${error.toString()}). Revisa tu conexión.',
+      );
+    }
+  }
+}
