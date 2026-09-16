@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/network/api_client.dart';
 import '../../services/auth_service.dart';
@@ -46,9 +47,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         _step = 1;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(mensaje)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(mensaje)));
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -80,10 +81,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
       if (!mounted) return;
 
-      Navigator.of(context).pushNamed(
-        '/reset-password',
-        arguments: resetToken,
-      );
+      Navigator.of(context).pushNamed('/reset-password', arguments: resetToken);
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -105,46 +103,60 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return AuthPageShell(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildTopBar(context),
-          const SizedBox(height: 34),
-          Icon(
-            _step == 0 ? Icons.alternate_email_rounded : Icons.pin_rounded,
-            color: AppColors.blue,
-            size: 44,
-          ),
-          const SizedBox(height: 28),
-          Text(
-            _step == 0 ? '¿Olvidaste tu contraseña?' : 'Revisa tu correo',
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 21,
-              fontWeight: FontWeight.w900,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 13),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildTopBar(context),
+            const SizedBox(height: 46),
+            Center(
+              child: DecoratedBox(
+                decoration: clayRaised(radius: AppRadius.md),
+                child: SizedBox(
+                  width: 84,
+                  height: 84,
+                  child: Icon(
+                    _step == 0
+                        ? Icons.alternate_email_rounded
+                        : Icons.pin_rounded,
+                    color: AppColors.blue,
+                    size: 40,
+                  ),
+                ),
+              ),
             ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            _step == 0
-                ? 'Te enviaremos un código de recuperación a tu correo registrado'
-                : 'Ingresa el código de 6 dígitos que enviamos a $_email',
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppColors.muted,
-              fontSize: 12,
-              height: 1.4,
+            const SizedBox(height: 35),
+            Text(
+              _step == 0 ? '¿Olvidaste tu contraseña?' : 'Revisa tu correo',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 21,
+                fontWeight: FontWeight.w900,
+              ),
             ),
-          ),
-          const SizedBox(height: 22),
-          _ProgressDots(step: _step),
-          const SizedBox(height: 26),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            child: _step == 0 ? _buildEmailStep() : _buildCodeStep(),
-          ),
-        ],
+            const SizedBox(height: 10),
+            Text(
+              _step == 0
+                  ? 'Te enviaremos un código de recuperación a tu\ncorreo registrado'
+                  : 'Ingresa el código de 6 dígitos que enviamos a $_email',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppColors.muted,
+                fontSize: 12,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 25),
+            _ProgressDots(step: _step),
+            const SizedBox(height: 33),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: _step == 0 ? _buildEmailStep() : _buildCodeStep(),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -152,14 +164,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Widget _buildTopBar(BuildContext context) {
     return Row(
       children: [
-        IconButton(
-          onPressed: () => Navigator.of(context).pop(),
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-          style: IconButton.styleFrom(
-            backgroundColor: AppColors.surface,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+        DecoratedBox(
+          decoration: clayRaised(radius: AppRadius.sm),
+          child: IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+            tooltip: 'Volver',
           ),
         ),
         const SizedBox(width: 8),
@@ -182,25 +192,39 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       children: [
         Form(
           key: _emailFormKey,
-          child: TextFormField(
-            controller: _emailController,
-            keyboardType: TextInputType.emailAddress,
-            textInputAction: TextInputAction.done,
-            decoration: const InputDecoration(
-              labelText: 'CORREO ELECTRÓNICO',
-              suffixIcon: Icon(Icons.mail_rounded, color: AppColors.textMuted),
+          child: AuthInputShell(
+            child: TextFormField(
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.done,
+              decoration: const InputDecoration(
+                labelText: 'CORREO ELECTRÓNICO',
+                suffixIcon: Icon(
+                  Icons.mail_outline_rounded,
+                  color: AppColors.textMuted,
+                ),
+                filled: false,
+                fillColor: Colors.transparent,
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                errorBorder: InputBorder.none,
+                focusedErrorBorder: InputBorder.none,
+              ),
+              validator: (value) {
+                final email = value?.trim() ?? '';
+
+                if (email.isEmpty) return 'Ingresa tu correo';
+
+                if (!RegExp(
+                  r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                ).hasMatch(email)) {
+                  return 'Ingresa un correo válido';
+                }
+
+                return null;
+              },
             ),
-            validator: (value) {
-              final email = value?.trim() ?? '';
-
-              if (email.isEmpty) return 'Ingresa tu correo';
-
-              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
-                return 'Ingresa un correo válido';
-              }
-
-              return null;
-            },
           ),
         ),
         const SizedBox(height: 16),
@@ -215,11 +239,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           style: OutlinedButton.styleFrom(
             minimumSize: const Size.fromHeight(52),
             foregroundColor: AppColors.textSecondary,
-            side: const BorderSide(color: AppColors.borderLight),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
             ),
-            backgroundColor: AppColors.surfaceAlt,
+            backgroundColor: AppColors.surface,
+            side: BorderSide.none,
           ),
           child: const Text(
             'Volver al inicio de sesión',
@@ -237,19 +261,28 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       children: [
         Form(
           key: _codeFormKey,
-          child: TextFormField(
-            controller: _codeController,
-            keyboardType: TextInputType.number,
-            textInputAction: TextInputAction.done,
-            decoration: const InputDecoration(
-              labelText: 'CÓDIGO DE VERIFICACIÓN',
-              suffixIcon: Icon(Icons.pin_rounded, color: AppColors.textMuted),
+          child: AuthInputShell(
+            child: TextFormField(
+              controller: _codeController,
+              keyboardType: TextInputType.number,
+              textInputAction: TextInputAction.done,
+              decoration: const InputDecoration(
+                labelText: 'CÓDIGO DE VERIFICACIÓN',
+                suffixIcon: Icon(Icons.pin_rounded, color: AppColors.textMuted),
+                filled: false,
+                fillColor: Colors.transparent,
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                errorBorder: InputBorder.none,
+                focusedErrorBorder: InputBorder.none,
+              ),
+              validator: (value) {
+                final code = value?.trim() ?? '';
+                if (code.isEmpty) return 'Ingresa el código';
+                return null;
+              },
             ),
-            validator: (value) {
-              final code = value?.trim() ?? '';
-              if (code.isEmpty) return 'Ingresa el código';
-              return null;
-            },
           ),
         ),
         const SizedBox(height: 16),

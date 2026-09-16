@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/network/api_client.dart';
 import '../../services/auth_service.dart';
@@ -83,7 +84,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } on ApiException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message), backgroundColor: AppColors.error),
+        SnackBar(
+          content: Text(error.message),
+          backgroundColor: AppColors.error,
+        ),
       );
     } catch (error) {
       if (!mounted) return;
@@ -101,85 +105,113 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return AuthPageShell(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildTopBar(context),
-          const SizedBox(height: 24),
-          const Text(
-            'AhorrApp',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.accent, fontSize: 30, fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 18),
-          const Text(
-            'Crea tu cuenta',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white, fontSize: 21, fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 7),
-          const Text(
-            'Comienza a gestionar tus finanzas',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.muted, fontSize: 12),
-          ),
-          const SizedBox(height: 28),
-          Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildField(
-                  controller: _nombreController,
-                  label: 'NOMBRE',
-                  hint: 'Manuel',
-                  icon: Icons.person_rounded,
-                ),
-                const SizedBox(height: 16),
-                _buildField(
-                  controller: _apellidoController,
-                  label: 'APELLIDO',
-                  hint: 'Guevara',
-                  icon: Icons.person_outline_rounded,
-                ),
-                const SizedBox(height: 16),
-                _buildField(
-                  controller: _emailController,
-                  label: 'CORREO ELECTRÓNICO',
-                  hint: 'correo@ejemplo.com',
-                  icon: Icons.mail_rounded,
-                  type: TextInputType.emailAddress,
-                ),
-                const SizedBox(height: 16),
-                _buildPasswordField(
-                  controller: _passwordController,
-                  label: 'CONTRASEÑA',
-                  hide: _hidePassword,
-                  onToggle: () => setState(() => _hidePassword = !_hidePassword),
-                  onChanged: (_) => setState(() {}),
-                ),
-                const SizedBox(height: 8),
-                _StrengthMeter(
-                  value: _passwordStrength,
-                  label: _passwordStrengthText,
-                  color: _passwordStrengthColor,
-                ),
-                const SizedBox(height: 16),
-                _buildPasswordField(
-                  controller: _confirmPasswordController,
-                  label: 'CONFIRMAR CONTRASEÑA',
-                  hide: _hideConfirmPassword,
-                  onToggle: () => setState(() => _hideConfirmPassword = !_hideConfirmPassword),
-                  isConfirm: true,
-                ),
-                const SizedBox(height: 24),
-                PrimaryAuthButton(label: 'Crear cuenta', isLoading: _isLoading, onPressed: _submit),
-              ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 13),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildTopBar(context),
+            const SizedBox(height: 28),
+            const Text(
+              'AhorrApp',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.accent,
+                fontSize: 30,
+                fontWeight: FontWeight.w900,
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
-          _Footer(onLogin: () => Navigator.of(context).pop()),
-        ],
+            const SizedBox(height: 18),
+            const Text(
+              'Crea tu cuenta',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 21,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 7),
+            const Text(
+              'Comienza a gestionar tus finanzas',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.muted, fontSize: 12),
+            ),
+            const SizedBox(height: 23),
+            const _RegisterProgressDots(),
+            const SizedBox(height: 27),
+            Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildField(
+                          controller: _nombreController,
+                          label: 'NOMBRE',
+                          hint: 'Manuel',
+                          icon: Icons.person_outline_rounded,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: _buildField(
+                          controller: _apellidoController,
+                          label: 'APELLIDO',
+                          hint: 'Guevara',
+                          icon: Icons.person_outline_rounded,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _buildField(
+                    controller: _emailController,
+                    label: 'CORREO ELECTRÓNICO',
+                    hint: 'correo@ejemplo.com',
+                    icon: Icons.mail_outline_rounded,
+                    type: TextInputType.emailAddress,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildPasswordField(
+                    controller: _passwordController,
+                    label: 'CONTRASEÑA',
+                    hide: _hidePassword,
+                    onToggle: () =>
+                        setState(() => _hidePassword = !_hidePassword),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                  const SizedBox(height: 8),
+                  _StrengthMeter(
+                    value: _passwordStrength,
+                    label: _passwordStrengthText,
+                    color: _passwordStrengthColor,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildPasswordField(
+                    controller: _confirmPasswordController,
+                    label: 'CONFIRMAR CONTRASEÑA',
+                    hide: _hideConfirmPassword,
+                    onToggle: () => setState(
+                      () => _hideConfirmPassword = !_hideConfirmPassword,
+                    ),
+                    isConfirm: true,
+                  ),
+                  const SizedBox(height: 24),
+                  PrimaryAuthButton(
+                    label: 'Crear cuenta',
+                    isLoading: _isLoading,
+                    onPressed: _submit,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            _Footer(onLogin: () => Navigator.of(context).pop()),
+          ],
+        ),
       ),
     );
   }
@@ -187,12 +219,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _buildTopBar(BuildContext context) {
     return Row(
       children: [
-        IconButton(
-          onPressed: () => Navigator.of(context).pop(),
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-          style: IconButton.styleFrom(
-            backgroundColor: AppColors.surface,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        DecoratedBox(
+          decoration: clayRaised(radius: AppRadius.sm),
+          child: IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+            tooltip: 'Volver',
           ),
         ),
       ],
@@ -206,28 +238,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
     required IconData icon,
     TextInputType type = TextInputType.text,
   }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: type,
-      textInputAction: TextInputAction.next,
-      textCapitalization: type == TextInputType.emailAddress
-          ? TextCapitalization.none
-          : TextCapitalization.words,
-      autocorrect: type != TextInputType.emailAddress,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        suffixIcon: Icon(icon, size: 20, color: AppColors.accent),
+    return AuthInputShell(
+      child: TextFormField(
+        controller: controller,
+        keyboardType: type,
+        textInputAction: TextInputAction.next,
+        textCapitalization: type == TextInputType.emailAddress
+            ? TextCapitalization.none
+            : TextCapitalization.words,
+        autocorrect: type != TextInputType.emailAddress,
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+          filled: false,
+          fillColor: Colors.transparent,
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          errorBorder: InputBorder.none,
+          focusedErrorBorder: InputBorder.none,
+          suffixIcon: Icon(icon, size: 20, color: AppColors.accent),
+        ),
+        validator: (value) {
+          final v = value?.trim() ?? '';
+          if (v.isEmpty) return 'Este campo es obligatorio';
+          if (type == TextInputType.emailAddress &&
+              !RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(v)) {
+            return 'Ingresa un correo válido';
+          }
+          return null;
+        },
       ),
-      validator: (value) {
-        final v = value?.trim() ?? '';
-        if (v.isEmpty) return 'Este campo es obligatorio';
-        if (type == TextInputType.emailAddress &&
-            !RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(v)) {
-          return 'Ingresa un correo válido';
-        }
-        return null;
-      },
     );
   }
 
@@ -239,36 +280,53 @@ class _RegisterScreenState extends State<RegisterScreen> {
     ValueChanged<String>? onChanged,
     bool isConfirm = false,
   }) {
-    return TextFormField(
-      controller: controller,
-      onChanged: onChanged,
-      obscureText: hide,
-      textInputAction: isConfirm ? TextInputAction.done : TextInputAction.next,
-      decoration: InputDecoration(
-        labelText: label,
-        suffixIcon: IconButton(
-          tooltip: hide ? 'Mostrar' : 'Ocultar',
-          onPressed: onToggle,
-          icon: Icon(
-            hide ? Icons.lock_rounded : Icons.lock_open_rounded,
-            size: 20,
-            color: AppColors.accent,
+    return AuthInputShell(
+      child: TextFormField(
+        controller: controller,
+        onChanged: onChanged,
+        obscureText: hide,
+        textInputAction: isConfirm
+            ? TextInputAction.done
+            : TextInputAction.next,
+        decoration: InputDecoration(
+          labelText: label,
+          filled: false,
+          fillColor: Colors.transparent,
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          errorBorder: InputBorder.none,
+          focusedErrorBorder: InputBorder.none,
+          suffixIcon: IconButton(
+            tooltip: hide ? 'Mostrar' : 'Ocultar',
+            onPressed: onToggle,
+            icon: Icon(
+              hide ? Icons.lock_rounded : Icons.lock_open_rounded,
+              size: 20,
+              color: AppColors.accent,
+            ),
           ),
         ),
+        validator: (value) {
+          final v = value ?? '';
+          if (v.isEmpty) return 'Ingresa tu contraseña';
+          if (!isConfirm && v.length < 8) return 'Usa al menos 8 caracteres';
+          if (isConfirm && v != _passwordController.text) {
+            return 'Las contraseñas no coinciden';
+          }
+          return null;
+        },
       ),
-      validator: (value) {
-        final v = value ?? '';
-        if (v.isEmpty) return 'Ingresa tu contraseña';
-        if (!isConfirm && v.length < 8) return 'Usa al menos 8 caracteres';
-        if (isConfirm && v != _passwordController.text) return 'Las contraseñas no coinciden';
-        return null;
-      },
     );
   }
 }
 
 class _StrengthMeter extends StatelessWidget {
-  const _StrengthMeter({required this.value, required this.label, required this.color});
+  const _StrengthMeter({
+    required this.value,
+    required this.label,
+    required this.color,
+  });
 
   final double value;
   final String label;
@@ -289,7 +347,46 @@ class _StrengthMeter extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-        Text(label, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w800)),
+        Text(
+          label,
+          style: TextStyle(
+            color: color,
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _RegisterProgressDots extends StatelessWidget {
+  const _RegisterProgressDots();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          width: 28,
+          height: 7,
+          decoration: BoxDecoration(
+            color: AppColors.accent,
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+          ),
+        ),
+        const SizedBox(width: 8),
+        for (var i = 0; i < 2; i++)
+          Container(
+            width: 8,
+            height: 8,
+            margin: const EdgeInsets.only(right: 8),
+            decoration: const BoxDecoration(
+              color: Color(0xFF202846),
+              shape: BoxShape.circle,
+            ),
+          ),
       ],
     );
   }
@@ -305,7 +402,10 @@ class _Footer extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text('¿Ya tienes cuenta? ', style: TextStyle(color: AppColors.muted, fontSize: 12)),
+        const Text(
+          '¿Ya tienes cuenta? ',
+          style: TextStyle(color: AppColors.muted, fontSize: 12),
+        ),
         TextButton(
           onPressed: onLogin,
           style: TextButton.styleFrom(
@@ -314,7 +414,10 @@ class _Footer extends StatelessWidget {
             minimumSize: const Size(0, 34),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
-          child: const Text('Iniciar sesión', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
+          child: const Text(
+            'Iniciar sesión',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
+          ),
         ),
       ],
     );
