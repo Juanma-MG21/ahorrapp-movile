@@ -1,26 +1,3 @@
-// lib/services/ocr_parser_service.dart
-//
-// Parser de texto reconocido por OCR sobre una foto de recibo/factura
-// (RF-23). Tiene lógica propia, distinta de QrParserService, porque el
-// texto que devuelve un motor de OCR es multilínea y ruidoso (varias
-// líneas con precios unitarios, cantidades, NIT, etc.), a diferencia
-// del payload limpio y de una sola pieza que suele traer un QR:
-//
-//   - Monto: se prioriza la línea que contiene una palabra clave de
-//     total ("TOTAL", "VALOR A PAGAR"...) y se extrae el número DE ESA
-//     línea — no "el número más grande de todo el texto", porque en un
-//     recibo con varios ítems el número más grande casi nunca es el
-//     total real (puede ser una cantidad, un NIT, un código de barras).
-//   - Fecha: no existía en QrParserService. Se busca con regex de
-//     fecha (dd/mm/yyyy, dd-mm-yyyy, yyyy-mm-dd) en todo el texto.
-//   - Comercio/descripción: se toma la primera línea "con contenido"
-//     (letras suficientes, no solo números/símbolos) — en un recibo el
-//     nombre del comercio casi siempre va en las primeras líneas.
-//
-// Misma filosofía de autollenado que QR y voz: nunca fija idCategoria
-// (solo el nombre, que el formulario intenta matchear), y parse()
-// devuelve NULL cuando no se pudo extraer un monto válido, para que
-// quien llama le avise al usuario en vez de abrir el formulario vacío.
 
 import '../models/gasto_model.dart';
 import '../data/categoria_keywords.dart';

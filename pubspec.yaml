@@ -8,11 +8,13 @@ environment:
 
 dependencies:
   flutter:
-    sdk: flutter
-
+  sdk: flutter
+  pdf: ^3.11.1
+  printing: ^5.13.4
   table_calendar: ^3.2.0
-  intl: ^0.20.3                      # 👈 nuevo — antes venía transitivo de table_calendar
-  flutter_secure_storage: ^9.2.2     # 👈 nuevo — para guardar el token del login
+  intl: ^0.20.3   
+                     # nuevo — antes venía transitivo de table_calendar
+  flutter_secure_storage: ^9.2.2     # nuevo — para guardar el token del login
   google_mlkit_text_recognition: ^0.13.0
   mobile_scanner: ^5.2.3
   image_picker: ^1.1.2
