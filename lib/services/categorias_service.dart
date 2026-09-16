@@ -206,6 +206,24 @@ class CategoriasService {
   }
 
   // ============================================================
+  // ELIMINAR (DELETE real — el backend solo lo permite si activa == false)
+  // ============================================================
+
+  Future<Map<String, dynamic>> eliminarCategoria(
+    int id,
+  ) async {
+    final response = await http.delete(
+      Uri.parse('$_baseUrl/categorias/$id'),
+      headers: await _headers(),
+      // sin body: el backend solo necesita el id, que ya va en la URL
+    );
+
+    return _procesarRespuesta(response);
+    // si el backend responde 409 (categoría aún activa) o 403 (no es tuya),
+    // _procesarRespuesta lanza una Exception con el mensaje que venga en el JSON
+  }
+
+  // ============================================================
   // PROCESAR RESPUESTAS CRUD
   // ============================================================
 

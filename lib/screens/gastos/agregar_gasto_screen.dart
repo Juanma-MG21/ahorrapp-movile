@@ -474,10 +474,10 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
                 itemBuilder: (context, index) => _buildCategoryCard(_listaCategorias[index]),
               ),
             ),
-          ),
+          ],),
         );
-      }
-    );
+      )}
+    )
   }
 
   Widget _buildCategoryCard(CategoriaModel cat) {

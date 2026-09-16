@@ -457,10 +457,10 @@ class _AgregarImprevistoScreenState extends State<AgregarImprevistoScreen> {
                 itemBuilder: (context, index) => _buildCategoryCard(_listaCategorias[index]),
               ),
             ),
-          ),
+          ]),
         );
-      }
-    );
+      )}
+    ;
   }
 
   Widget _buildCategoryCard(CategoriaModel cat) {

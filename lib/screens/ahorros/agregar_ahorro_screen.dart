@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/network/api_client.dart';
 import '../../models/ahorro_model.dart';
-import '../../models/categoria_model.dart';
+import '../../models/categorias_model.dart';
 import '../../services/ahorros_service.dart';
 import '../../services/categorias_service.dart';
 
