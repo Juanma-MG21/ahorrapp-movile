@@ -13,6 +13,7 @@ import 'screens/auth/fast_login_screen.dart';
 import 'screens/main_screen.dart';
 import 'screens/auth/auth_gate.dart';
 import 'screens/gastos/modulo_gastos.dart';
+import 'screens/reportes/reportes_screen.dart';
 
 class AhorrApp extends StatelessWidget {
   const AhorrApp({super.key});
@@ -44,6 +45,7 @@ class AhorrApp extends StatelessWidget {
           '/reset-password': (context) => const ResetPasswordScreen(),
           '/fast-login': (context) => const FastLoginScreen(),
           '/gastos': (context) => const ModuloGastos(),
+          '/reportes': (context) => const ReportesScreen(),
         },
       ),
     );

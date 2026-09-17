@@ -10,6 +10,7 @@ import 'ahorros/modulo_ahorros.dart';
 import 'deudas/modulo_deudas.dart';
 import 'presupuestos/modulo_presupuestos.dart';
 import '../services/quick_actions_service.dart';
+import '../screens/reportes/reportes_screen.dart';
 
 /// Metadata (icono + label) de cada pantalla accesible desde el menú
 /// "Más". El índice de cada _MenuItem debe corresponder al mismo
@@ -30,6 +31,7 @@ const List<_MenuItem> _itemsMas = [
   _MenuItem(icon: Icons.savings_outlined, label: 'Ahorros'),
   _MenuItem(icon: Icons.credit_card, label: 'Deudas'),
   _MenuItem(icon: Icons.calendar_month_outlined, label: 'Calendario'),
+  _MenuItem(icon: Icons.report_outlined, label: 'Reportes'),
 ];
 
 class MainScreen extends StatefulWidget {
@@ -49,13 +51,13 @@ class _MainScreenState extends State<MainScreen> {
     ModuloGastos(),
     ModuloPresupuestos(),
   ];
-
   // Pantallas accesibles desde "Más", alineadas 1 a 1 con _itemsMas.
   final List<Widget> _pantallasSecundarias = const [
     ModuloImprevistos(),
     ModuloAhorros(),
     ModuloDeudas(),
     CalendarioScreen(),
+    ReportesScreen(),
   ];
 
   // 0-3 = una de las pestañas fijas. 4 = estamos mostrando algo de "Más".
@@ -145,14 +147,14 @@ class _MainScreenState extends State<MainScreen> {
           child: SafeArea(
             top: false,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem(Icons.home_outlined, 'Inicio', 0),
-                _buildNavItem(Icons.arrow_upward, 'Ingresos', 1),
-                _buildNavItem(Icons.account_balance_wallet, 'Gastos', 2),
-                _buildNavItem(Icons.pie_chart_outline, 'Presupuestos', 3),
-                _buildMasNavItem(),
-              ],
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildNavItem(Icons.home_outlined, 'Inicio', 0),
+                  _buildNavItem(Icons.arrow_upward, 'Ingresos', 1),
+                  _buildNavItem(Icons.account_balance_wallet, 'Gastos', 2),
+                  _buildNavItem(Icons.pie_chart_outline, 'Presupuestos', 3),
+                  _buildMasNavItem(),
+                ],
             ),
           ),
         ),

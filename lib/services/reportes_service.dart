@@ -1,4 +1,4 @@
-import 'package:intl/intl.dart';
+// import 'package:intl/intl.dart';
 
 import '../core/network/api_client.dart';
 import '../models/periodo_presupuesto_model.dart';
@@ -11,22 +11,26 @@ import '../models/reportes/informe_completo.dart';
 import '../models/reportes/presupuesto_reporte_model.dart';
 import '../models/reportes/resumen_model.dart';
 import '../services/presupuestos_service.dart';
+// import '../../../../core/utils/presupuestos_parsing.dart';
 import 'auth_service.dart';
 
-class ReportesService {
+class ReportesService { 
   ReportesService({ApiClient? apiClient}) : _api = apiClient ?? ApiClient();
 
   final ApiClient _api;
 
   Future<String?> get _token => AuthService.instance.getToken();
 
-  static final DateFormat _formatoFecha = DateFormat('yyyy-MM-dd');
-
+  // Arma el query string de rango de fechas para los endpoints de reportes.
   String _rangoQuery(DateTime fechaInicio, DateTime fechaFin) {
-    final f1 = _formatoFecha.format(fechaInicio);
-    final f2 = _formatoFecha.format(fechaFin);
-    return '?fecha_inicio=$f1&fecha_fin=$f2';
+    String fmt(DateTime d) =>
+        '${d.year.toString().padLeft(4, '0')}-'
+        '${d.month.toString().padLeft(2, '0')}-'
+        '${d.day.toString().padLeft(2, '0')}';
+
+    return '?fecha_inicio=${fmt(fechaInicio)}&fecha_fin=${fmt(fechaFin)}';
   }
+
 
   // ---------------------------------------------------------------------
   // Reportes con rango de fechas
