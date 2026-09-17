@@ -303,6 +303,20 @@ class AuthService {
     });
   }
 
+  /// NUEVO — agregado para soportar la vista de "Mi cuenta" en móvil.
+  /// Actualiza el usuario cacheado (en memoria y, si la sesión se
+  /// guardó con "recordar sesión", también en secure storage) sin
+  /// necesidad de volver a hacer login. Se usa después de editar el
+  /// perfil (nombre/apellido/email) para que el resto de la app
+  /// refleje el cambio de inmediato.
+  Future<void> cacheUsuario(Usuario usuario) async {
+    _memoryUser = usuario;
+    final habiaSesionGuardada = await _storage.read(key: _userKey);
+    if (habiaSesionGuardada != null) {
+      await _storage.write(key: _userKey, value: jsonEncode(usuario.toJson()));
+    }
+  }
+
   Future<void> logout() async {
     _memoryToken = null;
     _memoryUser = null;

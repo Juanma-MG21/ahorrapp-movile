@@ -11,6 +11,7 @@ import 'deudas/modulo_deudas.dart';
 import 'presupuestos/modulo_presupuestos.dart';
 import '../services/quick_actions_service.dart';
 import '../screens/reportes/reportes_screen.dart';
+import 'cuenta/mi_cuenta_screen.dart';
 
 /// Metadata (icono + label) de cada pantalla accesible desde el menú
 /// "Más". El índice de cada _MenuItem debe corresponder al mismo
@@ -32,6 +33,7 @@ const List<_MenuItem> _itemsMas = [
   _MenuItem(icon: Icons.credit_card, label: 'Deudas'),
   _MenuItem(icon: Icons.calendar_month_outlined, label: 'Calendario'),
   _MenuItem(icon: Icons.report_outlined, label: 'Reportes'),
+  _MenuItem(icon: Icons.person_outline, label: 'Mi Cuenta'),
 ];
 
 class MainScreen extends StatefulWidget {
@@ -58,10 +60,11 @@ class _MainScreenState extends State<MainScreen> {
     ModuloDeudas(),
     CalendarioScreen(),
     ReportesScreen(),
+    MiCuentaScreen(),
   ];
 
   // 0-3 = una de las pestañas fijas. 4 = estamos mostrando algo de "Más".
-  int _tabPrincipal = 2; // Empezamos en Gastos.
+  int _tabPrincipal = 1; // Empezamos en Gastos.
 
   // Cuál de _pantallasSecundarias se muestra cuando _tabPrincipal == 4.
   int _indiceSecundario = 0;
