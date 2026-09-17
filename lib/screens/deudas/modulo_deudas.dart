@@ -79,7 +79,7 @@ class _ModuloDeudasState extends State<ModuloDeudas> {
           );
           if (result == true) _loadDeudas();
         },
-        backgroundColor: AppColors.error,
+        backgroundColor: AppModuleColors.deudas,
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
@@ -243,7 +243,7 @@ class _ModuloDeudasState extends State<ModuloDeudas> {
   Widget _buildDeudasList() {
     if (_isLoading)
       return const Center(
-        child: CircularProgressIndicator(color: AppColors.error),
+        child: CircularProgressIndicator(color: AppModuleColors.deudas),
       );
     if (_deudas.isEmpty)
       return const Center(
@@ -277,10 +277,10 @@ class _ModuloDeudasState extends State<ModuloDeudas> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: AppColors.error.withValues(alpha: 0.1),
+                  color: AppModuleColors.deudas.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(deuda.icono, color: AppColors.error, size: 24),
+                child: Icon(deuda.icono, color: AppModuleColors.deudas, size: 24),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -316,7 +316,7 @@ class _ModuloDeudasState extends State<ModuloDeudas> {
             ],
           ),
           const SizedBox(height: 16),
-          _buildProgressBar(deuda.progresoCuotas, AppColors.error),
+          _buildProgressBar(deuda.progresoCuotas, AppModuleColors.deudas),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

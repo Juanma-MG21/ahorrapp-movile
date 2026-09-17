@@ -222,7 +222,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
     if (_isLoadingData) {
       return const Scaffold(
         backgroundColor: AppColors.background,
-        body: Center(child: CircularProgressIndicator(color: AppColors.accent)),
+        body: Center(child: CircularProgressIndicator(color: AppModuleColors.gastos)),
       );
     }
     return Scaffold(
@@ -396,7 +396,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
           focusedBorder: InputBorder.none,
           errorBorder: InputBorder.none,
           focusedErrorBorder: InputBorder.none,
-          prefixIcon: Icon(icon, color: AppColors.accent, size: 20),
+          prefixIcon: Icon(icon, color: AppModuleColors.gastos, size: 20),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 14,
@@ -417,7 +417,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
             children: [
               const Icon(
                 Icons.calendar_month,
-                color: AppColors.accent,
+                color: AppModuleColors.gastos,
                 size: 20,
               ),
               const SizedBox(width: 10),
@@ -501,7 +501,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
             children: [
               const Icon(
                 Icons.person_outline_rounded,
-                color: AppColors.accent,
+                color: AppModuleColors.gastos,
                 size: 20,
               ),
               const SizedBox(width: 10),
@@ -626,7 +626,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
                           ? const BoxDecoration(
                               shape: BoxShape.circle,
                               gradient: RadialGradient(
-                                colors: [Color(0xFFFFD700), AppColors.accent],
+                                colors: [Color(0xFFFFD700), AppModuleColors.gastos],
                               ),
                             )
                           : const BoxDecoration(
@@ -769,7 +769,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
           radius: AppRadius.md,
           border: isSelected
               ? Border.all(
-                  color: AppColors.accent.withValues(alpha: 0.6),
+                  color: AppModuleColors.gastos.withValues(alpha: 0.6),
                   width: 1.5,
                 )
               : null,
@@ -876,7 +876,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
           radius: AppRadius.md,
           border: isSelected
               ? Border.all(
-                  color: AppColors.accent.withValues(alpha: 0.6),
+                  color: AppModuleColors.gastos.withValues(alpha: 0.6),
                   width: 1.5,
                 )
               : null,
@@ -913,7 +913,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
       child: Container(
         width: double.infinity,
         height: 56,
-        decoration: clayGlow(color: AppColors.accent, radius: AppRadius.lg),
+        decoration: clayGlow(color: AppModuleColors.gastos, radius: AppRadius.lg),
         child: Center(
           child: _isSaving
               ? const SizedBox(
@@ -994,7 +994,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
       case 'Servicios':
         return const Color(0xFFFF8C4A);
       default:
-        return AppColors.accent;
+        return AppModuleColors.gastos;
     }
   }
 }
@@ -1049,7 +1049,7 @@ class _ArrowIndicatorState extends State<_ArrowIndicator>
             ),
             child: const Icon(
               Icons.keyboard_arrow_down,
-              color: AppColors.accent,
+              color: AppModuleColors.gastos,
               size: 24,
             ),
           ),

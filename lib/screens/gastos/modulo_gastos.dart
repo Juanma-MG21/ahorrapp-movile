@@ -442,7 +442,7 @@ class _ModuloGastosState extends State<ModuloGastos>
               child: Text(
                 'Toca el botón para detener',
                 style: TextStyle(
-                  color: AppColors.accent,
+                  color: AppModuleColors.gastos,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
@@ -627,7 +627,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                 width: 50,
                 height: 50,
                 decoration: clayRaised(color: AppColors.surface, radius: 25),
-                child: Icon(icon, color: AppColors.accent, size: 22),
+                child: Icon(icon, color: AppModuleColors.gastos, size: 22),
               ),
             ),
           ],
@@ -641,7 +641,7 @@ class _ModuloGastosState extends State<ModuloGastos>
       duration: const Duration(milliseconds: 300),
       width: 60,
       height: 60,
-      decoration: clayGlow(color: AppColors.accent, radius: 30),
+      decoration: clayGlow(color: AppModuleColors.gastos, radius: 30),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -718,7 +718,7 @@ class _ModuloGastosState extends State<ModuloGastos>
             Container(
               width: 36,
               height: 36,
-              decoration: clayGlow(color: AppColors.accent, radius: 18),
+              decoration: clayGlow(color: AppModuleColors.gastos, radius: 18),
               child: const Icon(Icons.person, color: Colors.white, size: 20),
             ),
           ],
@@ -733,7 +733,7 @@ class _ModuloGastosState extends State<ModuloGastos>
       decoration: claySunken(radius: AppRadius.md),
       child: TextField(
         onChanged: (value) => setState(() => _searchQuery = value),
-        cursorColor: AppColors.accent,
+        cursorColor: AppModuleColors.gastos,
         style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
         decoration: InputDecoration(
           hintText: 'Buscar gasto o categoría...',
@@ -749,7 +749,7 @@ class _ModuloGastosState extends State<ModuloGastos>
           focusedErrorBorder: InputBorder.none,
           prefixIcon: const Icon(
             Icons.search,
-            color: AppColors.accent,
+            color: AppModuleColors.gastos,
             size: 20,
           ),
           prefixIconConstraints: const BoxConstraints(
@@ -962,7 +962,7 @@ class _ModuloGastosState extends State<ModuloGastos>
       return const Center(
         child: Padding(
           padding: EdgeInsets.only(top: 40),
-          child: CircularProgressIndicator(color: AppColors.accent),
+          child: CircularProgressIndicator(color: AppModuleColors.gastos),
         ),
       );
     }
@@ -1099,7 +1099,7 @@ class _ModuloGastosState extends State<ModuloGastos>
                           child: _buildActionButton(
                             label: 'Editar',
                             icon: Icons.edit_outlined,
-                            color: AppColors.accent,
+                            color: AppModuleColors.gastos,
                             onTap: () async {
                               final resultado = await Navigator.push<bool>(
                                 context,
@@ -1306,7 +1306,7 @@ class _VoicePulseButtonState extends State<_VoicePulseButton>
         child: Stack(
           alignment: Alignment.center,
           children: [
-            const CircularProgressIndicator(color: AppColors.accent),
+            const CircularProgressIndicator(color: AppModuleColors.gastos),
             Container(
               width: 60,
               height: 60,
@@ -1316,7 +1316,7 @@ class _VoicePulseButtonState extends State<_VoicePulseButton>
               ),
               child: const Icon(
                 Icons.auto_awesome,
-                color: AppColors.accent,
+                color: AppModuleColors.gastos,
                 size: 28,
               ),
             ),
@@ -1370,7 +1370,7 @@ class _VoicePulseButtonState extends State<_VoicePulseButton>
                   gradient: RadialGradient(
                     colors: widget.isListening
                         ? [const Color(0xFFFF8A8A), AppColors.error]
-                        : [const Color(0xFFFFD700), AppColors.accent],
+                        : [const Color(0xFFFFD700), AppModuleColors.gastos],
                   ),
                 ),
                 child: Icon(

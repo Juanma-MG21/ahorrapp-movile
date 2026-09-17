@@ -287,10 +287,10 @@ class _PerfilFormSheetState extends State<_PerfilFormSheet> {
                 child: ElevatedButton(
                   onPressed: _guardando ? null : _guardar,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.accent,
+                    backgroundColor: AppModuleColors.presupuestos,
                     foregroundColor: Colors.black,
                     elevation: 4, // Añadida elevación para que "se vea más"
-                    shadowColor: AppColors.accent.withValues(alpha: 0.3),
+                    shadowColor: AppModuleColors.presupuestos.withValues(alpha: 0.3),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(18),
                     ),
@@ -357,7 +357,7 @@ class _Campo extends StatelessWidget {
           maxLines: maxLines,
           style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600),
           decoration: InputDecoration(
-            prefixIcon: Icon(icon, size: 20, color: AppColors.accent),
+            prefixIcon: Icon(icon, size: 20, color: AppModuleColors.presupuestos),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             filled: true,
             fillColor: AppColors.background.withValues(alpha: 0.5),
@@ -436,7 +436,7 @@ class _CampoPorcentaje extends StatelessWidget {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: AppColors.accent, width: 1),
+                  borderSide: const BorderSide(color: AppModuleColors.presupuestos, width: 1),
                 ),
               ),
             ),

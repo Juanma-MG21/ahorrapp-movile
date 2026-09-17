@@ -38,15 +38,31 @@ class AppColors {
   static const Color borderLight = Color(0x14FFFFFF);
 }
 
+/// Colores únicos asignados a cada módulo de la aplicación.
+/// Mantiene la identidad visual consistente entre la navegación y las pantallas.
+class AppModuleColors {
+  const AppModuleColors._();
+
+  static const Color gastos = AppColors.accent; // Ámbar
+  static const Color ingresos = AppColors.success; // Esmeralda
+  static const Color ahorros = Color(0xFFA8A2FF); // Violeta
+  static const Color deudas = Color(0xFFFB923C); // Naranja
+  static const Color imprevistos = AppColors.error; // Rojo
+  static const Color presupuestos = Color(0xFFF472B6); // Rosa
+  static const Color calendario = Color(0xFF60A5FA); // Celeste
+  static const Color scanners = Color(0xFFFFCC33); // Ámbar suave (relacionado a gastos)
+}
+
 /// Colores centralizados para las categorías de presupuesto.
+/// Sincronizados automáticamente con los colores de módulo.
 class AppPresupuestoColors {
   const AppPresupuestoColors._();
 
-  static const Color gastos = AppColors.accent;
-  static const Color deudas = AppCategoryColors.almuerzo;
-  static const Color imprevistos = AppColors.accent;
-  static const Color ahorros = AppColors.success;
-  static const Color emergencia = AppColors.error;
+  static const Color gastos = AppModuleColors.gastos;
+  static const Color deudas = AppModuleColors.deudas;
+  static const Color imprevistos = AppModuleColors.imprevistos;
+  static const Color ahorros = AppModuleColors.ahorros;
+  static const Color emergencia = AppModuleColors.imprevistos;
 }
 
 /// Colores de íconos por categoría de gasto.
@@ -59,15 +75,14 @@ class AppCategoryColors {
 }
 
 /// Colores de los puntos marcadores en CalendarioScreen, uno por tipo de
-/// movimiento (ingreso/gasto/imprevisto/ahorro). Antes vivían hardcodeados
-/// como Colors.green/amber/red/purple directamente en calendario_screen.dart.
+/// movimiento (ingreso/gasto/imprevisto/ahorro). Sincronizados con AppModuleColors.
 class AppMovimientoColors {
   const AppMovimientoColors._();
 
-  static const Color ingreso = AppColors.success;
-  static const Color gasto = AppColors.accent;
-  static const Color imprevisto = AppColors.error;
-  static const Color ahorro = Color(0xFFA8A2FF);
+  static const Color ingreso = AppModuleColors.ingresos;
+  static const Color gasto = AppModuleColors.gastos;
+  static const Color imprevisto = AppModuleColors.imprevistos;
+  static const Color ahorro = AppModuleColors.ahorros;
 }
 
 class AppRadius {

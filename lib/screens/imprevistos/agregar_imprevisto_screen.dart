@@ -223,7 +223,7 @@ class _AgregarImprevistoScreenState extends State<AgregarImprevistoScreen> {
     if (_isLoadingData) {
       return const Scaffold(
         backgroundColor: AppColors.background,
-        body: Center(child: CircularProgressIndicator(color: AppColors.error)),
+        body: Center(child: CircularProgressIndicator(color: AppModuleColors.imprevistos)),
       );
     }
     return Scaffold(
@@ -407,7 +407,7 @@ class _AgregarImprevistoScreenState extends State<AgregarImprevistoScreen> {
             children: [
               const Icon(
                 Icons.calendar_month,
-                color: AppColors.error,
+                color: AppModuleColors.imprevistos,
                 size: 20,
               ),
               const SizedBox(width: 10),
@@ -444,7 +444,7 @@ class _AgregarImprevistoScreenState extends State<AgregarImprevistoScreen> {
               if (cat != null) ...[
                 Icon(
                   _getIconForCategory(cat.nombre),
-                  color: AppColors.error,
+                  color: AppModuleColors.imprevistos,
                   size: 20,
                 ),
                 const SizedBox(width: 10),
@@ -579,7 +579,7 @@ class _AgregarImprevistoScreenState extends State<AgregarImprevistoScreen> {
                           ? const BoxDecoration(
                               shape: BoxShape.circle,
                               gradient: RadialGradient(
-                                colors: [Color(0xFFFF8A8A), AppColors.error],
+                                colors: [Color(0xFFFF8A8A), AppModuleColors.imprevistos],
                               ),
                             )
                           : const BoxDecoration(
@@ -718,7 +718,7 @@ class _AgregarImprevistoScreenState extends State<AgregarImprevistoScreen> {
           borderRadius: BorderRadius.circular(18),
           border: isSelected
               ? Border.all(
-                  color: AppColors.error.withValues(alpha: 0.6),
+                  color: AppModuleColors.imprevistos.withValues(alpha: 0.6),
                   width: 1.5,
                 )
               : null,
@@ -736,10 +736,10 @@ class _AgregarImprevistoScreenState extends State<AgregarImprevistoScreen> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: AppColors.error.withValues(alpha: 0.15),
+                color: AppModuleColors.imprevistos.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: AppColors.error, size: 22),
+              child: Icon(icon, color: AppModuleColors.imprevistos, size: 22),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -778,18 +778,7 @@ class _AgregarImprevistoScreenState extends State<AgregarImprevistoScreen> {
       child: Container(
         width: double.infinity,
         height: 56,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFFF8A8A), AppColors.error],
-          ),
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.error.withValues(alpha: 0.4),
-              blurRadius: 20,
-            ),
-          ],
-        ),
+        decoration: clayGlow(color: AppModuleColors.imprevistos, radius: AppRadius.lg),
         child: Center(
           child: _isSaving
               ? const SizedBox(
@@ -909,7 +898,7 @@ class _ArrowIndicatorState extends State<_ArrowIndicator>
             ),
             child: const Icon(
               Icons.keyboard_arrow_down,
-              color: AppColors.error,
+              color: AppModuleColors.imprevistos,
               size: 24,
             ),
           ),

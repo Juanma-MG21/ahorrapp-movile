@@ -438,7 +438,7 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
             children: [
               const Icon(
                 Icons.calendar_month,
-                color: AppColors.error,
+                color: AppModuleColors.deudas,
                 size: 20,
               ),
               const SizedBox(width: 10),
@@ -567,7 +567,7 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
                         ? const BoxDecoration(
                             shape: BoxShape.circle,
                             gradient: LinearGradient(
-                              colors: [AppColors.error, Color(0xFFFF8A8A)],
+                              colors: [AppModuleColors.deudas, Color(0xFFFF8A8A)],
                             ),
                           )
                         : const BoxDecoration(
@@ -726,7 +726,7 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
           borderRadius: BorderRadius.circular(18),
           border: isSelected
               ? Border.all(
-                  color: AppColors.error.withValues(alpha: 0.6),
+                  color: AppModuleColors.deudas.withValues(alpha: 0.6),
                   width: 1.5,
                 )
               : null,
@@ -784,7 +784,7 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
           borderRadius: BorderRadius.circular(18),
           border: isSelected
               ? Border.all(
-                  color: AppColors.error.withValues(alpha: 0.6),
+                  color: AppModuleColors.deudas.withValues(alpha: 0.6),
                   width: 1.5,
                 )
               : null,
@@ -844,18 +844,7 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
       child: Container(
         width: double.infinity,
         height: 56,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppColors.error, Color(0xFFFF8A8A)],
-          ),
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.error.withValues(alpha: 0.4),
-              blurRadius: 20,
-            ),
-          ],
-        ),
+        decoration: clayGlow(color: AppModuleColors.deudas, radius: AppRadius.lg),
         child: Center(
           child: _isSaving
               ? const SizedBox(
@@ -939,7 +928,7 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
       case 'Servicios':
         return const Color(0xFFFF8C4A);
       default:
-        return AppColors.error;
+        return AppModuleColors.deudas;
     }
   }
 }
@@ -994,7 +983,7 @@ class _ArrowIndicatorState extends State<_ArrowIndicator>
             ),
             child: const Icon(
               Icons.keyboard_arrow_down,
-              color: AppColors.error,
+              color: AppModuleColors.deudas,
               size: 24,
             ),
           ),

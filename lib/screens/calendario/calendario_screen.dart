@@ -126,14 +126,14 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
         title: const Text(
           'Calendario',
           style: TextStyle(
-            color: AppColors.accent,
+            color: AppModuleColors.calendario,
             fontWeight: FontWeight.bold,
           ),
         ),
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: AppColors.accent),
+              child: CircularProgressIndicator(color: AppModuleColors.calendario),
             )
           : Column(children: [_buildTarjetaTitulo(), _buildCalendario()]),
     );
@@ -155,7 +155,7 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
           const Text(
             'Actividad del mes',
             style: TextStyle(
-              color: AppColors.accent,
+              color: AppModuleColors.calendario,
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
@@ -195,31 +195,31 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
           setState(() => _diaFocalizado = nuevoDiaFocalizado);
         },
         eventLoader: _obtenerMovimientosDelDia,
-        calendarStyle: const CalendarStyle(
-          defaultTextStyle: TextStyle(color: AppColors.textPrimary),
-          weekendTextStyle: TextStyle(color: AppColors.textSecondary),
-          outsideTextStyle: TextStyle(color: AppColors.textMuted),
+        calendarStyle: CalendarStyle(
+          defaultTextStyle: const TextStyle(color: AppColors.textPrimary),
+          weekendTextStyle: const TextStyle(color: AppColors.textSecondary),
+          outsideTextStyle: const TextStyle(color: AppColors.textMuted),
           todayDecoration: BoxDecoration(
-            color: Color(0x4DFFB800), // AppColors.accent al 30% de opacidad
+            color: AppModuleColors.calendario.withValues(alpha: 0.3),
             shape: BoxShape.circle,
           ),
-          todayTextStyle: TextStyle(color: AppColors.textPrimary),
-          selectedDecoration: BoxDecoration(
-            color: AppColors.accent,
+          todayTextStyle: const TextStyle(color: AppColors.textPrimary),
+          selectedDecoration: const BoxDecoration(
+            color: AppModuleColors.calendario,
             shape: BoxShape.circle,
           ),
-          selectedTextStyle: TextStyle(color: Colors.black),
+          selectedTextStyle: const TextStyle(color: Colors.black),
           markersMaxCount: 0,
         ),
         headerStyle: const HeaderStyle(
           formatButtonVisible: false,
           titleCentered: true,
           titleTextStyle: TextStyle(
-            color: AppColors.accent,
+            color: AppModuleColors.calendario,
             fontWeight: FontWeight.bold,
           ),
-          leftChevronIcon: Icon(Icons.chevron_left, color: AppColors.accent),
-          rightChevronIcon: Icon(Icons.chevron_right, color: AppColors.accent),
+          leftChevronIcon: Icon(Icons.chevron_left, color: AppModuleColors.calendario),
+          rightChevronIcon: Icon(Icons.chevron_right, color: AppModuleColors.calendario),
         ),
         daysOfWeekStyle: const DaysOfWeekStyle(
           weekdayStyle: TextStyle(color: AppColors.textSecondary),

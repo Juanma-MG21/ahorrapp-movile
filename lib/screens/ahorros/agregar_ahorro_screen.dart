@@ -487,7 +487,7 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
           borderRadius: BorderRadius.circular(18),
           border: isSelected
               ? Border.all(
-                  color: AppColors.accent.withValues(alpha: 0.6),
+                  color: AppModuleColors.ahorros.withValues(alpha: 0.6),
                   width: 1.5,
                 )
               : null,
@@ -575,7 +575,7 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
       case 'Servicios':
         return const Color(0xFFFF8C4A);
       default:
-        return AppColors.accent;
+        return AppModuleColors.ahorros;
     }
   }
 
@@ -696,7 +696,7 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
                           ? const BoxDecoration(
                               shape: BoxShape.circle,
                               gradient: RadialGradient(
-                                colors: [Color(0xFFFFD700), AppColors.accent],
+                                colors: [Color(0xFFFFD700), AppModuleColors.ahorros],
                               ),
                             )
                           : const BoxDecoration(
@@ -761,7 +761,7 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
             children: [
               const Icon(
                 Icons.calendar_today,
-                color: AppColors.accent,
+                color: AppModuleColors.ahorros,
                 size: 20,
               ),
               const SizedBox(width: 10),
@@ -794,12 +794,7 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
       child: Container(
         width: double.infinity,
         height: 56,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppColors.accent, Color(0xFFFF8C00)],
-          ),
-          borderRadius: BorderRadius.circular(28),
-        ),
+        decoration: clayGlow(color: AppModuleColors.ahorros, radius: AppRadius.lg),
         child: Center(
           child: _isSaving
               ? const CircularProgressIndicator(color: Colors.black)
@@ -923,7 +918,7 @@ class _ArrowIndicatorState extends State<_ArrowIndicator>
             ),
             child: const Icon(
               Icons.keyboard_arrow_down,
-              color: AppColors.accent,
+              color: AppModuleColors.ahorros,
               size: 24,
             ),
           ),

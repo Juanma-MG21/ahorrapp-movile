@@ -350,7 +350,7 @@ class _ModuloIngresosState extends State<ModuloIngresos>
               child: Text(
                 'Toca el botón para detener',
                 style: TextStyle(
-                  color: Color(0xFF4ADE80),
+                  color: AppModuleColors.ingresos,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
@@ -521,7 +521,7 @@ class _ModuloIngresosState extends State<ModuloIngresos>
                 width: 50,
                 height: 50,
                 decoration: clayRaised(color: AppColors.surface, radius: 25),
-                child: Icon(icon, color: const Color(0xFF4ADE80), size: 22),
+                child: Icon(icon, color: AppModuleColors.ingresos, size: 22),
               ),
             ),
           ],
@@ -535,7 +535,7 @@ class _ModuloIngresosState extends State<ModuloIngresos>
       duration: const Duration(milliseconds: 300),
       width: 60,
       height: 60,
-      decoration: clayGlow(color: const Color(0xFF34D399), radius: 30),
+      decoration: clayGlow(color: AppModuleColors.ingresos, radius: 30),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -612,7 +612,7 @@ class _ModuloIngresosState extends State<ModuloIngresos>
             Container(
               width: 36,
               height: 36,
-              decoration: clayGlow(color: const Color(0xFF34D399), radius: 18),
+              decoration: clayGlow(color: AppModuleColors.ingresos, radius: 18),
               child: const Icon(Icons.person, color: Colors.black, size: 20),
             ),
           ],
@@ -627,7 +627,7 @@ class _ModuloIngresosState extends State<ModuloIngresos>
       decoration: claySunken(radius: AppRadius.md),
       child: TextField(
         onChanged: (value) => setState(() => _searchQuery = value),
-        cursorColor: AppColors.success,
+        cursorColor: AppModuleColors.ingresos,
         style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
         decoration: InputDecoration(
           hintText: 'Buscar ingreso o fuente...',
@@ -643,7 +643,7 @@ class _ModuloIngresosState extends State<ModuloIngresos>
           focusedErrorBorder: InputBorder.none,
           prefixIcon: const Icon(
             Icons.search,
-            color: AppColors.success,
+            color: AppModuleColors.ingresos,
             size: 20,
           ),
           prefixIconConstraints: const BoxConstraints(
@@ -694,13 +694,13 @@ class _ModuloIngresosState extends State<ModuloIngresos>
                 child: Text(
                   _formatCurrency(totalIngresos),
                   style: const TextStyle(
-                    color: Color(0xFF4ADE80),
+                    color: AppModuleColors.ingresos,
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-              const Icon(Icons.trending_up, color: Color(0xFF4ADE80), size: 32),
+              const Icon(Icons.trending_up, color: AppModuleColors.ingresos, size: 32),
             ],
           ),
         ],
@@ -733,7 +733,7 @@ class _ModuloIngresosState extends State<ModuloIngresos>
       return const Center(
         child: Padding(
           padding: EdgeInsets.only(top: 40),
-          child: CircularProgressIndicator(color: Color(0xFF4ADE80)),
+          child: CircularProgressIndicator(color: AppModuleColors.ingresos),
         ),
       );
     final filtered = _filteredIngresos.reversed.toList();
@@ -817,7 +817,7 @@ class _ModuloIngresosState extends State<ModuloIngresos>
                   Text(
                     '+${_formatCurrency(ingreso.monto)}',
                     style: const TextStyle(
-                      color: Color(0xFF4ADE80),
+                      color: AppModuleColors.ingresos,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -860,7 +860,7 @@ class _ModuloIngresosState extends State<ModuloIngresos>
                         _buildDetailItem(
                           'MONTO',
                           '+${_formatCurrency(ingreso.monto)}',
-                          color: const Color(0xFF4ADE80),
+                          color: AppModuleColors.ingresos,
                         ),
                       ],
                     ),
@@ -871,7 +871,7 @@ class _ModuloIngresosState extends State<ModuloIngresos>
                           child: _buildActionButton(
                             label: 'Editar',
                             icon: Icons.edit_outlined,
-                            color: const Color(0xFF4ADE80),
+                            color: AppModuleColors.ingresos,
                             onTap: () async {
                               final resultado =
                                   await Navigator.push<IngresoModel>(
@@ -1073,7 +1073,7 @@ class _VoicePulseButtonState extends State<_VoicePulseButton>
         child: Stack(
           alignment: Alignment.center,
           children: [
-            const CircularProgressIndicator(color: Color(0xFF4ADE80)),
+            const CircularProgressIndicator(color: AppModuleColors.ingresos),
             Container(
               width: 60,
               height: 60,
@@ -1083,7 +1083,7 @@ class _VoicePulseButtonState extends State<_VoicePulseButton>
               ),
               child: const Icon(
                 Icons.auto_awesome,
-                color: Color(0xFF4ADE80),
+                color: AppModuleColors.ingresos,
                 size: 28,
               ),
             ),
@@ -1137,7 +1137,7 @@ class _VoicePulseButtonState extends State<_VoicePulseButton>
                   gradient: RadialGradient(
                     colors: widget.isListening
                         ? [const Color(0xFFFF8A8A), AppColors.error]
-                        : [const Color(0xFF4ADE80), const Color(0xFF34D399)],
+                        : [AppModuleColors.ingresos, const Color(0xFF34D399)],
                   ),
                 ),
                 child: Icon(

@@ -225,7 +225,7 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
     if (_isLoadingData) {
       return const Scaffold(
         backgroundColor: AppColors.background,
-        body: Center(child: CircularProgressIndicator(color: AppColors.accent)),
+        body: Center(child: CircularProgressIndicator(color: AppModuleColors.ingresos)),
       );
     }
     return Scaffold(
@@ -311,21 +311,21 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
       margin: const EdgeInsets.only(bottom: 24),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF4ADE80).withValues(alpha: 0.1),
+        color: AppModuleColors.ingresos.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: const Color(0xFF4ADE80).withValues(alpha: 0.3),
+          color: AppModuleColors.ingresos.withValues(alpha: 0.3),
         ),
       ),
       child: const Row(
         children: [
-          Icon(Icons.qr_code_2, color: Color(0xFF4ADE80), size: 20),
+          Icon(Icons.qr_code_2, color: AppModuleColors.ingresos, size: 20),
           SizedBox(width: 12),
           Expanded(
             child: Text(
               'Información recuperada del QR. Verifica los campos.',
               style: TextStyle(
-                color: Color(0xFF4ADE80),
+                color: AppModuleColors.ingresos,
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
@@ -436,7 +436,7 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
           focusedBorder: InputBorder.none,
           errorBorder: InputBorder.none,
           focusedErrorBorder: InputBorder.none,
-          prefixIcon: Icon(icon, color: AppColors.success, size: 20),
+          prefixIcon: Icon(icon, color: AppModuleColors.ingresos, size: 20),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 14,
@@ -457,7 +457,7 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
             children: [
               const Icon(
                 Icons.calendar_month,
-                color: Color(0xFF4ADE80),
+                color: AppModuleColors.ingresos,
                 size: 20,
               ),
               const SizedBox(width: 10),
@@ -629,7 +629,7 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
                           ? const BoxDecoration(
                               shape: BoxShape.circle,
                               gradient: RadialGradient(
-                                colors: [Color(0xFF4ADE80), Color(0xFF34D399)],
+                                colors: [AppModuleColors.ingresos, Color(0xFF34D399)],
                               ),
                             )
                           : const BoxDecoration(
@@ -771,7 +771,7 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
           radius: AppRadius.md,
           border: isSelected
               ? Border.all(
-                  color: const Color(0xFF4ADE80).withValues(alpha: 0.6),
+                  color: AppModuleColors.ingresos.withValues(alpha: 0.6),
                   width: 1.5,
                 )
               : null,
@@ -824,7 +824,7 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
       child: Container(
         width: double.infinity,
         height: 56,
-        decoration: clayGlow(color: AppColors.success, radius: AppRadius.lg),
+        decoration: clayGlow(color: AppModuleColors.ingresos, radius: AppRadius.lg),
         child: Center(
           child: _isSaving
               ? const SizedBox(
@@ -972,7 +972,7 @@ class _ArrowIndicatorState extends State<_ArrowIndicator>
             ),
             child: const Icon(
               Icons.keyboard_arrow_down,
-              color: Color(0xFF4ADE80),
+              color: AppModuleColors.ingresos,
               size: 24,
             ),
           ),

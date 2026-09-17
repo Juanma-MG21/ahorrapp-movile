@@ -301,7 +301,7 @@ class _ModuloImprevistosState extends State<ModuloImprevistos>
                   color: AppColors.surface,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: AppColors.error, size: 22),
+                child: Icon(icon, color: AppModuleColors.imprevistos, size: 22),
               ),
             ),
           ],
@@ -318,7 +318,7 @@ class _ModuloImprevistosState extends State<ModuloImprevistos>
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: const RadialGradient(
-          colors: [Color(0xFFFF8A8A), AppColors.error],
+          colors: [Color(0xFFFF8A8A), AppModuleColors.imprevistos],
         ),
         border: Border.all(
           color: Colors.white.withValues(alpha: _isMenuOpen ? 0.9 : 0),
@@ -404,7 +404,7 @@ class _ModuloImprevistosState extends State<ModuloImprevistos>
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
-                  colors: [Color(0xFFFF8A8A), AppColors.error],
+                  colors: [Color(0xFFFF8A8A), AppModuleColors.imprevistos],
                 ),
               ),
               child: const Icon(Icons.person, color: Colors.white, size: 20),
@@ -421,7 +421,7 @@ class _ModuloImprevistosState extends State<ModuloImprevistos>
       decoration: claySunken(radius: AppRadius.md),
       child: TextField(
         onChanged: (value) => setState(() => _searchQuery = value),
-        cursorColor: AppColors.error,
+        cursorColor: AppModuleColors.imprevistos,
         style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
         decoration: InputDecoration(
           hintText: 'Buscar imprevisto...',
@@ -437,7 +437,7 @@ class _ModuloImprevistosState extends State<ModuloImprevistos>
           focusedErrorBorder: InputBorder.none,
           prefixIcon: const Icon(
             Icons.search,
-            color: AppColors.error,
+            color: AppModuleColors.imprevistos,
             size: 20,
           ),
           prefixIconConstraints: const BoxConstraints(
@@ -614,7 +614,7 @@ class _ModuloImprevistosState extends State<ModuloImprevistos>
       return const Center(
         child: Padding(
           padding: EdgeInsets.only(top: 40),
-          child: CircularProgressIndicator(color: AppColors.error),
+          child: CircularProgressIndicator(color: AppModuleColors.imprevistos),
         ),
       );
     final filtered = _filteredImprevistos.reversed.toList();

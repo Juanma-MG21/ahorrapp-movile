@@ -90,7 +90,7 @@ class _ModuloAhorrosState extends State<ModuloAhorros> {
           );
           if (result == true) _loadAhorros();
         },
-        backgroundColor: AppColors.accent,
+        backgroundColor: AppModuleColors.ahorros,
         child: const Icon(Icons.add, color: Colors.black),
       ),
     );
@@ -250,7 +250,7 @@ class _ModuloAhorrosState extends State<ModuloAhorros> {
   Widget _buildAhorrosList() {
     if (_isLoading)
       return const Center(
-        child: CircularProgressIndicator(color: AppColors.accent),
+        child: CircularProgressIndicator(color: AppModuleColors.ahorros),
       );
     if (_ahorros.isEmpty)
       return const Center(
@@ -353,7 +353,7 @@ class _ModuloAhorrosState extends State<ModuloAhorros> {
                   IconButton(
                     icon: const Icon(
                       Icons.add_circle_outline,
-                      color: AppColors.accent,
+                      color: AppModuleColors.ahorros,
                       size: 20,
                     ),
                     onPressed: () => _mostrarDialogoAbono(ahorro),
@@ -415,7 +415,7 @@ class _ModuloAhorrosState extends State<ModuloAhorros> {
               hintText: 'Monto a abonar',
               hintStyle: TextStyle(color: AppColors.textSecondary),
               enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: AppColors.accent),
+                borderSide: BorderSide(color: AppModuleColors.ahorros),
               ),
             ),
           ),
@@ -452,7 +452,7 @@ class _ModuloAhorrosState extends State<ModuloAhorros> {
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accent,
+                backgroundColor: AppModuleColors.ahorros,
                 foregroundColor: Colors.black,
               ),
               child: const Text('Abonar'),
