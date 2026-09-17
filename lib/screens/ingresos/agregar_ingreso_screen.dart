@@ -6,6 +6,7 @@ import '../../models/ingreso_model.dart';
 import '../../models/categoria_model.dart';
 import '../../services/ingresos_service.dart';
 import '../../core/network/api_client.dart';
+import '../../widgets/neumorphic_widgets.dart';
 
 class AgregarIngresoScreen extends StatefulWidget {
   final IngresoModel? ingresoParaEditar;
@@ -62,7 +63,6 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
           _fecha = i.fechaRegistro;
           _idCategoria = i.idCategoria;
 
-          // Si el ID es nulo pero tenemos nombre (de la IA), intentamos el match
           if (_idCategoria == null && i.categoriaNombre != null) {
             final sugerida = _listaCategorias.where(
               (c) => c.nombre.toLowerCase() == i.categoriaNombre!.toLowerCase(),
@@ -269,40 +269,10 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
   }
 
   Widget _buildHeader() {
-    return Row(
-      children: [
-        _NeumorphicIcon(
-          icon: Icons.arrow_back,
-          size: 20,
-          onTap: () => Navigator.pop(context),
-        ),
-        const SizedBox(width: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.ingresoParaEditar != null
-                  ? 'Editar ingreso'
-                  : 'Agregar ingreso',
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              widget.ingresoParaEditar != null
-                  ? 'Modificar registro'
-                  : 'Nuevo ingreso',
-              style: const TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-      ],
+    return NeumorphicHeader(
+      title: widget.ingresoParaEditar != null ? 'Editar ingreso' : 'Agregar ingreso',
+      subtitle: widget.ingresoParaEditar != null ? 'Modificar registro' : 'Nuevo ingreso',
+      onBack: () => Navigator.pop(context),
     );
   }
 
@@ -313,9 +283,7 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
       decoration: BoxDecoration(
         color: AppModuleColors.ingresos.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: AppModuleColors.ingresos.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: AppModuleColors.ingresos.withValues(alpha: 0.3)),
       ),
       child: const Row(
         children: [
@@ -324,11 +292,7 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
           Expanded(
             child: Text(
               'Información recuperada del QR. Verifica los campos.',
-              style: TextStyle(
-                color: AppModuleColors.ingresos,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
+              style: TextStyle(color: AppModuleColors.ingresos, fontSize: 12, fontWeight: FontWeight.w500),
             ),
           ),
         ],
@@ -340,192 +304,63 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildLabel('Monto', required: true),
+        const NeumorphicLabel(text: 'Monto', required: true),
         const SizedBox(height: 8),
-        _buildTextField(
+        NeumorphicTextField(
           controller: _montoController,
           hint: '\$0',
           icon: Icons.payments_outlined,
+          iconColor: AppModuleColors.ingresos,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
         ),
         const SizedBox(height: 18),
-        _buildLabel('Descripción'),
+        const NeumorphicLabel(text: 'Descripción'),
         const SizedBox(height: 8),
-        _buildTextField(
+        NeumorphicTextField(
           controller: _descripcionController,
           hint: 'Ej: Pago de nómina',
           icon: Icons.notes_rounded,
+          iconColor: AppModuleColors.ingresos,
         ),
         const SizedBox(height: 18),
-        _buildLabel('Fuente'),
+        const NeumorphicLabel(text: 'Fuente'),
         const SizedBox(height: 8),
-        _buildTextField(
+        NeumorphicTextField(
           controller: _fuenteController,
           hint: 'Ej: Empresa XYZ',
           icon: Icons.business_outlined,
+          iconColor: AppModuleColors.ingresos,
         ),
         const SizedBox(height: 18),
-        _buildLabel('Fecha de registro', required: true),
+        const NeumorphicLabel(text: 'Fecha de registro', required: true),
         const SizedBox(height: 8),
         _buildFechaField(),
         const SizedBox(height: 18),
-        _buildLabel('Categoría'),
+        const NeumorphicLabel(text: 'Categoría'),
         const SizedBox(height: 8),
         _buildCategoriaField(),
       ],
     );
   }
 
-  Widget _buildLabel(String text, {bool required = false}) {
-    return RichText(
-      text: TextSpan(
-        children: [
-          TextSpan(
-            text: text,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          if (required)
-            const TextSpan(
-              text: ' *',
-              style: TextStyle(
-                color: AppColors.error,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInsetBox({required Widget child}) {
-    return DecoratedBox(
-      decoration: clayInset(radius: AppRadius.md),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        child: child,
-      ),
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String hint,
-    required IconData icon,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return _buildInsetBox(
-      child: TextField(
-        controller: controller,
-        keyboardType: keyboardType,
-        style: const TextStyle(color: AppColors.textPrimary, fontSize: 15),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: const TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 14,
-          ),
-          filled: false,
-          fillColor: Colors.transparent,
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          errorBorder: InputBorder.none,
-          focusedErrorBorder: InputBorder.none,
-          prefixIcon: Icon(icon, color: AppModuleColors.ingresos, size: 20),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildFechaField() {
-    return _buildInsetBox(
-      child: InkWell(
-        onTap: _showCalendarSheet,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.calendar_month,
-                color: AppModuleColors.ingresos,
-                size: 20,
-              ),
-              const SizedBox(width: 10),
-              Text(
-                _formatFecha(_fecha),
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 14,
-                ),
-              ),
-              const Spacer(),
-              const Icon(
-                Icons.expand_more,
-                color: AppColors.textSecondary,
-                size: 20,
-              ),
-            ],
-          ),
-        ),
-      ),
+    return NeumorphicActionField(
+      onTap: _showCalendarSheet,
+      icon: Icons.calendar_month,
+      iconColor: AppModuleColors.ingresos,
+      value: _formatFecha(_fecha),
+      hint: 'Seleccionar fecha',
     );
   }
 
   Widget _buildCategoriaField() {
     final cat = _categoriaSeleccionada;
-    return _buildInsetBox(
-      child: InkWell(
-        onTap: _showCategorySheet,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            children: [
-              if (cat != null) ...[
-                Icon(
-                  _getIconForCategory(cat.nombre),
-                  color: _getColorForCategory(cat.nombre),
-                  size: 20,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    cat.nombre,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ] else
-                const Expanded(
-                  child: Text(
-                    'Sin seleccionar',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              const Icon(
-                Icons.expand_more,
-                color: AppColors.textSecondary,
-                size: 20,
-              ),
-            ],
-          ),
-        ),
-      ),
+    return NeumorphicActionField(
+      onTap: _showCategorySheet,
+      icon: cat != null ? _getIconForCategory(cat.nombre) : Icons.category_outlined,
+      iconColor: cat != null ? _getColorForCategory(cat.nombre) : AppModuleColors.ingresos,
+      value: cat?.nombre,
+      hint: 'Sin seleccionar',
     );
   }
 
@@ -536,18 +371,8 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
     final offset = DateTime(year, month, 1).weekday - 1;
 
     const List<String> meses = [
-      'Enero',
-      'Febrero',
-      'Marzo',
-      'Abril',
-      'Mayo',
-      'Junio',
-      'Julio',
-      'Agosto',
-      'Septiembre',
-      'Octubre',
-      'Noviembre',
-      'Diciembre',
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
     ];
 
     return Container(
@@ -575,29 +400,16 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
             const SizedBox(height: 16),
             Text(
               '${meses[month - 1]} $year',
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 18),
             Row(
               children: ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do']
-                  .map(
-                    (d) => Expanded(
-                      child: Center(
-                        child: Text(
-                          d,
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ),
+                  .map((d) => Expanded(
+                    child: Center(
+                      child: Text(d, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
                     ),
-                  )
-                  .toList(),
+                  )).toList(),
             ),
             const SizedBox(height: 10),
             GridView.builder(
@@ -615,12 +427,10 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
                 final isSelected = day == _fecha.day;
                 final isFuture = dayDate.isAfter(DateTime.now());
                 return GestureDetector(
-                  onTap: isFuture
-                      ? null
-                      : () {
-                          setState(() => _fecha = dayDate);
-                          Navigator.pop(context);
-                        },
+                  onTap: isFuture ? null : () {
+                    setState(() => _fecha = dayDate);
+                    Navigator.pop(context);
+                  },
                   child: Opacity(
                     opacity: isFuture ? 0.25 : 1.0,
                     child: Container(
@@ -628,25 +438,16 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
                       decoration: isSelected
                           ? const BoxDecoration(
                               shape: BoxShape.circle,
-                              gradient: RadialGradient(
-                                colors: [AppModuleColors.ingresos, Color(0xFF34D399)],
-                              ),
+                              gradient: RadialGradient(colors: [AppModuleColors.ingresos, Color(0xFF34D399)]),
                             )
-                          : const BoxDecoration(
-                              color: AppColors.background,
-                              shape: BoxShape.circle,
-                            ),
+                          : const BoxDecoration(color: AppColors.background, shape: BoxShape.circle),
                       child: Center(
                         child: Text(
                           '$day',
                           style: TextStyle(
-                            color: isSelected
-                                ? Colors.black
-                                : AppColors.textPrimary,
+                            color: isSelected ? Colors.black : AppColors.textPrimary,
                             fontSize: 12,
-                            fontWeight: isSelected
-                                ? FontWeight.bold
-                                : FontWeight.w500,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                           ),
                         ),
                       ),
@@ -680,39 +481,26 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
                   child: Container(
                     width: 40,
                     height: 4,
-                    decoration: BoxDecoration(
-                      color: AppColors.navInactive,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+                    decoration: BoxDecoration(color: AppColors.navInactive, borderRadius: BorderRadius.circular(2)),
                   ),
                 ),
                 const SizedBox(height: 16),
                 const Text(
                   'Seleccionar categoría',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
                 Stack(
                   alignment: Alignment.bottomCenter,
                   children: [
                     ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxHeight: MediaQuery.of(context).size.height * 0.55,
-                      ),
+                      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.55),
                       child: NotificationListener<ScrollNotification>(
                         onNotification: (scroll) {
                           if (scroll.metrics.extentAfter > 10) {
-                            if (!_showScrollIndicator) {
-                              setSheetState(() => _showScrollIndicator = true);
-                            }
+                            if (!_showScrollIndicator) setSheetState(() => _showScrollIndicator = true);
                           } else {
-                            if (_showScrollIndicator) {
-                              setSheetState(() => _showScrollIndicator = false);
-                            }
+                            if (_showScrollIndicator) setSheetState(() => _showScrollIndicator = false);
                           }
                           return false;
                         },
@@ -720,21 +508,12 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
                           controller: _categoryScrollController,
                           shrinkWrap: true,
                           itemCount: _listaCategorias.length,
-                          separatorBuilder: (_, _) =>
-                              const SizedBox(height: 12),
+                          separatorBuilder: (_, _) => const SizedBox(height: 12),
                           itemBuilder: (context, index) {
                             WidgetsBinding.instance.addPostFrameCallback((_) {
                               if (_categoryScrollController.hasClients) {
-                                final hasMore =
-                                    _categoryScrollController
-                                        .position
-                                        .extentAfter >
-                                    10;
-                                if (hasMore != _showScrollIndicator) {
-                                  setSheetState(
-                                    () => _showScrollIndicator = hasMore,
-                                  );
-                                }
+                                final hasMore = _categoryScrollController.position.extentAfter > 10;
+                                if (hasMore != _showScrollIndicator) setSheetState(() => _showScrollIndicator = hasMore);
                               }
                             });
                             return _buildCategoryCard(_listaCategorias[index]);
@@ -742,8 +521,7 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
                         ),
                       ),
                     ),
-                    if (_showScrollIndicator)
-                      Positioned(bottom: 0, child: _ArrowIndicator()),
+                    if (_showScrollIndicator) Positioned(bottom: 0, child: _ArrowIndicator()),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -769,22 +547,14 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
         decoration: clayRaised(
           color: AppColors.surface,
           radius: AppRadius.md,
-          border: isSelected
-              ? Border.all(
-                  color: AppModuleColors.ingresos.withValues(alpha: 0.6),
-                  width: 1.5,
-                )
-              : null,
+          border: isSelected ? Border.all(color: AppModuleColors.ingresos.withValues(alpha: 0.6), width: 1.5) : null,
         ),
         child: Row(
           children: [
             Container(
               width: 44,
               height: 44,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
-              ),
+              decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)),
               child: Icon(icon, color: color, size: 22),
             ),
             const SizedBox(width: 14),
@@ -792,23 +562,9 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    cat.nombre,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  Text(cat.nombre, style: const TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
                   if (cat.descripcion != null)
-                    Text(
-                      cat.descripcion!,
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 11,
-                      ),
-                      maxLines: 1,
-                    ),
+                    Text(cat.descripcion!, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11), maxLines: 1),
                 ],
               ),
             ),
@@ -819,105 +575,48 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
   }
 
   Widget _buildGuardarButton() {
-    return GestureDetector(
-      onTap: _isSaving ? null : _guardarIngreso,
-      child: Container(
-        width: double.infinity,
-        height: 56,
-        decoration: clayGlow(color: AppModuleColors.ingresos, radius: AppRadius.lg),
-        child: Center(
-          child: _isSaving
-              ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    color: Colors.black,
-                    strokeWidth: 2,
-                  ),
-                )
-              : Text(
-                  widget.ingresoParaEditar != null
-                      ? 'Guardar cambios'
-                      : 'Guardar ingreso',
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-        ),
-      ),
+    return NeumorphicPrimaryButton(
+      label: widget.ingresoParaEditar != null ? 'Guardar cambios' : 'Guardar ingreso',
+      onTap: _guardarIngreso,
+      color: AppModuleColors.ingresos,
+      isLoading: _isSaving,
     );
   }
 
   Widget _buildCancelarButton() {
-    return GestureDetector(
+    return NeumorphicSecondaryButton(
+      label: 'Cancelar',
       onTap: () => Navigator.pop(context),
-      child: Container(
-        width: double.infinity,
-        height: 52,
-        decoration: clayRaised(color: AppColors.surface, radius: AppRadius.lg),
-        child: const Center(
-          child: Text(
-            'Cancelar',
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ),
     );
   }
 
   IconData _getIconForCategory(String nombre) {
     switch (nombre) {
-      case 'Salario':
-        return Icons.payments;
-      case 'Venta':
-        return Icons.sell;
-      case 'Regalo':
-        return Icons.card_giftcard;
-      case 'Inversión':
-        return Icons.trending_up;
-      case 'Bonificación':
-        return Icons.redeem;
-      case 'Reembolso':
-        return Icons.settings_backup_restore;
-      case 'Honorarios':
-        return Icons.work;
-      case 'Arriendo':
-        return Icons.apartment;
-      case 'Otros':
-        return Icons.more_horiz;
-      default:
-        return Icons.account_balance_wallet;
+      case 'Salario': return Icons.payments;
+      case 'Venta': return Icons.sell;
+      case 'Regalo': return Icons.card_giftcard;
+      case 'Inversión': return Icons.trending_up;
+      case 'Bonificación': return Icons.redeem;
+      case 'Reembolso': return Icons.settings_backup_restore;
+      case 'Honorarios': return Icons.work;
+      case 'Arriendo': return Icons.apartment;
+      case 'Otros': return Icons.more_horiz;
+      default: return Icons.account_balance_wallet;
     }
   }
 
   Color _getColorForCategory(String nombre) {
     switch (nombre) {
-      case 'Salario':
-        return const Color(0xFF4ADE80);
-      case 'Venta':
-        return const Color(0xFF34D399);
-      case 'Regalo':
-        return const Color(0xFFF472B6);
-      case 'Inversión':
-        return const Color(0xFF60A5FA);
-      case 'Bonificación':
-        return const Color(0xFFFBBF24);
-      case 'Reembolso':
-        return const Color(0xFFA8A2FF);
-      case 'Honorarios':
-        return const Color(0xFFC084FC);
-      case 'Arriendo':
-        return const Color(0xFFFF8C4A);
-      case 'Otros':
-        return const Color(0xFF94A3B8);
-      default:
-        return const Color(0xFF2DD4BF);
+      case 'Salario': return const Color(0xFF4ADE80);
+      case 'Venta': return const Color(0xFF34D399);
+      case 'Regalo': return const Color(0xFFF472B6);
+      case 'Inversión': return const Color(0xFF60A5FA);
+      case 'Bonificación': return const Color(0xFFFBBF24);
+      case 'Reembolso': return const Color(0xFFA8A2FF);
+      case 'Honorarios': return const Color(0xFFC084FC);
+      case 'Arriendo': return const Color(0xFFFF8C4A);
+      case 'Otros': return const Color(0xFF94A3B8);
+      default: return const Color(0xFF2DD4BF);
     }
   }
 }
@@ -927,22 +626,15 @@ class _ArrowIndicator extends StatefulWidget {
   State<_ArrowIndicator> createState() => _ArrowIndicatorState();
 }
 
-class _ArrowIndicatorState extends State<_ArrowIndicator>
-    with SingleTickerProviderStateMixin {
+class _ArrowIndicatorState extends State<_ArrowIndicator> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    )..repeat(reverse: true);
-    _animation = Tween<double>(
-      begin: 0,
-      end: 8,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000))..repeat(reverse: true);
+    _animation = Tween<double>(begin: 0, end: 8).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -963,44 +655,12 @@ class _ArrowIndicatorState extends State<_ArrowIndicator>
             decoration: BoxDecoration(
               color: AppColors.surface.withValues(alpha: 0.8),
               shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  blurRadius: 4,
-                ),
-              ],
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)],
             ),
-            child: const Icon(
-              Icons.keyboard_arrow_down,
-              color: AppModuleColors.ingresos,
-              size: 24,
-            ),
+            child: const Icon(Icons.keyboard_arrow_down, color: AppModuleColors.ingresos, size: 24),
           ),
         );
       },
-    );
-  }
-}
-
-class _NeumorphicIcon extends StatelessWidget {
-  final IconData icon;
-  final double size;
-  final VoidCallback onTap;
-  const _NeumorphicIcon({
-    required this.icon,
-    required this.size,
-    required this.onTap,
-  });
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: clayRaised(color: AppColors.surface, radius: 20),
-        child: Icon(icon, color: AppColors.textSecondary, size: size),
-      ),
     );
   }
 }

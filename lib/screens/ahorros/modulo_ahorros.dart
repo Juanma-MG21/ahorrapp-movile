@@ -81,6 +81,7 @@ class _ModuloAhorrosState extends State<ModuloAhorros> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'fab_ahorros',
         onPressed: () async {
           final result = await Navigator.push(
             context,

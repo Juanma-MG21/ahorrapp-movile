@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-// import'../../core/theme/app_theme.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../models/presupuesto_model.dart';
 import '../../providers/presupuesto_provider.dart';
+import '../../widgets/neumorphic_widgets.dart';
 
 /// Abre el formulario de crear/editar perfil como bottom sheet.
 /// Si `perfil` es null, es modo "crear"; si no, precarga sus valores
@@ -199,24 +199,33 @@ class _PerfilFormSheetState extends State<_PerfilFormSheet> {
                 ),
               ),
               const SizedBox(height: 16),
-              _Campo(
-                label: 'NOMBRE DEL PERFIL',
+              const NeumorphicLabel(text: 'NOMBRE DEL PERFIL'),
+              const SizedBox(height: 8),
+              NeumorphicTextField(
                 controller: _nombreCtrl,
+                hint: 'Ej: Presupuesto Mensual',
                 icon: Icons.badge_outlined,
+                iconColor: AppModuleColors.presupuestos,
               ),
               const SizedBox(height: 12),
-              _Campo(
-                label: 'DESCRIPCIÓN (OPCIONAL)',
+              const NeumorphicLabel(text: 'DESCRIPCIÓN (OPCIONAL)'),
+              const SizedBox(height: 8),
+              NeumorphicTextField(
                 controller: _descripcionCtrl,
+                hint: 'Breve descripción...',
                 maxLines: 2,
                 icon: Icons.description_outlined,
+                iconColor: AppModuleColors.presupuestos,
               ),
               const SizedBox(height: 12),
-              _Campo(
-                label: 'DÍA DE CORTE (1-31)',
+              const NeumorphicLabel(text: 'DÍA DE CORTE (1-31)'),
+              const SizedBox(height: 8),
+              NeumorphicTextField(
                 controller: _diaCorteCtrl,
+                hint: '1',
                 keyboardType: TextInputType.number,
                 icon: Icons.calendar_today_outlined,
+                iconColor: AppModuleColors.presupuestos,
               ),
               const SizedBox(height: 24),
               Row(
@@ -281,89 +290,16 @@ class _PerfilFormSheetState extends State<_PerfilFormSheet> {
                 ),
               ],
               const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 60, // Aumentado de 54 a 60
-                child: ElevatedButton(
-                  onPressed: _guardando ? null : _guardar,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppModuleColors.presupuestos,
-                    foregroundColor: Colors.black,
-                    elevation: 4, // Añadida elevación para que "se vea más"
-                    shadowColor: AppModuleColors.presupuestos.withValues(alpha: 0.3),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                  ),
-                  child: _guardando
-                      ? const SizedBox(
-                          width: 28,
-                          height: 28,
-                          child: CircularProgressIndicator(strokeWidth: 3, color: Colors.black),
-                        )
-                      : Text(
-                          _esEdicion ? 'GUARDAR CAMBIOS' : 'CREAR PERFIL',
-                          style: const TextStyle(
-                            fontSize: 16, // Tamaño de letra aumentado
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                ),
+              NeumorphicPrimaryButton(
+                label: _esEdicion ? 'GUARDAR CAMBIOS' : 'CREAR PERFIL',
+                onTap: _guardar,
+                color: AppModuleColors.presupuestos,
+                isLoading: _guardando,
               ),
             ],
           ),
         ),
       ),
-    );
-  }
-}
-
-class _Campo extends StatelessWidget {
-  const _Campo({
-    required this.label,
-    required this.controller,
-    required this.icon,
-    this.keyboardType,
-    this.maxLines = 1,
-  });
-
-  final String label;
-  final TextEditingController controller;
-  final IconData icon;
-  final TextInputType? keyboardType;
-  final int maxLines;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 6),
-          child: Text(
-            label,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 9,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1,
-            ),
-          ),
-        ),
-        TextField(
-          controller: controller,
-          keyboardType: keyboardType,
-          maxLines: maxLines,
-          style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600),
-          decoration: InputDecoration(
-            prefixIcon: Icon(icon, size: 20, color: AppModuleColors.presupuestos),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            filled: true,
-            fillColor: AppColors.background.withValues(alpha: 0.5),
-          ),
-        ),
-      ],
     );
   }
 }
@@ -419,24 +355,19 @@ class _CampoPorcentaje extends StatelessWidget {
           ),
           SizedBox(
             width: 70,
-            child: TextField(
-              controller: controller,
-              keyboardType: TextInputType.number,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w900),
-              decoration: InputDecoration(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                suffixText: '%',
-                suffixStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
-                filled: true,
-                fillColor: AppColors.surfaceAlt.withValues(alpha: 0.5),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: AppColors.borderLight),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: AppModuleColors.presupuestos, width: 1),
+            child: NeumorphicInsetBox(
+              radius: 10,
+              child: TextField(
+                controller: controller,
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w900),
+                decoration: const InputDecoration(
+                  contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  suffixText: '%',
+                  suffixStyle: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                  filled: false,
+                  border: InputBorder.none,
                 ),
               ),
             ),

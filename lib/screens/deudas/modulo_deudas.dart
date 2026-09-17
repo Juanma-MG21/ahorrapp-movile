@@ -72,6 +72,7 @@ class _ModuloDeudasState extends State<ModuloDeudas> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'fab_deudas',
         onPressed: () async {
           final result = await Navigator.push(
             context,
