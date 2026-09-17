@@ -20,16 +20,26 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final mensaje = await AuthService.instance.forgotPassword(email: _emailController.text.trim());
+      final email = _emailController.text.trim();
+      final mensaje = await AuthService.instance.forgotPassword(email: email);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(mensaje)));
-      
-      // En un flujo real de Render, aquí podrías navegar a una pantalla de "Ingresar Código"
-      // o simplemente avisar al usuario. Por ahora, regresamos al login para que use el enlace.
-      Navigator.of(context).pop();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(mensaje)),
+      );
+
+      await Navigator.of(context).pushNamed(
+        '/reset-password',
+        arguments: {'email': email},
+      );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

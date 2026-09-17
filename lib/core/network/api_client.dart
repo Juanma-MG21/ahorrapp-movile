@@ -156,11 +156,15 @@ class ApiClient {
       );
     }
 
-    final bool ok = decoded['ok'] == true;
+    final bool ok =
+        decoded['ok'] == true ||
+        decoded.containsKey('mensaje') ||
+        decoded.containsKey('message');
 
     if (!ok || response.statusCode >= 400) {
       final mensaje =
           decoded['mensaje'] as String? ??
+          decoded['message'] as String? ??
           'Ocurrió un error inesperado (código ${response.statusCode})';
       throw ApiException(mensaje, statusCode: response.statusCode);
     }

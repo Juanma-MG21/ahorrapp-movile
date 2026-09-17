@@ -30,10 +30,11 @@ class Usuario {
 }
 
 class AuthService {
-  AuthService._internal();
+  AuthService._internal() : _api = ApiClient();
+  AuthService.forTesting([ApiClient? api]) : _api = api ?? ApiClient();
   static final AuthService instance = AuthService._internal();
 
-  final ApiClient _api = ApiClient();
+  final ApiClient _api;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   final LocalAuthentication _localAuth = LocalAuthentication();
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
@@ -178,10 +179,7 @@ class AuthService {
 
     final data = await _api.postRaw(
       '/auth/google',
-      body: {
-        'idToken': idToken,
-        'provider': 'google',
-      },
+      body: {'idToken': idToken, 'provider': 'google'},
     );
 
     final token = data['token'] as String? ?? data['accessToken'] as String?;
@@ -194,7 +192,8 @@ class AuthService {
     _memoryToken = token;
     await _storage.write(key: _tokenKey, value: token);
 
-    final usuarioData = data['usuario'] as Map<String, dynamic>? ??
+    final usuarioData =
+        data['usuario'] as Map<String, dynamic>? ??
         data['user'] as Map<String, dynamic>?;
 
     if (usuarioData == null) {
@@ -209,9 +208,11 @@ class AuthService {
   Future<String> forgotPassword({required String email}) async {
     final data = await _api.post(
       '/auth/forgot-password',
-      body: {'Email': email},
+      body: {'email': email, 'Email': email},
     );
-    return data['mensaje'] as String? ?? 'Se ha enviado un correo';
+    return data['mensaje'] as String? ??
+        data['message'] as String? ??
+        'Se ha enviado un correo';
   }
 
   Future<String> verifyResetCode({
@@ -220,9 +221,12 @@ class AuthService {
   }) async {
     final data = await _api.post(
       '/auth/verify-reset-code',
-      body: {'Email': email, 'code': code},
+      body: {'email': email, 'Email': email, 'code': code, 'Code': code},
     );
-    return data['resetToken'] as String? ?? '';
+    return data['resetToken'] as String? ??
+        data['token'] as String? ??
+        data['reset_token'] as String? ??
+        '';
   }
 
   Future<void> resetPassword({
@@ -231,7 +235,13 @@ class AuthService {
   }) async {
     await _api.post(
       '/auth/reset-password',
-      body: {'resetToken': resetToken, 'nuevaPassword': nuevaPassword},
+      body: {
+        'resetToken': resetToken,
+        'token': resetToken,
+        'nuevaPassword': nuevaPassword,
+        'password': nuevaPassword,
+        'newPassword': nuevaPassword,
+      },
     );
   }
 

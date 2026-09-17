@@ -14,6 +14,7 @@ class ResetPasswordScreen extends StatefulWidget {
 
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _codeController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
@@ -23,6 +24,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
   @override
   void dispose() {
+    _codeController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -31,14 +33,17 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // El resetToken llega como argumento de ruta desde
-    // forgot_password_screen.dart (Navigator.pushNamed con arguments).
-    final resetToken = ModalRoute.of(context)?.settings.arguments as String?;
+    final arguments = ModalRoute.of(context)?.settings.arguments;
+    final email = arguments is Map ? arguments['email'] as String? : null;
+    final resetToken = arguments is String ? arguments :
+        arguments is Map ? arguments['resetToken'] as String? : null;
 
-    if (resetToken == null) {
+    if ((email == null || email.isEmpty) && (resetToken == null || resetToken.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('El enlace de recuperación no es válido. Solicítalo de nuevo.'),
+          content: Text(
+            'No se encontró la información de recuperación. Solicítala de nuevo.',
+          ),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -48,8 +53,28 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     setState(() => _isLoading = true);
 
     try {
+      String resolvedToken = resetToken ?? '';
+
+      if (resolvedToken.isEmpty) {
+        final code = _codeController.text.trim();
+        if (code.isEmpty) {
+          throw ApiException('Ingresa el código que recibiste por correo.');
+        }
+
+        resolvedToken = await AuthService.instance.verifyResetCode(
+          email: email!,
+          code: code,
+        );
+      }
+
+      if (resolvedToken.isEmpty) {
+        throw ApiException(
+          'El código o enlace de recuperación no es válido. Inténtalo de nuevo.',
+        );
+      }
+
       await AuthService.instance.resetPassword(
-        resetToken: resetToken,
+        resetToken: resolvedToken,
         nuevaPassword: _passwordController.text,
       );
 
@@ -60,10 +85,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         const SnackBar(content: Text('Contrasena actualizada con exito')),
       );
 
-      // Volver al login despues de cambiar la clave
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const AuthGate()),
-            (route) => false,
+        (route) => false,
       );
     } on ApiException catch (error) {
       if (!mounted) return;
@@ -134,6 +158,26 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             key: _formKey,
             child: Column(
               children: [
+                if (ModalRoute.of(context)?.settings.arguments is Map &&
+                    (ModalRoute.of(context)?.settings.arguments as Map)['resetToken'] == null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: TextFormField(
+                      controller: _codeController,
+                      keyboardType: TextInputType.number,
+                      textInputAction: TextInputAction.next,
+                      decoration: const InputDecoration(
+                        labelText: 'CÓDIGO DE VERIFICACIÓN',
+                        suffixIcon: Icon(Icons.confirmation_number_rounded, size: 20),
+                      ),
+                      validator: (value) {
+                        if ((value ?? '').trim().isEmpty) {
+                          return 'Ingresa el código recibido';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _hidePassword,
