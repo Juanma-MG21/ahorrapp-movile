@@ -13,6 +13,8 @@ import '../screens/dependientes/dependientes_screen.dart';
 import '../screens/dashboard/dashboard_screen.dart';
 import 'categorias/categorias_screen.dart';
 import '../services/quick_actions_service.dart';
+import '../screens/reportes/reportes_screen.dart';
+import 'cuenta/mi_cuenta_screen.dart';
 
 /// Metadata (icono + label) de cada pantalla accesible desde el menú
 /// "Más". El índice de cada _MenuItem debe corresponder al mismo
@@ -54,7 +56,6 @@ class _MainScreenState extends State<MainScreen> {
     ModuloGastos(),
     ModuloPresupuestos(),
   ];
-
   // Pantallas accesibles desde "Más", alineadas 1 a 1 con _itemsMas.
   final List<Widget> _pantallasSecundarias = const [
     ModuloImprevistos(),
@@ -64,10 +65,6 @@ class _MainScreenState extends State<MainScreen> {
     PanelDependientesScreen(),
     ModuloCategoriasScreen(), // Agregamos la pantalla de categorías al final
   ];
-
-  // 0-3 = una de las pestañas fijas. 4 = estamos mostrando algo de "Más".
-  int _tabPrincipal = 2; // Empezamos en Gastos.
-
   // Cuál de _pantallasSecundarias se muestra cuando _tabPrincipal == 4.
   int _indiceSecundario = 0;
 
@@ -153,14 +150,14 @@ class _MainScreenState extends State<MainScreen> {
           child: SafeArea(
             top: false,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem(Icons.home_outlined, 'Inicio', 0),
-                _buildNavItem(Icons.arrow_upward, 'Ingresos', 1),
-                _buildNavItem(Icons.account_balance_wallet, 'Gastos', 2),
-                _buildNavItem(Icons.pie_chart_outline, 'Presupuestos', 3),
-                _buildMasNavItem(),
-              ],
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildNavItem(Icons.home_outlined, 'Inicio', 0),
+                  _buildNavItem(Icons.arrow_upward, 'Ingresos', 1),
+                  _buildNavItem(Icons.account_balance_wallet, 'Gastos', 2),
+                  _buildNavItem(Icons.pie_chart_outline, 'Presupuestos', 3),
+                  _buildMasNavItem(),
+                ],
             ),
           ),
         ),

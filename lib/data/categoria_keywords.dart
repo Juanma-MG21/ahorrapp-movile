@@ -1,15 +1,3 @@
-// lib/data/categoria_keywords.dart
-//
-// Diccionario de palabras clave -> nombre de categoría, compartido por
-// QrParserService y OcrParserService. Es solo data (no lógica): al
-// extraerlo a un archivo único, agregar o ajustar una categoría se
-// refleja automáticamente en ambos flujos de autollenado sin tener que
-// tocar cada parser por separado.
-//
-// Los nombres del lado derecho deben coincidir EXACTAMENTE (mismas
-// tildes/mayúsculas) con los nombres reales de categorías en la tabla
-// `categorias`, porque AgregarGastoScreen hace el match por nombre
-// (case-insensitive) contra las categorías reales del backend.
 const Map<String, String> mapeoCategoriasKeywords = {
   // Alimentación
   'supermercado': 'Alimentación', 'super': 'Alimentación', 'mercado': 'Alimentación',
