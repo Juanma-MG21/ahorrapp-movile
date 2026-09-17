@@ -451,9 +451,12 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
     );
   }
 
-  Widget _buildCategorySheet() {
+    Widget _buildCategorySheet() {
     return Container(
-      decoration: const BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       child: SafeArea(
         top: false,
@@ -461,25 +464,44 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.navInactive, borderRadius: BorderRadius.circular(2)))),
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.navInactive,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
             const SizedBox(height: 16),
-            const Text('Seleccionar categoría', style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              'Seleccionar categoría',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 16),
             ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.55),
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.55,
+              ),
               child: ListView.separated(
                 shrinkWrap: true,
                 itemCount: _listaCategorias.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, index) => _buildCategoryCard(_listaCategorias[index]),
+                itemBuilder: (context, index) =>
+                    _buildCategoryCard(_listaCategorias[index]),
               ),
             ),
-          ],),
-        );
-      )}
-    )
+          ],
+        ),
+      ),
+    );
   }
-
+  
   Widget _buildCategoryCard(CategoriaModel cat) {
     final isSelected = _idCategoria == cat.id;
     final icon = _getIconForCategory(cat.nombre);

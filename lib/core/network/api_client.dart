@@ -30,18 +30,23 @@ class ApiClient {
   Map<String, String> _headers({String? token}) {
     return {
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
       if (token != null) 'Authorization': 'Bearer $token',
     };
   }
 
+  // ============================================================
+  // MÉTODOS GENÉRICOS (esperan respuesta { ok, ... } del backend)
+  // ============================================================
+
   /// POST genérico. [path] empieza con '/', ej: '/auth/login'.
   Future<Map<String, dynamic>> post(
-      String path, {
-        Map<String, dynamic>? body,
-        String? token,
-      }) {
+    String path, {
+    Map<String, dynamic>? body,
+    String? token,
+  }) {
     return _send(
-          () => http.post(
+      () => http.post(
         _uri(path),
         headers: _headers(token: token),
         body: jsonEncode(body ?? {}),
@@ -52,18 +57,18 @@ class ApiClient {
   /// GET genérico. Para endpoints que responden { ok, ... }.
   Future<Map<String, dynamic>> get(String path, {String? token}) {
     return _send(
-          () => http.get(_uri(path), headers: _headers(token: token)),
+      () => http.get(_uri(path), headers: _headers(token: token)),
     );
   }
 
   /// PUT genérico.
   Future<Map<String, dynamic>> put(
-      String path, {
-        Map<String, dynamic>? body,
-        String? token,
-      }) {
+    String path, {
+    Map<String, dynamic>? body,
+    String? token,
+  }) {
     return _send(
-          () => http.put(
+      () => http.put(
         _uri(path),
         headers: _headers(token: token),
         body: jsonEncode(body ?? {}),
@@ -74,23 +79,28 @@ class ApiClient {
   /// DELETE genérico. Para endpoints que responden { ok, ... }.
   Future<Map<String, dynamic>> delete(String path, {String? token}) {
     return _send(
-          () => http.delete(_uri(path), headers: _headers(token: token)),
+      () => http.delete(_uri(path), headers: _headers(token: token)),
     );
   }
 
+  /// PATCH genérico.
   Future<Map<String, dynamic>> patch(
-      String path, {
-        Map<String, dynamic>? body,
-        String? token,
-      }) {
+    String path, {
+    Map<String, dynamic>? body,
+    String? token,
+  }) {
     return _send(
-          () => http.patch(
+      () => http.patch(
         _uri(path),
         headers: _headers(token: token),
         body: jsonEncode(body ?? {}),
       ),
     );
   }
+
+  // ============================================================
+  // GET PARA RESPUESTAS DE TIPO LISTA
+  // ============================================================
 
   /// GET para endpoints que responden un array plano en vez de { ok, ... },
   /// como GET /movimientos/ingresos.
@@ -132,9 +142,69 @@ class ApiClient {
     }
   }
 
+  // ============================================================
+  // POST "CRUDO" — no asume { ok, ... }
+  // ============================================================
+
+  /// POST que NO espera el formato { ok, ... } del backend.
+  /// Se usa, por ejemplo, para flujos de auth con Google donde
+  /// el backend devuelve directamente { token, usuario } u otro shape.
+  Future<Map<String, dynamic>> postRaw(
+    String path, {
+    Map<String, String>? headers,
+    Object? body,
+  }) async {
+    late final http.Response response;
+
+    try {
+      response = await http
+          .post(
+            _uri(path),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              ...?headers,
+            },
+            body: body == null ? null : jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 45));
+    } on TimeoutException {
+      throw ApiException(
+        'El servidor está tardando demasiado en responder. Puede estar iniciándose; inténtalo de nuevo en unos segundos.',
+      );
+    } catch (e) {
+      throw ApiException(
+        'No se pudo conectar con el servidor ($e). Revisa tu conexión.',
+      );
+    }
+
+    Map<String, dynamic> decoded;
+    try {
+      decoded = jsonDecode(response.body) as Map<String, dynamic>;
+    } catch (e) {
+      throw ApiException(
+        'Respuesta del servidor no es JSON válido (posible error 404 o 500 HTML). Detalles: $e',
+        statusCode: response.statusCode,
+      );
+    }
+
+    if (response.statusCode >= 400) {
+      final mensaje = decoded['mensaje'] as String? ??
+          decoded['message'] as String? ??
+          'Ocurrió un error inesperado (código ${response.statusCode})';
+      throw ApiException(mensaje, statusCode: response.statusCode);
+    }
+
+    return decoded;
+  }
+
+  // ============================================================
+  // ENVÍO INTERNO CON TIMEOUT Y PARSEO ESTÁNDAR
+  // ============================================================
+
   Future<Map<String, dynamic>> _send(
-      Future<http.Response> Function() request,
-      ) async {
+    Future<http.Response> Function() request,
+  ) async {
     late final http.Response response;
 
     try {

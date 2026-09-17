@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
-// PRUEBA TODAVIA SE SIGUE TESTEANDO 
+import '../../core/theme/design_tokens.dart';
+
 // ---------------------------------------------------------------------------
-// Colores (definidos aquí para no depender de variables globales)
+// Colores locales (los que no están en design_tokens)
 // ---------------------------------------------------------------------------
-const Color fondoOscuro = Color(0xFF0f172a);
-const Color fondoTarjeta = Color(0xFF1e293b);
-const Color dorado = Color(0xFFE0B855);
+const Color fondoOscuro  = Color(0xFF0F172A);
+const Color fondoTarjeta = Color(0xFF1E293B);
+const Color dorado       = Color(0xFFE0B855);
 
 // Colores por tipo de movimiento (mismo criterio que el frontend)
 const Map<String, Color> colorPorTipo = {
-  'ingreso': AppMovimientoColors.ingreso,
-  'gasto': AppMovimientoColors.gasto,
+  'ingreso':    AppMovimientoColors.ingreso,
+  'gasto':      AppMovimientoColors.gasto,
   'imprevisto': AppMovimientoColors.imprevisto,
-  'ahorro': AppMovimientoColors.ahorro,
+  'ahorro':     AppMovimientoColors.ahorro,
 };
 
 // ---------------------------------------------------------------------------
@@ -45,19 +46,22 @@ class CalendarioScreen extends StatefulWidget {
 
 class _CalendarioScreenState extends State<CalendarioScreen> {
   // Fechas seleccionadas y enfocadas
-  DateTime _diaFocalizado = DateTime.now();
+  DateTime _diaFocalizado   = DateTime.now();
   DateTime _diaSeleccionado = DateTime.now();
+
+  // 👇 campo que faltaba
+  bool _isLoading = false;
 
   // Datos de ejemplo de movimientos (esto debería venir de tu backend)
   final Map<DateTime, List<String>> _movimientosPorDia = {
-    _fechaSinHora(DateTime(2026, 8, 5)): ['ahorro'],
+    _fechaSinHora(DateTime(2026, 8,  5)): ['ahorro'],
     _fechaSinHora(DateTime(2026, 8, 10)): ['imprevisto'],
     _fechaSinHora(DateTime(2026, 8, 14)): ['ahorro'],
     _fechaSinHora(DateTime(2026, 8, 15)): ['gasto'],
     _fechaSinHora(DateTime(2026, 8, 16)): ['ingreso'],
     _fechaSinHora(DateTime(2026, 8, 20)): ['gasto'],
-    _fechaSinHora(DateTime(2026, 8, 24)): ['ahorro'],
     _fechaSinHora(DateTime(2026, 8, 23)): ['gasto', 'ingreso'],
+    _fechaSinHora(DateTime(2026, 8, 24)): ['ahorro'],
   };
 
   // Normaliza una fecha quitando la hora (para comparar días)
@@ -68,6 +72,27 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
   // Obtiene los movimientos de un día concreto
   List<String> _obtenerMovimientosDelDia(DateTime dia) {
     return _movimientosPorDia[_fechaSinHora(dia)] ?? [];
+  }
+
+  // 👇 método que faltaba: cuenta movimientos por tipo en el mes enfocado
+  Map<String, int> _resumenDelMes() {
+    final conteo = <String, int>{
+      'ingreso': 0,
+      'gasto': 0,
+      'imprevisto': 0,
+      'ahorro': 0,
+    };
+
+    _movimientosPorDia.forEach((fecha, tipos) {
+      if (fecha.year == _diaFocalizado.year &&
+          fecha.month == _diaFocalizado.month) {
+        for (final t in tipos) {
+          conteo[t] = (conteo[t] ?? 0) + 1;
+        }
+      }
+    });
+
+    return conteo;
   }
 
   // -------------------------------------------------------------------------
@@ -83,11 +108,16 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
         elevation: 0,
         title: const Text(
           'Calendario',
-          style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: AppColors.accent,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.accent),
+            )
           : Column(
               children: [
                 _buildTarjetaTitulo(),
@@ -98,11 +128,12 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
   }
 
   // -------------------------------------------------------------------------
-  // Tarjeta con resumen del mes (ejemplo estático)
+  // Tarjeta con resumen del mes
   // -------------------------------------------------------------------------
   Widget _buildTarjetaTitulo() {
     final resumen = _resumenDelMes();
-    final texto = '${resumen['ingreso']} ingresos, ${resumen['gasto']} gastos, '
+    final texto =
+        '${resumen['ingreso']} ingresos, ${resumen['gasto']} gastos, '
         '${resumen['ahorro']} ahorros, ${resumen['imprevisto']} imprevistos';
 
     return Container(
@@ -116,7 +147,7 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             'Actividad del Mes:',
             style: TextStyle(
               color: Colors.amber,
@@ -126,8 +157,8 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            '2 ingresos, 3 gastos, 3 ahorros, 1 imprevisto',
-            style: TextStyle(color: Colors.white, fontSize: 16),
+            texto,
+            style: const TextStyle(color: Colors.white, fontSize: 16),
           ),
         ],
       ),
@@ -154,7 +185,7 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
         onDaySelected: (diaSeleccionado, diaFocalizado) {
           setState(() {
             _diaSeleccionado = diaSeleccionado;
-            _diaFocalizado = diaFocalizado;
+            _diaFocalizado   = diaFocalizado;
           });
         },
         onPageChanged: (nuevoDiaFocalizado) {
@@ -180,8 +211,7 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
             color: AppColors.accent,
             shape: BoxShape.circle,
           ),
-          selectedTextStyle: const TextStyle(color: Color(0xFF0f172a)),
-          // Desactivamos los marcadores por defecto (usaremos markerBuilder)
+          selectedTextStyle: const TextStyle(color: Color(0xFF0F172A)),
           markersMaxCount: 0,
         ),
 
@@ -193,7 +223,7 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
             color: dorado,
             fontWeight: FontWeight.bold,
           ),
-          leftChevronIcon: Icon(Icons.chevron_left, color: dorado),
+          leftChevronIcon:  Icon(Icons.chevron_left,  color: dorado),
           rightChevronIcon: Icon(Icons.chevron_right, color: dorado),
         ),
 
@@ -206,16 +236,13 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
         // Personalización de marcadores (puntitos debajo del día)
         calendarBuilders: CalendarBuilders(
           markerBuilder: (context, dia, movimientosDelDia) {
-            // Si no hay movimientos, no mostramos nada
             if (movimientosDelDia.isEmpty) return const SizedBox.shrink();
 
-            // Dibujamos una hilera de círculos pequeños
             return Positioned(
               bottom: 2,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: movimientosDelDia.map((tipo) {
-                  // Asignamos color según el tipo de movimiento
                   final color = colorPorTipo[tipo] ?? Colors.grey;
                   return Container(
                     width: 6,

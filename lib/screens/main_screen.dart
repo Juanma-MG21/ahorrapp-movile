@@ -12,6 +12,7 @@ import 'presupuestos/modulo_presupuestos.dart';
 import '../screens/dependientes/dependientes_screen.dart';
 import '../screens/dashboard/dashboard_screen.dart';
 import 'categorias/categorias_screen.dart';
+import '../services/quick_actions_service.dart';
 
 /// Metadata (icono + label) de cada pantalla accesible desde el menú
 /// "Más". El índice de cada _MenuItem debe corresponder al mismo

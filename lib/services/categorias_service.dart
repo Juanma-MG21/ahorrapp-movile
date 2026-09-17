@@ -60,21 +60,12 @@ class CategoriasService {
       );
     }
 
-    // Caso:
-    // [
-    //   {...},
-    //   {...}
-    // ]
     if (decoded is List) {
       return decoded
           .map((item) => Map<String, dynamic>.from(item as Map))
           .toList();
     }
 
-    // Caso:
-    // {
-    //   "data": [...]
-    // }
     if (decoded is Map<String, dynamic>) {
       final data = decoded['data'];
 
@@ -104,6 +95,12 @@ class CategoriasService {
     final data = await _getLista('/categorias');
 
     return data.map((json) => CategoriaModel.fromJson(json)).toList();
+  }
+
+  // ✅ NUEVO: alias estático que usan los formularios que llaman
+  //     CategoriasService.obtenerCategorias() sin instanciar.
+  static Future<List<CategoriaModel>> obtenerCategorias() {
+    return CategoriasService().getCategorias();
   }
 
   // ============================================================
@@ -175,13 +172,9 @@ class CategoriasService {
   // DESHABILITAR
   // ============================================================
 
-  Future<Map<String, dynamic>> deshabilitarCategoria(
-    int id,
-  ) async {
+  Future<Map<String, dynamic>> deshabilitarCategoria(int id) async {
     final response = await http.patch(
-      Uri.parse(
-        '$_baseUrl/categorias/$id/deshabilitar',
-      ),
+      Uri.parse('$_baseUrl/categorias/$id/deshabilitar'),
       headers: await _headers(),
     );
 
@@ -192,13 +185,9 @@ class CategoriasService {
   // HABILITAR
   // ============================================================
 
-  Future<Map<String, dynamic>> habilitarCategoria(
-    int id,
-  ) async {
+  Future<Map<String, dynamic>> habilitarCategoria(int id) async {
     final response = await http.patch(
-      Uri.parse(
-        '$_baseUrl/categorias/$id/habilitar',
-      ),
+      Uri.parse('$_baseUrl/categorias/$id/habilitar'),
       headers: await _headers(),
     );
 
@@ -206,30 +195,23 @@ class CategoriasService {
   }
 
   // ============================================================
-  // ELIMINAR (DELETE real — el backend solo lo permite si activa == false)
+  // ELIMINAR
   // ============================================================
 
-  Future<Map<String, dynamic>> eliminarCategoria(
-    int id,
-  ) async {
+  Future<Map<String, dynamic>> eliminarCategoria(int id) async {
     final response = await http.delete(
       Uri.parse('$_baseUrl/categorias/$id'),
       headers: await _headers(),
-      // sin body: el backend solo necesita el id, que ya va en la URL
     );
 
     return _procesarRespuesta(response);
-    // si el backend responde 409 (categoría aún activa) o 403 (no es tuya),
-    // _procesarRespuesta lanza una Exception con el mensaje que venga en el JSON
   }
 
   // ============================================================
   // PROCESAR RESPUESTAS CRUD
   // ============================================================
 
-  Map<String, dynamic> _procesarRespuesta(
-    http.Response response,
-  ) {
+  Map<String, dynamic> _procesarRespuesta(http.Response response) {
     final decoded = jsonDecode(response.body);
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
