@@ -10,11 +10,12 @@ import 'ahorros/modulo_ahorros.dart';
 import 'deudas/modulo_deudas.dart';
 import 'presupuestos/modulo_presupuestos.dart';
 import '../screens/dependientes/dependientes_screen.dart';
-import '../screens/dashboard/dashboard_screen.dart';
+// import '../screens/dashboard/dashboard_screen.dart';
 import 'categorias/categorias_screen.dart';
 import '../services/quick_actions_service.dart';
 import '../screens/reportes/reportes_screen.dart';
 import 'cuenta/mi_cuenta_screen.dart';
+import '../screens/home/home_screen.dart';
 
 /// Metadata (icono + label) de cada pantalla accesible desde el menú
 /// "Más". El índice de cada _MenuItem debe corresponder al mismo
@@ -51,7 +52,7 @@ class _MainScreenState extends State<MainScreen> {
 
   // Pantallas fijas del bottom nav (índices 0-3).
   final List<Widget> _pantallasPrincipales = const [
-    DashboardScreen(),
+    HomeScreen(),
     ModuloIngresos(),
     ModuloGastos(),
     ModuloPresupuestos(),
@@ -67,6 +68,11 @@ class _MainScreenState extends State<MainScreen> {
   ];
   // Cuál de _pantallasSecundarias se muestra cuando _tabPrincipal == 4.
   int _indiceSecundario = 0;
+
+  // Índice de la pestaña principal activa en el bottom nav / PageView.
+  // 0-3 = pantallas fijas (_pantallasPrincipales); 4 = sección "Más"
+  // (que a su vez muestra _pantallasSecundarias[_indiceSecundario]).
+  int _tabPrincipal = 0;
 
   bool get _mostrandoSecundaria => _tabPrincipal == 4;
 
