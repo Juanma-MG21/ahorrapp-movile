@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../../core/theme/design_tokens.dart';
+import '../../core/theme/app_theme.dart';
 import '../../services/gastos_service.dart';
 import '../../services/ingresos_service.dart';
 import '../../services/imprevistos_service.dart';
@@ -104,7 +105,8 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
   Map<String, int> _resumenDelMes() {
     final conteo = {'ingreso': 0, 'gasto': 0, 'ahorro': 0, 'imprevisto': 0};
     _movimientosPorDia.forEach((fecha, tipos) {
-      if (fecha.year == _diaFocalizado.year && fecha.month == _diaFocalizado.month) {
+      if (fecha.year == _diaFocalizado.year &&
+          fecha.month == _diaFocalizado.month) {
         for (final tipo in tipos) {
           if (conteo.containsKey(tipo)) conteo[tipo] = conteo[tipo]! + 1;
         }
@@ -123,39 +125,40 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
         elevation: 0,
         title: const Text(
           'Calendario',
-          style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: AppModuleColors.calendario,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
-          : Column(
-              children: [
-                _buildTarjetaTitulo(),
-                _buildCalendario(),
-              ],
-            ),
+          ? const Center(
+              child: CircularProgressIndicator(color: AppModuleColors.calendario),
+            )
+          : Column(children: [_buildTarjetaTitulo(), _buildCalendario()]),
     );
   }
 
   Widget _buildTarjetaTitulo() {
     final resumen = _resumenDelMes();
-    final texto = '${resumen['ingreso']} ingresos, ${resumen['gasto']} gastos, '
+    final texto =
+        '${resumen['ingreso']} ingresos, ${resumen['gasto']} gastos, '
         '${resumen['ahorro']} ahorros, ${resumen['imprevisto']} imprevistos';
 
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
-      ),
+      decoration: clayRaised(radius: AppRadius.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             'Actividad del mes',
-            style: TextStyle(color: AppColors.accent, fontSize: 20, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: AppModuleColors.calendario,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -171,10 +174,7 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
+      decoration: clayRaised(radius: AppRadius.md),
       child: TableCalendar(
         firstDay: DateTime(2020),
         lastDay: DateTime(2030),
@@ -195,28 +195,31 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
           setState(() => _diaFocalizado = nuevoDiaFocalizado);
         },
         eventLoader: _obtenerMovimientosDelDia,
-        calendarStyle: const CalendarStyle(
-          defaultTextStyle: TextStyle(color: AppColors.textPrimary),
-          weekendTextStyle: TextStyle(color: AppColors.textSecondary),
-          outsideTextStyle: TextStyle(color: AppColors.textMuted),
+        calendarStyle: CalendarStyle(
+          defaultTextStyle: const TextStyle(color: AppColors.textPrimary),
+          weekendTextStyle: const TextStyle(color: AppColors.textSecondary),
+          outsideTextStyle: const TextStyle(color: AppColors.textMuted),
           todayDecoration: BoxDecoration(
-            color: Color(0x4DFFB800), // AppColors.accent al 30% de opacidad
+            color: AppModuleColors.calendario.withValues(alpha: 0.3),
             shape: BoxShape.circle,
           ),
-          todayTextStyle: TextStyle(color: AppColors.textPrimary),
-          selectedDecoration: BoxDecoration(
-            color: AppColors.accent,
+          todayTextStyle: const TextStyle(color: AppColors.textPrimary),
+          selectedDecoration: const BoxDecoration(
+            color: AppModuleColors.calendario,
             shape: BoxShape.circle,
           ),
-          selectedTextStyle: TextStyle(color: Colors.black),
+          selectedTextStyle: const TextStyle(color: Colors.black),
           markersMaxCount: 0,
         ),
         headerStyle: const HeaderStyle(
           formatButtonVisible: false,
           titleCentered: true,
-          titleTextStyle: TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold),
-          leftChevronIcon: Icon(Icons.chevron_left, color: AppColors.accent),
-          rightChevronIcon: Icon(Icons.chevron_right, color: AppColors.accent),
+          titleTextStyle: TextStyle(
+            color: AppModuleColors.calendario,
+            fontWeight: FontWeight.bold,
+          ),
+          leftChevronIcon: Icon(Icons.chevron_left, color: AppModuleColors.calendario),
+          rightChevronIcon: Icon(Icons.chevron_right, color: AppModuleColors.calendario),
         ),
         daysOfWeekStyle: const DaysOfWeekStyle(
           weekdayStyle: TextStyle(color: AppColors.textSecondary),
@@ -230,7 +233,8 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: movimientosDelDia.map((tipo) {
-                  final colorDelPunto = colorPorTipo[tipo] ?? AppColors.textMuted;
+                  final colorDelPunto =
+                      colorPorTipo[tipo] ?? AppColors.textMuted;
                   return Container(
                     width: 6,
                     height: 6,

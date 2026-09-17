@@ -1,11 +1,13 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../core/theme/design_tokens.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/network/api_client.dart';
 import '../../models/ahorro_model.dart';
 import '../../models/categoria_model.dart';
 import '../../services/ahorros_service.dart';
 import '../../services/categorias_service.dart';
+import '../../widgets/neumorphic_widgets.dart';
 
 class AgregarAhorroScreen extends StatefulWidget {
   final AhorroModel? ahorroParaEditar;
@@ -22,7 +24,6 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
   DateTime? _fechaLimite;
   int? _selectedCategoriaId;
   List<CategoriaModel> _categorias = [];
-  // bool _isLoadingCategorias = true;
   bool _isSaving = false;
   bool _showScrollIndicator = false;
   final ScrollController _categoryScrollController = ScrollController();
@@ -45,11 +46,9 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
       final cats = await CategoriasService.obtenerCategorias();
       setState(() {
         _categorias = cats;
-        // _isLoadingCategorias = false;
       });
     } catch (e) {
       debugPrint('Error cargando categorías: $e');
-      // setState(() => _isLoadingCategorias = false);
     }
   }
 
@@ -107,17 +106,12 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
       } else {
         await AhorrosService.actualizarAhorro(ahorro.id!, ahorro);
       }
-
       if (!mounted) return;
-
       Navigator.pop(context, true);
     } on ApiException catch (e) {
       if (!mounted) return;
-
       setState(() => _isSaving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
     }
   }
 
@@ -147,112 +141,75 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
   }
 
   Widget _buildHeader() {
-    return Row(
-      children: [
-        _NeumorphicIcon(icon: Icons.arrow_back, size: 20, onTap: () => Navigator.pop(context)),
-        const SizedBox(width: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.ahorroParaEditar != null ? 'Editar Meta' : 'Nueva Meta',
-              style: const TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const Text('Registrar objetivo de ahorro', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-          ],
-        ),
-      ],
+    return NeumorphicHeader(
+      title: widget.ahorroParaEditar != null ? 'Editar Meta' : 'Nueva Meta',
+      subtitle: 'Registrar objetivo de ahorro',
+      onBack: () => Navigator.pop(context),
     );
   }
 
   Widget _buildFormCard() {
-    return _NeumorphicContainer(
-      borderRadius: 24,
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildLabel('Nombre de la meta', required: true),
-          const SizedBox(height: 8),
-          _buildTextField(controller: _nombreController, hint: 'Ej: Viaje a la playa'),
-          const SizedBox(height: 18),
-          _buildLabel('Monto objetivo', required: true),
-          const SizedBox(height: 8),
-          _buildTextField(controller: _montoController, hint: '\$0', keyboardType: TextInputType.number),
-          const SizedBox(height: 18),
-          _buildLabel('Categoría'),
-          const SizedBox(height: 8),
-          _buildCategoriaField(),
-          const SizedBox(height: 18),
-          _buildLabel('Descripción'),
-          const SizedBox(height: 8),
-          _buildTextField(controller: _descripcionController, hint: 'Ej: Para el retiro del 2024', maxLines: 3),
-          const SizedBox(height: 18),
-          _buildLabel('Fecha límite (opcional)'),
-          const SizedBox(height: 8),
-          _buildFechaField(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLabel(String text, {bool required = false}) {
-    return RichText(
-      text: TextSpan(
-        children: [
-          TextSpan(text: text, style: const TextStyle(color: AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
-          if (required)
-            const TextSpan(text: ' *', style: TextStyle(color: AppColors.error, fontSize: 13, fontWeight: FontWeight.w600)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String hint,
-    TextInputType keyboardType = TextInputType.text,
-    int maxLines = 1,
-  }) {
-    return Container(
-      decoration: BoxDecoration(color: AppColors.inset, borderRadius: BorderRadius.circular(14)),
-      child: TextField(
-        controller: controller,
-        keyboardType: keyboardType,
-        maxLines: maxLines,
-        style: const TextStyle(color: AppColors.textPrimary),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: const TextStyle(color: AppColors.textSecondary),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const NeumorphicLabel(text: 'Nombre de la meta', required: true),
+        const SizedBox(height: 8),
+        NeumorphicTextField(
+          controller: _nombreController,
+          hint: 'Ej: Viaje a la playa',
+          icon: Icons.badge_outlined,
+          iconColor: AppModuleColors.ahorros,
         ),
-      ),
+        const SizedBox(height: 18),
+        const NeumorphicLabel(text: 'Monto objetivo', required: true),
+        const SizedBox(height: 8),
+        NeumorphicTextField(
+          controller: _montoController,
+          hint: '\$0',
+          icon: Icons.payments_outlined,
+          iconColor: AppModuleColors.ahorros,
+          keyboardType: TextInputType.number,
+        ),
+        const SizedBox(height: 18),
+        const NeumorphicLabel(text: 'Categoría'),
+        const SizedBox(height: 8),
+        _buildCategoriaField(),
+        const SizedBox(height: 18),
+        const NeumorphicLabel(text: 'Descripción'),
+        const SizedBox(height: 8),
+        NeumorphicTextField(
+          controller: _descripcionController,
+          hint: 'Ej: Para el retiro del 2024',
+          icon: Icons.notes_rounded,
+          iconColor: AppModuleColors.ahorros,
+          maxLines: 3,
+        ),
+        const SizedBox(height: 18),
+        const NeumorphicLabel(text: 'Fecha límite (opcional)'),
+        const SizedBox(height: 8),
+        _buildFechaField(),
+      ],
     );
   }
 
   Widget _buildCategoriaField() {
     final cat = _categoriaSeleccionada;
-    return Container(
-      decoration: BoxDecoration(color: AppColors.inset, borderRadius: BorderRadius.circular(14)),
-      child: InkWell(
-        onTap: _showCategorySheet,
-        borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            children: [
-              if (cat != null) ...[
-                Icon(_getIconForCategory(cat.nombre), color: _getColorForCategory(cat.nombre), size: 20),
-                const SizedBox(width: 10),
-                Expanded(child: Text(cat.nombre, style: const TextStyle(color: AppColors.textPrimary, fontSize: 14))),
-              ] else
-                const Expanded(child: Text('Seleccionar categoría', style: TextStyle(color: AppColors.textSecondary, fontSize: 14))),
-              const Icon(Icons.expand_more, color: AppColors.textSecondary, size: 20),
-            ],
-          ),
-        ),
-      ),
+    return NeumorphicActionField(
+      onTap: _showCategorySheet,
+      icon: cat != null ? _getIconForCategory(cat.nombre) : Icons.savings_outlined,
+      iconColor: cat != null ? _getColorForCategory(cat.nombre) : AppModuleColors.ahorros,
+      value: cat?.nombre,
+      hint: 'Seleccionar categoría',
+    );
+  }
+
+  Widget _buildFechaField() {
+    return NeumorphicActionField(
+      onTap: _showCalendarSheet,
+      icon: Icons.calendar_today,
+      iconColor: AppModuleColors.ahorros,
+      value: _fechaLimite == null ? null : _formatFecha(_fechaLimite!),
+      hint: 'Seleccionar fecha',
     );
   }
 
@@ -270,25 +227,9 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
             final t = Curves.easeOut.transform(animation.value);
             return Stack(
               children: [
-                GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
-                  child: Container(color: Colors.black.withValues(alpha: 0.4 * t)),
-                ),
-                Positioned.fill(
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 8 * t, sigmaY: 8 * t),
-                    child: const SizedBox.expand(),
-                  ),
-                ),
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: FractionalTranslation(
-                    translation: Offset(0, 1 - t),
-                    child: Material(type: MaterialType.transparency, child: sheet),
-                  ),
-                ),
+                GestureDetector(onTap: () => Navigator.of(context).pop(), child: Container(color: Colors.black.withValues(alpha: 0.4 * t))),
+                Positioned.fill(child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 8 * t, sigmaY: 8 * t), child: const SizedBox.expand())),
+                Positioned(left: 0, right: 0, bottom: 0, child: FractionalTranslation(translation: Offset(0, 1 - t), child: Material(type: MaterialType.transparency, child: sheet))),
               ],
             );
           },
@@ -298,6 +239,7 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
   }
 
   void _showCategorySheet() => _showNeumorphicSheet(_buildCategorySheet());
+  void _showCalendarSheet() => _showNeumorphicSheet(_buildCalendarSheet());
 
   Widget _buildCategorySheet() {
     return StatefulBuilder(
@@ -338,9 +280,7 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
                             WidgetsBinding.instance.addPostFrameCallback((_) {
                               if (_categoryScrollController.hasClients) {
                                 final hasMore = _categoryScrollController.position.extentAfter > 10;
-                                if (hasMore != _showScrollIndicator) {
-                                  setSheetState(() => _showScrollIndicator = hasMore);
-                                }
+                                if (hasMore != _showScrollIndicator) setSheetState(() => _showScrollIndicator = hasMore);
                               }
                             });
                             return _buildCategoryCard(_categorias[index]);
@@ -348,11 +288,7 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
                         ),
                       ),
                     ),
-                    if (_showScrollIndicator)
-                      Positioned(
-                        bottom: 0,
-                        child: _ArrowIndicator(),
-                      ),
+                    if (_showScrollIndicator) Positioned(bottom: 0, child: _ArrowIndicator()),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -360,7 +296,7 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
             ),
           ),
         );
-      }
+      },
     );
   }
 
@@ -369,71 +305,38 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
     final icon = _getIconForCategory(cat.nombre);
     final color = _getColorForCategory(cat.nombre);
     return GestureDetector(
-      onTap: () { setState(() => _selectedCategoriaId = cat.id); Navigator.pop(context); },
+      onTap: () {
+        setState(() => _selectedCategoriaId = cat.id);
+        Navigator.pop(context);
+      },
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: AppColors.background,
           borderRadius: BorderRadius.circular(18),
-          border: isSelected ? Border.all(color: AppColors.accent.withValues(alpha: 0.6), width: 1.5) : null,
+          border: isSelected ? Border.all(color: AppModuleColors.ahorros.withValues(alpha: 0.6), width: 1.5) : null,
           boxShadow: const [BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 8)],
         ),
         child: Row(
           children: [
             Container(width: 44, height: 44, decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: color, size: 22)),
             const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(cat.nombre, style: const TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
-                  if (cat.descripcion != null) Text(cat.descripcion!, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11), maxLines: 1),
-                ],
-              ),
-            ),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(cat.nombre, style: const TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
+              if (cat.descripcion != null) Text(cat.descripcion!, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11), maxLines: 1),
+            ])),
           ],
         ),
       ),
     );
   }
 
-  IconData _getIconForCategory(String nombre) {
-    switch (nombre) {
-      case 'Alimentación': return Icons.restaurant;
-      case 'Transporte': return Icons.directions_bus;
-      case 'Salud': return Icons.medical_services;
-      case 'Educación': return Icons.school;
-      case 'Entretenimiento': return Icons.movie;
-      case 'Servicios': return Icons.home;
-      default: return Icons.savings_outlined;
-    }
-  }
-
-  Color _getColorForCategory(String nombre) {
-    switch (nombre) {
-      case 'Alimentación': return const Color(0xFFA8A2FF);
-      case 'Transporte': return const Color(0xFF60A5FA);
-      case 'Salud': return const Color(0xFFFF6B6B);
-      case 'Educación': return const Color(0xFF4ADE80);
-      case 'Entretenimiento': return const Color(0xFFC084FC);
-      case 'Servicios': return const Color(0xFFFF8C4A);
-      default: return AppColors.accent;
-    }
-  }
-
-  void _showCalendarSheet() => _showNeumorphicSheet(_buildCalendarSheet());
-
-  // Mismo calendario propio (grid de 7 columnas dentro de un bottom sheet)
-  // que usan gastos, ingresos, imprevistos y deudas, en vez del
-  // showDatePicker nativo de Flutter que se usaba antes acá — así los 5
-  // formularios financieros se ven y se sienten igual.
   Widget _buildCalendarSheet() {
     final base = _fechaLimite ?? DateTime.now();
     final year = base.year;
     final month = base.month;
     final daysInMonth = DateTime(year, month + 1, 0).day;
     final offset = DateTime(year, month, 1).weekday - 1;
-
     const List<String> meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
     return Container(
@@ -460,10 +363,7 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
                 if (index < offset) return const SizedBox.shrink();
                 final day = index - offset + 1;
                 final dayDate = DateTime(year, month, day);
-                final isSelected = _fechaLimite != null &&
-                    day == _fechaLimite!.day &&
-                    month == _fechaLimite!.month &&
-                    year == _fechaLimite!.year;
+                final isSelected = _fechaLimite != null && day == _fechaLimite!.day && month == _fechaLimite!.month && year == _fechaLimite!.year;
                 final isPast = dayDate.isBefore(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day));
                 return GestureDetector(
                   onTap: isPast ? null : () { setState(() => _fechaLimite = dayDate); Navigator.pop(context); },
@@ -471,9 +371,7 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
                     opacity: isPast ? 0.25 : 1.0,
                     child: Container(
                       margin: const EdgeInsets.all(3),
-                      decoration: isSelected
-                          ? const BoxDecoration(shape: BoxShape.circle, gradient: RadialGradient(colors: [Color(0xFFFFD700), AppColors.accent]))
-                          : const BoxDecoration(color: AppColors.background, shape: BoxShape.circle),
+                      decoration: isSelected ? const BoxDecoration(shape: BoxShape.circle, gradient: RadialGradient(colors: [Color(0xFFFFD700), AppModuleColors.ahorros])) : const BoxDecoration(color: AppColors.background, shape: BoxShape.circle),
                       child: Center(child: Text('$day', style: TextStyle(color: isSelected ? Colors.black : AppColors.textPrimary, fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500))),
                     ),
                   ),
@@ -482,12 +380,7 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
             ),
             if (_fechaLimite != null) ...[
               const SizedBox(height: 12),
-              Center(
-                child: TextButton(
-                  onPressed: () { setState(() => _fechaLimite = null); Navigator.pop(context); },
-                  child: const Text('Quitar fecha', style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
-                ),
-              ),
+              Center(child: TextButton(onPressed: () { setState(() => _fechaLimite = null); Navigator.pop(context); }, child: const Text('Quitar fecha', style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600)))),
             ],
           ],
         ),
@@ -495,68 +388,44 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
     );
   }
 
-  Widget _buildFechaField() {
-    return Container(
-      decoration: BoxDecoration(color: AppColors.inset, borderRadius: BorderRadius.circular(14)),
-      child: InkWell(
-        onTap: _showCalendarSheet,
-        borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            children: [
-              const Icon(Icons.calendar_today, color: AppColors.accent, size: 20),
-              const SizedBox(width: 10),
-              Text(_fechaLimite == null ? 'Seleccionar fecha' : _formatFecha(_fechaLimite!), style: TextStyle(color: _fechaLimite == null ? AppColors.textSecondary : AppColors.textPrimary)),
-              const Spacer(),
-              const Icon(Icons.expand_more, color: AppColors.textSecondary, size: 20),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildGuardarButton() {
-    return GestureDetector(
-      onTap: _isSaving ? null : _guardar,
-      child: Container(
-        width: double.infinity, height: 56,
-        decoration: BoxDecoration(gradient: const LinearGradient(colors: [AppColors.accent, Color(0xFFFF8C00)]), borderRadius: BorderRadius.circular(28)),
-        child: Center(
-          child: _isSaving ? const CircularProgressIndicator(color: Colors.black) : const Text('Guardar Meta', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-        ),
-      ),
+    return NeumorphicPrimaryButton(
+      label: 'Guardar Meta',
+      onTap: _guardar,
+      color: AppModuleColors.ahorros,
+      isLoading: _isSaving,
     );
   }
 
   Widget _buildCancelarButton() {
-    return GestureDetector(
+    return NeumorphicSecondaryButton(
+      label: 'Cancelar',
       onTap: () => Navigator.pop(context),
-      child: const Center(child: Text('Cancelar', style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600))),
     );
   }
-}
 
-class _NeumorphicContainer extends StatelessWidget {
-  final Widget child;
-  final double borderRadius;
-  final EdgeInsets padding;
-  const _NeumorphicContainer({required this.child, this.borderRadius = 16, this.padding = const EdgeInsets.all(16)});
-  @override
-  Widget build(BuildContext context) {
-    return Container(padding: padding, decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(borderRadius), boxShadow: const [BoxShadow(color: Color(0xFF05060D), offset: Offset(4, 4), blurRadius: 12)]), child: child);
+  IconData _getIconForCategory(String nombre) {
+    switch (nombre) {
+      case 'Alimentación': return Icons.restaurant;
+      case 'Transporte': return Icons.directions_bus;
+      case 'Salud': return Icons.medical_services;
+      case 'Educación': return Icons.school;
+      case 'Entretenimiento': return Icons.movie;
+      case 'Servicios': return Icons.home;
+      default: return Icons.savings_outlined;
+    }
   }
-}
 
-class _NeumorphicIcon extends StatelessWidget {
-  final IconData icon;
-  final double size;
-  final VoidCallback onTap;
-  const _NeumorphicIcon({required this.icon, required this.size, required this.onTap});
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(onTap: onTap, child: Container(width: 40, height: 40, decoration: const BoxDecoration(color: AppColors.background, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 8)]), child: Icon(icon, color: AppColors.textSecondary, size: size)));
+  Color _getColorForCategory(String nombre) {
+    switch (nombre) {
+      case 'Alimentación': return const Color(0xFFA8A2FF);
+      case 'Transporte': return const Color(0xFF60A5FA);
+      case 'Salud': return const Color(0xFFFF6B6B);
+      case 'Educación': return const Color(0xFF4ADE80);
+      case 'Entretenimiento': return const Color(0xFFC084FC);
+      case 'Servicios': return const Color(0xFFFF8C4A);
+      default: return AppModuleColors.ahorros;
+    }
   }
 }
 
@@ -568,20 +437,14 @@ class _ArrowIndicator extends StatefulWidget {
 class _ArrowIndicatorState extends State<_ArrowIndicator> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
-
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000))..repeat(reverse: true);
     _animation = Tween<double>(begin: 0, end: 8).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
-
   @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
+  void dispose() { _controller.dispose(); super.dispose(); }
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -591,12 +454,8 @@ class _ArrowIndicatorState extends State<_ArrowIndicator> with SingleTickerProvi
           offset: Offset(0, _animation.value),
           child: Container(
             padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: AppColors.surface.withValues(alpha: 0.8),
-              shape: BoxShape.circle,
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)],
-            ),
-            child: const Icon(Icons.keyboard_arrow_down, color: AppColors.accent, size: 24),
+            decoration: BoxDecoration(color: AppColors.surface.withValues(alpha: 0.8), shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)]),
+            child: const Icon(Icons.keyboard_arrow_down, color: AppModuleColors.ahorros, size: 24),
           ),
         );
       },

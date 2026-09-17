@@ -167,7 +167,25 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _buildNavItem(IconData icon, String label, int index) {
     final bool isActive = !_mostrandoSecundaria && _tabPrincipal == index;
-    final color = isActive ? AppColors.accent : AppColors.navInactive;
+
+    Color color;
+    if (isActive) {
+      switch (index) {
+        case 1:
+          color = AppModuleColors.ingresos;
+          break;
+        case 2:
+          color = AppModuleColors.gastos;
+          break;
+        case 3:
+          color = AppModuleColors.presupuestos;
+          break;
+        default:
+          color = AppColors.accent; // Para Home
+      }
+    } else {
+      color = AppColors.navInactive;
+    }
 
     return Expanded(
       child: InkWell(
@@ -197,7 +215,28 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _buildMasNavItem() {
     final bool isActive = _mostrandoSecundaria;
-    final color = isActive ? AppColors.accent : AppColors.navInactive;
+    Color color;
+
+    if (isActive) {
+      switch (_indiceSecundario) {
+        case 0:
+          color = AppModuleColors.imprevistos;
+          break;
+        case 1:
+          color = AppModuleColors.ahorros;
+          break;
+        case 2:
+          color = AppModuleColors.deudas;
+          break;
+        case 3:
+          color = AppModuleColors.calendario;
+          break;
+        default:
+          color = AppColors.accent;
+      }
+    } else {
+      color = AppColors.navInactive;
+    }
 
     return Expanded(
       child: InkWell(
@@ -236,7 +275,9 @@ class _MenuMasSheet extends StatelessWidget {
       child: Container(
         decoration: const BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadius.lg),
+          ),
         ),
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
         child: Column(
@@ -266,6 +307,29 @@ class _MenuMasSheet extends StatelessWidget {
             ...List.generate(_itemsMas.length, (i) {
               final item = _itemsMas[i];
               final activo = indiceActivo == i;
+
+              Color itemColor;
+              if (activo) {
+                switch (i) {
+                  case 0:
+                    itemColor = AppModuleColors.imprevistos;
+                    break;
+                  case 1:
+                    itemColor = AppModuleColors.ahorros;
+                    break;
+                  case 2:
+                    itemColor = AppModuleColors.deudas;
+                    break;
+                  case 3:
+                    itemColor = AppModuleColors.calendario;
+                    break;
+                  default:
+                    itemColor = AppColors.accent;
+                }
+              } else {
+                itemColor = AppColors.textPrimary;
+              }
+
               return InkWell(
                 borderRadius: BorderRadius.circular(AppRadius.sm),
                 onTap: () => Navigator.of(context).pop(i),
@@ -275,7 +339,7 @@ class _MenuMasSheet extends StatelessWidget {
                     children: [
                       Icon(
                         item.icon,
-                        color: activo ? AppColors.accent : AppColors.textPrimary,
+                        color: itemColor,
                         size: 22,
                       ),
                       const SizedBox(width: 16),
@@ -283,14 +347,20 @@ class _MenuMasSheet extends StatelessWidget {
                         child: Text(
                           item.label,
                           style: TextStyle(
-                            color: activo ? AppColors.accent : AppColors.textPrimary,
+                            color: itemColor,
                             fontSize: 15,
-                            fontWeight: activo ? FontWeight.w700 : FontWeight.w500,
+                            fontWeight: activo
+                                ? FontWeight.w700
+                                : FontWeight.w500,
                           ),
                         ),
                       ),
                       if (activo)
-                        const Icon(Icons.check, color: AppColors.accent, size: 18),
+                        Icon(
+                          Icons.check,
+                          color: itemColor,
+                          size: 18,
+                        ),
                     ],
                   ),
                 ),
@@ -302,7 +372,9 @@ class _MenuMasSheet extends StatelessWidget {
               onTap: () async {
                 await AuthService.instance.logout();
                 if (context.mounted) {
-                  Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                  Navigator.of(
+                    context,
+                  ).pushNamedAndRemoveUntil('/login', (route) => false);
                 }
               },
               child: const Padding(

@@ -24,10 +24,7 @@ class AppTheme {
           horizontal: 18,
           vertical: 16,
         ),
-        hintStyle: const TextStyle(
-          color: AppColors.textMuted,
-          fontSize: 13,
-        ),
+        hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
         labelStyle: const TextStyle(
           color: AppColors.textSecondary,
           fontSize: 11,
@@ -36,34 +33,23 @@ class AppTheme {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: AppColors.borderLight,
-          ),
+          borderSide: const BorderSide(color: AppColors.borderLight),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: AppColors.accent,
-            width: 0.8,
-          ),
+          borderSide: const BorderSide(color: AppColors.accent, width: 0.8),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: AppColors.error,
-          ),
+          borderSide: const BorderSide(color: AppColors.error),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: AppColors.error,
-          ),
+          borderSide: const BorderSide(color: AppColors.error),
         ),
       ),
       textTheme: const TextTheme(
-        bodyMedium: TextStyle(
-          color: AppColors.textPrimary,
-        ),
+        bodyMedium: TextStyle(color: AppColors.textPrimary),
       ),
       // Sin esto, cualquier SnackBar que no fije backgroundColor a mano
       // (la gran mayoría en la app) hereda el estilo claro por defecto de
@@ -100,20 +86,31 @@ BoxDecoration clayRaised({
   return BoxDecoration(
     color: color,
     borderRadius: BorderRadius.circular(radius),
-    border: border ?? Border.all(
-      color: AppColors.borderLight,
-      width: 1,
-    ),
+    border: border,
     boxShadow: const [
-      BoxShadow(
-        color: Colors.black54,
-        offset: Offset(6, 8),
-        blurRadius: 16,
-      ),
+      BoxShadow(color: Colors.black54, offset: Offset(6, 8), blurRadius: 16),
       BoxShadow(
         color: Color(0x0DFFFFFF),
         offset: Offset(-4, -4),
         blurRadius: 12,
+      ),
+    ],
+  );
+}
+
+BoxDecoration clayInset({
+  Color color = AppColors.surface,
+  double radius = AppRadius.md,
+}) {
+  return BoxDecoration(
+    color: color,
+    borderRadius: BorderRadius.circular(radius),
+    boxShadow: const [
+      BoxShadow(color: Color(0xB3000000), offset: Offset(7, 8), blurRadius: 14),
+      BoxShadow(
+        color: Color(0x0D7E8CC7),
+        offset: Offset(-4, -4),
+        blurRadius: 10,
       ),
     ],
   );
@@ -126,10 +123,6 @@ BoxDecoration claySunken({
   return BoxDecoration(
     color: color,
     borderRadius: BorderRadius.circular(radius),
-    border: Border.all(
-      color: AppColors.borderLight,
-      width: 1,
-    ),
     boxShadow: const [
       BoxShadow(
         color: Colors.black87,
@@ -158,4 +151,3 @@ BoxDecoration clayGlow({
     ],
   );
 }
-

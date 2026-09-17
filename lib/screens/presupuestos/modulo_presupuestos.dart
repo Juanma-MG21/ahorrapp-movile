@@ -67,7 +67,7 @@ class _ModuloPresupuestosState extends State<ModuloPresupuestos> {
           if (provider.status == PresupuestoLoadStatus.loading &&
               provider.perfiles.isEmpty) {
             return const Center(
-              child: CircularProgressIndicator(color: AppColors.accent),
+              child: CircularProgressIndicator(color: AppModuleColors.presupuestos),
             );
           }
 
@@ -80,7 +80,7 @@ class _ModuloPresupuestosState extends State<ModuloPresupuestos> {
           }
 
           return RefreshIndicator(
-            color: AppColors.accent,
+            color: AppModuleColors.presupuestos,
             backgroundColor: AppColors.surface,
             onRefresh: provider.refrescar,
             child: ListView(
@@ -141,7 +141,7 @@ class _ErrorState extends StatelessWidget {
             ElevatedButton(
               onPressed: onRetry,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accent,
+                backgroundColor: AppModuleColors.presupuestos,
                 foregroundColor: Colors.black,
               ),
               child: const Text('Reintentar'),
@@ -210,7 +210,7 @@ class _SinPeriodoActivoCard extends StatelessWidget {
                   ? null
                   : () => _mostrarDialogoAbrirPeriodo(context, provider),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accent,
+                backgroundColor: AppModuleColors.presupuestos,
                 foregroundColor: Colors.black,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
@@ -309,7 +309,7 @@ class _PeriodoActivoCard extends StatelessWidget {
                 Text(
                   formatMonto(periodo.ingresoEstimado),
                   style: const TextStyle(
-                    color: AppColors.accent,
+                    color: AppModuleColors.presupuestos,
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
                   ),
@@ -384,7 +384,7 @@ class _ToggleResumenButton extends StatelessWidget {
             Text(
               expandido ? 'Ocultar resumen' : 'Ver resumen',
               style: const TextStyle(
-                color: AppColors.accent,
+                color: AppModuleColors.presupuestos,
                 fontWeight: FontWeight.w700,
                 fontSize: 14,
               ),
@@ -392,7 +392,7 @@ class _ToggleResumenButton extends StatelessWidget {
             const SizedBox(width: 6),
             Icon(
               expandido ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-              color: AppColors.accent,
+              color: AppModuleColors.presupuestos,
               size: 20,
             ),
           ],
@@ -427,7 +427,7 @@ class _ResumenExpandido extends StatelessWidget {
             _IngresoColumna(
               label: 'Estimado',
               valor: formatMonto(periodo.ingresoEstimado),
-              color: AppColors.accent,
+              color: AppModuleColors.presupuestos,
             ),
             _IngresoColumna(
               label: 'Real',
@@ -977,7 +977,7 @@ class _DialogoMonto extends StatelessWidget {
         ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(true),
-          child: Text(textoConfirmar, style: const TextStyle(color: AppColors.accent)),
+          child: Text(textoConfirmar, style: const TextStyle(color: AppModuleColors.presupuestos)),
         ),
       ],
     );

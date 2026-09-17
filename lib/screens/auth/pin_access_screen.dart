@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/design_tokens.dart';
+import '../../core/theme/app_theme.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/auth_widgets.dart';
 
@@ -259,23 +260,13 @@ class _NumberButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.surface,
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.borderLight),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black45,
-                offset: Offset(4, 4),
-                blurRadius: 8,
-              ),
-            ],
-          ),
+          decoration: clayRaised(radius: AppRadius.md),
           alignment: Alignment.center,
           child: Text(
             label,

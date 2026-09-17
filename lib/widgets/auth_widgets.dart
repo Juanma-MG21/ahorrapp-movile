@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/theme/app_theme.dart';
 import '../core/theme/design_tokens.dart';
 
 class AuthPageShell extends StatelessWidget {
@@ -15,7 +16,8 @@ class AuthPageShell extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(18, 12, 18, 28),
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              minHeight: MediaQuery.sizeOf(context).height -
+              minHeight:
+                  MediaQuery.sizeOf(context).height -
                   MediaQuery.paddingOf(context).vertical -
                   40,
             ),
@@ -84,6 +86,23 @@ class PrimaryAuthButton extends StatelessWidget {
                   ),
                 ),
         ),
+      ),
+    );
+  }
+}
+
+class AuthInputShell extends StatelessWidget {
+  const AuthInputShell({required this.child, super.key});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: clayInset(radius: AppRadius.md),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: child,
       ),
     );
   }

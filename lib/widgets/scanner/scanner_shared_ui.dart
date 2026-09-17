@@ -12,7 +12,7 @@ import '../../core/theme/design_tokens.dart';
 /// AppColors, porque el verde de las esquinas y la sombra del marco son
 /// específicos de esta UI).
 class ScannerColors {
-  static const Color accentGreen = Color(0xFF4ADE80);
+  static const Color accent = AppModuleColors.scanners;
   static const Color frameShadow = Color(0xFF05060D);
   static const Color iconShadowDark = Color(0xFF05060D);
   static const Color iconShadowLight = Color(0xFF1A1D3A);
@@ -46,7 +46,7 @@ class ScannerHeader extends StatelessWidget {
               Text(
                 label,
                 style: const TextStyle(
-                  color: AppColors.accent,
+                  color: AppModuleColors.scanners,
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.2,
@@ -119,7 +119,7 @@ class ScannerCornerFrame extends StatelessWidget {
   const ScannerCornerFrame({
     super.key,
     required this.child,
-    this.cornerColor = ScannerColors.accentGreen,
+    this.cornerColor = ScannerColors.accent,
   });
 
   @override
@@ -179,12 +179,12 @@ class ScannerRoundAction extends StatelessWidget {
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: activo ? AppColors.accent : AppColors.surface,
+                color: activo ? AppModuleColors.scanners : AppColors.surface,
                 shape: BoxShape.circle,
                 boxShadow: activo
                     ? [
                         BoxShadow(
-                          color: AppColors.accent.withValues(alpha: 0.45),
+                          color: AppModuleColors.scanners.withValues(alpha: 0.45),
                           blurRadius: 24,
                           spreadRadius: 1,
                         ),
