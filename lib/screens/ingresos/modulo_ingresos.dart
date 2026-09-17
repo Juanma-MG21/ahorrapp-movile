@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../core/theme/design_tokens.dart';
+import '../../core/theme/app_theme.dart';
 import '../../models/ingreso_model.dart';
 import '../../services/ingresos_service.dart';
 import '../../services/gastos_service.dart';
@@ -34,8 +35,18 @@ class _ModuloIngresosState extends State<ModuloIngresos>
   String _lastWords = '';
 
   static const List<String> _mesesNom = [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+    'Enero',
+    'Febrero',
+    'Marzo',
+    'Abril',
+    'Mayo',
+    'Junio',
+    'Julio',
+    'Agosto',
+    'Septiembre',
+    'Octubre',
+    'Noviembre',
+    'Diciembre',
   ];
 
   late AnimationController _menuController;
@@ -43,11 +54,16 @@ class _ModuloIngresosState extends State<ModuloIngresos>
 
   List<IngresoModel> get _filteredIngresos {
     return _ingresos.where((i) {
-      final matchesDate = i.fechaRegistro.month == _selectedDate.month && i.fechaRegistro.year == _selectedDate.year;
-      final matchesSearch = _searchQuery.isEmpty ||
-          (i.descripcion?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false) ||
+      final matchesDate =
+          i.fechaRegistro.month == _selectedDate.month &&
+          i.fechaRegistro.year == _selectedDate.year;
+      final matchesSearch =
+          _searchQuery.isEmpty ||
+          (i.descripcion?.toLowerCase().contains(_searchQuery.toLowerCase()) ??
+              false) ||
           i.titulo.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          (i.fuente?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false);
+          (i.fuente?.toLowerCase().contains(_searchQuery.toLowerCase()) ??
+              false);
       return matchesDate && matchesSearch;
     }).toList();
   }
@@ -61,7 +77,8 @@ class _ModuloIngresosState extends State<ModuloIngresos>
     );
 
     if (delta > 0) {
-      if (newDate.year > now.year || (newDate.year == now.year && newDate.month > now.month)) {
+      if (newDate.year > now.year ||
+          (newDate.year == now.year && newDate.month > now.month)) {
         return;
       }
     }
@@ -104,12 +121,18 @@ class _ModuloIngresosState extends State<ModuloIngresos>
     final now = DateTime.now();
     final gastos = await GastosService.obtenerGastos();
     double totalGastos = 0;
-    for (var g in gastos.where((g) => g.fecha.month == now.month && g.fecha.year == now.year)) {
+    for (var g in gastos.where(
+      (g) => g.fecha.month == now.month && g.fecha.year == now.year,
+    )) {
       totalGastos += g.monto;
     }
 
     double totalIngresos = 0;
-    for (var i in _ingresos.where((i) => i.fechaRegistro.month == now.month && i.fechaRegistro.year == now.year)) {
+    for (var i in _ingresos.where(
+      (i) =>
+          i.fechaRegistro.month == now.month &&
+          i.fechaRegistro.year == now.year,
+    )) {
       totalIngresos += i.monto;
     }
 
@@ -199,13 +222,18 @@ class _ModuloIngresosState extends State<ModuloIngresos>
     await Future.delayed(const Duration(milliseconds: 600));
 
     if (_lastWords.isNotEmpty) {
-      final IngresoModel parsedIngreso = LocalParserService.parseIngreso(_lastWords);
+      final IngresoModel parsedIngreso = LocalParserService.parseIngreso(
+        _lastWords,
+      );
       if (mounted) {
         _closeVoiceModal();
         setState(() => _isProcessing = false);
         final resultado = await Navigator.push<IngresoModel>(
           context,
-          MaterialPageRoute(builder: (context) => AgregarIngresoScreen(ingresoParaEditar: parsedIngreso)),
+          MaterialPageRoute(
+            builder: (context) =>
+                AgregarIngresoScreen(ingresoParaEditar: parsedIngreso),
+          ),
         );
         if (resultado != null) _loadIngresos();
       }
@@ -255,11 +283,16 @@ class _ModuloIngresosState extends State<ModuloIngresos>
                         _speech.stop();
                         _closeVoiceModal();
                       },
-                      child: Container(color: Colors.black.withValues(alpha: 0.45 * t)),
+                      child: Container(
+                        color: Colors.black.withValues(alpha: 0.45 * t),
+                      ),
                     ),
                     Positioned.fill(
                       child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 10 * t, sigmaY: 10 * t),
+                        filter: ImageFilter.blur(
+                          sigmaX: 10 * t,
+                          sigmaY: 10 * t,
+                        ),
                         child: const SizedBox.expand(),
                       ),
                     ),
@@ -279,7 +312,7 @@ class _ModuloIngresosState extends State<ModuloIngresos>
                 );
               },
             );
-          }
+          },
         );
       },
     );
@@ -292,17 +325,7 @@ class _ModuloIngresosState extends State<ModuloIngresos>
       width: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 40),
       padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
+      decoration: clayRaised(radius: AppRadius.lg),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -326,7 +349,11 @@ class _ModuloIngresosState extends State<ModuloIngresos>
               padding: EdgeInsets.only(top: 4),
               child: Text(
                 'Toca el botón para detener',
-                style: TextStyle(color: Color(0xFF4ADE80), fontSize: 12, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  color: Color(0xFF4ADE80),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           const SizedBox(height: 12),
@@ -340,7 +367,11 @@ class _ModuloIngresosState extends State<ModuloIngresos>
               child: Text(
                 _lastWords,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontStyle: FontStyle.italic),
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 14,
+                  fontStyle: FontStyle.italic,
+                ),
               ),
             )
           else if (_isListening)
@@ -358,7 +389,11 @@ class _ModuloIngresosState extends State<ModuloIngresos>
               },
               child: const Text(
                 'Cancelar',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
         ],
@@ -403,7 +438,9 @@ class _ModuloIngresosState extends State<ModuloIngresos>
                       filter: ImageFilter.blur(sigmaX: 10 * t, sigmaY: 10 * t),
                       child: GestureDetector(
                         onTap: _toggleMenu,
-                        child: Container(color: Colors.black.withValues(alpha: 0.45 * t)),
+                        child: Container(
+                          color: Colors.black.withValues(alpha: 0.45 * t),
+                        ),
                       ),
                     );
                   },
@@ -456,7 +493,10 @@ class _ModuloIngresosState extends State<ModuloIngresos>
     required VoidCallback onTap,
   }) {
     return SlideTransition(
-      position: Tween<Offset>(begin: const Offset(0.4, 0), end: Offset.zero).animate(animation),
+      position: Tween<Offset>(
+        begin: const Offset(0.4, 0),
+        end: Offset.zero,
+      ).animate(animation),
       child: FadeTransition(
         opacity: animation,
         child: Row(
@@ -464,19 +504,23 @@ class _ModuloIngresosState extends State<ModuloIngresos>
           children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.4), blurRadius: 10, offset: const Offset(0, 4))],
+              decoration: clayRaised(radius: AppRadius.sm),
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-              child: Text(label, style: const TextStyle(color: AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
             ),
             const SizedBox(width: 12),
             GestureDetector(
               onTap: onTap,
               child: Container(
-                width: 50, height: 50,
-                decoration: const BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
+                width: 50,
+                height: 50,
+                decoration: clayRaised(color: AppColors.surface, radius: 25),
                 child: Icon(icon, color: const Color(0xFF4ADE80), size: 22),
               ),
             ),
@@ -489,12 +533,9 @@ class _ModuloIngresosState extends State<ModuloIngresos>
   Widget _buildFAB() {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      width: 60, height: 60,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: const RadialGradient(colors: [Color(0xFF4ADE80), Color(0xFF34D399)]),
-        border: Border.all(color: Colors.white.withValues(alpha: _isMenuOpen ? 0.9 : 0), width: 2),
-      ),
+      width: 60,
+      height: 60,
+      decoration: clayGlow(color: const Color(0xFF34D399), radius: 30),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -515,34 +556,63 @@ class _ModuloIngresosState extends State<ModuloIngresos>
 
   Widget _buildHeader() {
     final now = DateTime.now();
-    final isCurrentMonth = _selectedDate.year == now.year && _selectedDate.month == now.month;
+    final isCurrentMonth =
+        _selectedDate.year == now.year && _selectedDate.month == now.month;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Row(
           children: [
-            _NeumorphicIcon(icon: Icons.arrow_back_ios, size: 12, onTap: () => _changeMonth(-1)),
+            _NeumorphicIcon(
+              icon: Icons.arrow_back_ios,
+              size: 12,
+              onTap: () => _changeMonth(-1),
+            ),
             const SizedBox(width: 12),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_mesesNom[_selectedDate.month - 1], style: const TextStyle(color: AppColors.textPrimary, fontSize: 22, fontWeight: FontWeight.bold)),
-                Text('${_selectedDate.year}', style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                Text(
+                  _mesesNom[_selectedDate.month - 1],
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  '${_selectedDate.year}',
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                  ),
+                ),
               ],
             ),
             const SizedBox(width: 12),
-            if (!isCurrentMonth) _NeumorphicIcon(icon: Icons.arrow_forward_ios, size: 12, onTap: () => _changeMonth(1))
-            else const SizedBox(width: 40),
+            if (!isCurrentMonth)
+              _NeumorphicIcon(
+                icon: Icons.arrow_forward_ios,
+                size: 12,
+                onTap: () => _changeMonth(1),
+              )
+            else
+              const SizedBox(width: 40),
           ],
         ),
         Row(
           children: [
-            _NeumorphicIcon(icon: Icons.notifications_outlined, size: 22, onTap: () {}),
+            _NeumorphicIcon(
+              icon: Icons.notifications_outlined,
+              size: 22,
+              onTap: () {},
+            ),
             const SizedBox(width: 12),
             Container(
-              width: 36, height: 36,
-              decoration: const BoxDecoration(shape: BoxShape.circle, gradient: LinearGradient(colors: [Color(0xFF4ADE80), Color(0xFF34D399)])),
+              width: 36,
+              height: 36,
+              decoration: clayGlow(color: const Color(0xFF34D399), radius: 18),
               child: const Icon(Icons.person, color: Colors.black, size: 20),
             ),
           ],
@@ -552,25 +622,48 @@ class _ModuloIngresosState extends State<ModuloIngresos>
   }
 
   Widget _buildSearchBar() {
-    return _NeumorphicContainer(
-      borderRadius: 16,
+    return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: claySunken(radius: AppRadius.md),
       child: TextField(
         onChanged: (value) => setState(() => _searchQuery = value),
+        cursorColor: AppColors.success,
         style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
         decoration: InputDecoration(
           hintText: 'Buscar ingreso o fuente...',
-          hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.5)),
+          hintStyle: TextStyle(
+            color: AppColors.textSecondary.withValues(alpha: 0.5),
+          ),
+          filled: false,
+          fillColor: Colors.transparent,
           border: InputBorder.none,
-          icon: const Icon(Icons.search, color: Color(0xFF4ADE80), size: 20),
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          errorBorder: InputBorder.none,
+          focusedErrorBorder: InputBorder.none,
+          prefixIcon: const Icon(
+            Icons.search,
+            color: AppColors.success,
+            size: 20,
+          ),
+          prefixIconConstraints: const BoxConstraints(
+            minWidth: 28,
+            minHeight: 20,
+          ),
+          contentPadding: const EdgeInsets.symmetric(vertical: 17),
         ),
       ),
     );
   }
 
   String _formatCurrency(double amount) {
-    String formatted = amount.abs().toStringAsFixed(0).replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
+    String formatted = amount
+        .abs()
+        .toStringAsFixed(0)
+        .replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]}.',
+        );
     return '${amount < 0 ? "-" : ""}\$$formatted';
   }
 
@@ -585,11 +678,28 @@ class _ModuloIngresosState extends State<ModuloIngresos>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('TOTAL INGRESOS', style: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1)),
+          const Text(
+            'TOTAL INGRESOS',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1,
+            ),
+          ),
           const SizedBox(height: 8),
           Row(
             children: [
-              Expanded(child: Text(_formatCurrency(totalIngresos), style: const TextStyle(color: Color(0xFF4ADE80), fontSize: 32, fontWeight: FontWeight.bold))),
+              Expanded(
+                child: Text(
+                  _formatCurrency(totalIngresos),
+                  style: const TextStyle(
+                    color: Color(0xFF4ADE80),
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
               const Icon(Icons.trending_up, color: Color(0xFF4ADE80), size: 32),
             ],
           ),
@@ -602,17 +712,60 @@ class _ModuloIngresosState extends State<ModuloIngresos>
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text('Ingresos del mes', style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
-        Text('${_filteredIngresos.length} total', style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+        const Text(
+          'Ingresos del mes',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          '${_filteredIngresos.length} total',
+          style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+        ),
       ],
     );
   }
 
   Widget _buildIngresosList() {
-    if (_isLoading) return const Center(child: Padding(padding: EdgeInsets.only(top: 40), child: CircularProgressIndicator(color: Color(0xFF4ADE80))));
+    if (_isLoading)
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.only(top: 40),
+          child: CircularProgressIndicator(color: Color(0xFF4ADE80)),
+        ),
+      );
     final filtered = _filteredIngresos.reversed.toList();
-    if (filtered.isEmpty) return Center(child: Padding(padding: const EdgeInsets.only(top: 40), child: Column(children: [Icon(Icons.receipt_long, color: AppColors.textSecondary.withValues(alpha: 0.3), size: 64), const SizedBox(height: 16), const Text('No hay ingresos registrados', style: TextStyle(color: AppColors.textSecondary, fontSize: 14))])));
-    return Column(children: List.generate(filtered.length, (index) => Padding(padding: const EdgeInsets.only(bottom: 14), child: _buildIngresoCard(filtered[index], index))));
+    if (filtered.isEmpty)
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.only(top: 40),
+          child: Column(
+            children: [
+              Icon(
+                Icons.receipt_long,
+                color: AppColors.textSecondary.withValues(alpha: 0.3),
+                size: 64,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'No hay ingresos registrados',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+              ),
+            ],
+          ),
+        ),
+      );
+    return Column(
+      children: List.generate(
+        filtered.length,
+        (index) => Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: _buildIngresoCard(filtered[index], index),
+        ),
+      ),
+    );
   }
 
   Widget _buildIngresoCard(IngresoModel ingreso, int index) {
@@ -628,12 +781,57 @@ class _ModuloIngresosState extends State<ModuloIngresos>
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  Container(width: 44, height: 44, decoration: BoxDecoration(color: ingreso.color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)), child: Icon(ingreso.icono, color: ingreso.color, size: 24)),
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: ingreso.color.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(ingreso.icono, color: ingreso.color, size: 24),
+                  ),
                   const SizedBox(width: 14),
-                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(ingreso.titulo, style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)), const SizedBox(height: 4), Text(ingreso.subtitulo, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12))])),
-                  Text('+${_formatCurrency(ingreso.monto)}', style: const TextStyle(color: Color(0xFF4ADE80), fontSize: 16, fontWeight: FontWeight.bold)),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          ingreso.titulo,
+                          style: const TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          ingreso.subtitulo,
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    '+${_formatCurrency(ingreso.monto)}',
+                    style: const TextStyle(
+                      color: Color(0xFF4ADE80),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(width: 8),
-                  AnimatedRotation(turns: isExpanded ? 0.5 : 0.0, duration: const Duration(milliseconds: 200), child: const Icon(Icons.expand_more, color: AppColors.textSecondary, size: 20)),
+                  AnimatedRotation(
+                    turns: isExpanded ? 0.5 : 0.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: const Icon(
+                      Icons.expand_more,
+                      color: AppColors.textSecondary,
+                      size: 20,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -643,18 +841,61 @@ class _ModuloIngresosState extends State<ModuloIngresos>
                 padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
                 child: Column(
                   children: [
-                    Row(children: [_buildDetailItem('CATEGORÍA', ingreso.titulo), _buildDetailItem('FECHA', '${ingreso.fechaRegistro.day.toString().padLeft(2, '0')}/${ingreso.fechaRegistro.month.toString().padLeft(2, '0')}/${ingreso.fechaRegistro.year}')]),
+                    Row(
+                      children: [
+                        _buildDetailItem('CATEGORÍA', ingreso.titulo),
+                        _buildDetailItem(
+                          'FECHA',
+                          '${ingreso.fechaRegistro.day.toString().padLeft(2, '0')}/${ingreso.fechaRegistro.month.toString().padLeft(2, '0')}/${ingreso.fechaRegistro.year}',
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 18),
-                    Row(children: [_buildDetailItem('FUENTE', ingreso.fuente ?? 'No especificada'), _buildDetailItem('MONTO', '+${_formatCurrency(ingreso.monto)}', color: const Color(0xFF4ADE80))]),
+                    Row(
+                      children: [
+                        _buildDetailItem(
+                          'FUENTE',
+                          ingreso.fuente ?? 'No especificada',
+                        ),
+                        _buildDetailItem(
+                          'MONTO',
+                          '+${_formatCurrency(ingreso.monto)}',
+                          color: const Color(0xFF4ADE80),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 24),
                     Row(
                       children: [
-                        Expanded(child: _buildActionButton(label: 'Editar', icon: Icons.edit_outlined, color: const Color(0xFF4ADE80), onTap: () async {
-                          final resultado = await Navigator.push<IngresoModel>(context, MaterialPageRoute(builder: (context) => AgregarIngresoScreen(ingresoParaEditar: ingreso)));
-                          if (resultado != null) _loadIngresos();
-                        })),
+                        Expanded(
+                          child: _buildActionButton(
+                            label: 'Editar',
+                            icon: Icons.edit_outlined,
+                            color: const Color(0xFF4ADE80),
+                            onTap: () async {
+                              final resultado =
+                                  await Navigator.push<IngresoModel>(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          AgregarIngresoScreen(
+                                            ingresoParaEditar: ingreso,
+                                          ),
+                                    ),
+                                  );
+                              if (resultado != null) _loadIngresos();
+                            },
+                          ),
+                        ),
                         const SizedBox(width: 16),
-                        Expanded(child: _buildActionButton(label: 'Eliminar', icon: Icons.delete_outline, color: AppColors.error, onTap: () => _mostrarConfirmacion(ingreso))),
+                        Expanded(
+                          child: _buildActionButton(
+                            label: 'Eliminar',
+                            icon: Icons.delete_outline,
+                            color: AppColors.error,
+                            onTap: () => _mostrarConfirmacion(ingreso),
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -674,20 +915,47 @@ class _ModuloIngresosState extends State<ModuloIngresos>
         filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
         child: AlertDialog(
           backgroundColor: AppColors.background,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: const Text('Confirmar eliminación', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
-          content: const Text('¿Seguro de que quieres eliminar este ingreso?', style: TextStyle(color: AppColors.textSecondary), textAlign: TextAlign.center),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          title: const Text(
+            'Confirmar eliminación',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          content: const Text(
+            '¿Seguro de que quieres eliminar este ingreso?',
+            style: TextStyle(color: AppColors.textSecondary),
+            textAlign: TextAlign.center,
+          ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary))),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'Cancelar',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            ),
             ElevatedButton(
               onPressed: () async {
                 if (ingreso.id != null) {
-                  final success = await IngresosService.eliminarIngreso(ingreso.id!);
+                  final success = await IngresosService.eliminarIngreso(
+                    ingreso.id!,
+                  );
                   if (success) _loadIngresos();
                 }
                 if (context.mounted) Navigator.pop(context);
               },
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.error.withValues(alpha: 0.2), foregroundColor: AppColors.error, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error.withValues(alpha: 0.2),
+                foregroundColor: AppColors.error,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
               child: const Text('Eliminar'),
             ),
           ],
@@ -697,11 +965,67 @@ class _ModuloIngresosState extends State<ModuloIngresos>
   }
 
   Widget _buildDetailItem(String label, String value, {Color? color}) {
-    return Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5)), const SizedBox(height: 5), Text(value, style: TextStyle(color: color ?? AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis)]));
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            value,
+            style: TextStyle(
+              color: color ?? AppColors.textPrimary,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
   }
 
-  Widget _buildActionButton({required String label, required IconData icon, required Color color, required VoidCallback onTap}) {
-    return GestureDetector(onTap: onTap, child: Container(height: 48, decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(14), border: Border.all(color: color.withValues(alpha: 0.4), width: 1)), child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(icon, color: color, size: 18), const SizedBox(width: 8), Text(label, style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.bold))])));
+  Widget _buildActionButton({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 48,
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withValues(alpha: 0.4), width: 1),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 18),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -728,14 +1052,44 @@ class _VoicePulseButtonState extends State<_VoicePulseButton>
   @override
   void initState() {
     super.initState();
-    _pulseController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))..repeat();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
   }
+
   @override
-  void dispose() { _pulseController.dispose(); super.dispose(); }
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.isProcessing) {
-      return SizedBox(width: 150, height: 150, child: Stack(alignment: Alignment.center, children: [const CircularProgressIndicator(color: Color(0xFF4ADE80)), Container(width: 60, height: 60, decoration: const BoxDecoration(color: AppColors.surface, shape: BoxShape.circle), child: const Icon(Icons.auto_awesome, color: Color(0xFF4ADE80), size: 28))]));
+      return SizedBox(
+        width: 150,
+        height: 150,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            const CircularProgressIndicator(color: Color(0xFF4ADE80)),
+            Container(
+              width: 60,
+              height: 60,
+              decoration: const BoxDecoration(
+                color: AppColors.surface,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.auto_awesome,
+                color: Color(0xFF4ADE80),
+                size: 28,
+              ),
+            ),
+          ],
+        ),
+      );
     }
     return GestureDetector(
       onTap: widget.onTap,
@@ -744,7 +1098,8 @@ class _VoicePulseButtonState extends State<_VoicePulseButton>
         scale: widget.isListening ? 0.9 : 1.0,
         duration: const Duration(milliseconds: 150),
         child: SizedBox(
-          width: 150, height: 150,
+          width: 150,
+          height: 150,
           child: Stack(
             alignment: Alignment.center,
             children: [
@@ -756,15 +1111,40 @@ class _VoicePulseButtonState extends State<_VoicePulseButton>
                       final t = (_pulseController.value + i * 0.33) % 1.0;
                       final scale = 1.0 + 0.8 * t;
                       final opacity = (1 - t) * 0.5;
-                      return Transform.scale(scale: scale, child: Container(width: 96, height: 96, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.error.withValues(alpha: opacity), width: 2))));
+                      return Transform.scale(
+                        scale: scale,
+                        child: Container(
+                          width: 96,
+                          height: 96,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: AppColors.error.withValues(alpha: opacity),
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                      );
                     },
                   );
                 }),
               AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                width: 96, height: 96,
-                decoration: BoxDecoration(shape: BoxShape.circle, gradient: RadialGradient(colors: widget.isListening ? [const Color(0xFFFF8A8A), AppColors.error] : [const Color(0xFF4ADE80), const Color(0xFF34D399)])),
-                child: Icon(widget.isListening ? Icons.stop : Icons.mic, color: widget.isListening ? Colors.white : Colors.black, size: 40),
+                width: 96,
+                height: 96,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: widget.isListening
+                        ? [const Color(0xFFFF8A8A), AppColors.error]
+                        : [const Color(0xFF4ADE80), const Color(0xFF34D399)],
+                  ),
+                ),
+                child: Icon(
+                  widget.isListening ? Icons.stop : Icons.mic,
+                  color: widget.isListening ? Colors.white : Colors.black,
+                  size: 40,
+                ),
               ),
             ],
           ),
@@ -778,10 +1158,18 @@ class _NeumorphicContainer extends StatelessWidget {
   final Widget child;
   final double borderRadius;
   final EdgeInsets padding;
-  const _NeumorphicContainer({required this.child, this.borderRadius = 16, this.padding = const EdgeInsets.all(16)});
+  const _NeumorphicContainer({
+    required this.child,
+    this.borderRadius = 16,
+    this.padding = const EdgeInsets.all(16),
+  });
   @override
   Widget build(BuildContext context) {
-    return Container(padding: padding, decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(borderRadius), boxShadow: const [BoxShadow(color: Color(0xFF05060D), offset: Offset(4, 4), blurRadius: 12), BoxShadow(color: Color(0xFF1A1D3A), offset: Offset(-4, -4), blurRadius: 12)]), child: child);
+    return Container(
+      padding: padding,
+      decoration: clayRaised(color: AppColors.surface, radius: borderRadius),
+      child: child,
+    );
   }
 }
 
@@ -789,9 +1177,21 @@ class _NeumorphicIcon extends StatelessWidget {
   final IconData icon;
   final double size;
   final VoidCallback onTap;
-  const _NeumorphicIcon({required this.icon, required this.size, required this.onTap});
+  const _NeumorphicIcon({
+    required this.icon,
+    required this.size,
+    required this.onTap,
+  });
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(onTap: onTap, child: Container(width: 40, height: 40, decoration: const BoxDecoration(color: AppColors.background, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 8), BoxShadow(color: Color(0xFF1A1D3A), offset: Offset(-3, -3), blurRadius: 8)]), child: Icon(icon, color: AppColors.textSecondary, size: size)));
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: clayRaised(color: AppColors.surface, radius: 20),
+        child: Icon(icon, color: AppColors.textSecondary, size: size),
+      ),
+    );
   }
 }

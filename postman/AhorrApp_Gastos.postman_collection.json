@@ -1,0 +1,228 @@
+{
+  "info": {
+    "_postman_id": "e9c0d2a4-8e52-4f5e-a84e-2867c3b64a79",
+    "name": "AhorrApp - API Gastos",
+    "description": "Pruebas CRUD de gastos. Configure el JWT en la variable token antes de ejecutar la colección.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://ahorrapp-react-pkj9.onrender.com/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "test_email",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "test_password",
+      "value": "Postman123!",
+      "type": "string"
+    },
+    {
+      "key": "gasto_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "id_categoria",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "id_dependientes",
+      "value": "null",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Autenticación (para pruebas de gastos)",
+      "item": [
+        {
+          "name": "POST - Registrar usuario de prueba",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('test_email')) {",
+                  "  pm.collectionVariables.set('test_email', 'postman.gastos.' + Date.now() + '@example.com');",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Usuario registrado', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+                  "pm.test('Respuesta exitosa', function () { pm.expect(pm.response.json().ok).to.eql(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Nombre\": \"Usuario\",\n  \"Apellido\": \"Postman\",\n  \"Email\": \"{{test_email}}\",\n  \"Password_hash\": \"{{test_password}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/auth/register",
+            "description": "Genera un correo único automáticamente la primera vez. No lo ejecutes de nuevo si deseas conservar el mismo usuario."
+          }
+        },
+        {
+          "name": "POST - Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Inicio de sesión exitoso', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "var body = pm.response.json();",
+                  "pm.test('El servidor devuelve un JWT', function () { pm.expect(body.token).to.be.a('string').and.not.empty; });",
+                  "if (body.token) { pm.collectionVariables.set('token', body.token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Email\": \"{{test_email}}\",\n  \"Password_hash\": \"{{test_password}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Guarda automáticamente el JWT devuelto en la variable token de la colección."
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET - Listar gastos",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}", "type": "text" }
+        ],
+        "url": "{{baseUrl}}/movimientos/gastos",
+        "description": "Devuelve un arreglo JSON con los gastos del usuario autenticado."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Respuesta exitosa', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+              "pm.test('La respuesta es una lista', function () { pm.expect(pm.response.json()).to.be.an('array'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST - Crear gasto",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json", "type": "text" },
+          { "key": "Authorization", "value": "Bearer {{token}}", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tipo_flujo\": \"Salida\",\n  \"subtipo_modulo\": \"Gasto\",\n  \"datos\": {\n    \"monto\": 25000,\n    \"descripcion\": \"Gasto de prueba Postman\",\n    \"fecha_registro\": \"2026-09-15\",\n    \"id_categoria\": {{id_categoria}},\n    \"id_dependientes\": {{id_dependientes}}\n  }\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": "{{baseUrl}}/movimientos",
+        "description": "Crea un gasto. Si no aplica dependiente, borre la propiedad id_dependientes del cuerpo."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Gasto creado', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+              "var body = pm.response.json();",
+              "pm.test('Respuesta exitosa', function () { pm.expect(body.ok).to.eql(true); });",
+              "pm.test('El servidor devuelve ID_detalle', function () { pm.expect(body.ID_detalle).to.exist; });",
+              "if (body.ID_detalle) { pm.collectionVariables.set('gasto_id', body.ID_detalle); }"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "PUT - Actualizar gasto",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json", "type": "text" },
+          { "key": "Authorization", "value": "Bearer {{token}}", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"monto\": 30000,\n  \"descripcion\": \"Gasto actualizado desde Postman\",\n  \"fecha_registro\": \"2026-09-15\",\n  \"id_categoria\": {{id_categoria}},\n  \"id_dependientes\": {{id_dependientes}}\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": "{{baseUrl}}/movimientos/gastos/{{gasto_id}}",
+        "description": "Ejecute POST antes, o asigne gasto_id manualmente. Si no aplica dependiente, elimine id_dependientes del cuerpo."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Gasto actualizado', function () { pm.expect(pm.response.code).to.be.oneOf([200, 204]); });",
+              "if (pm.response.code !== 204) { pm.test('Respuesta exitosa', function () { pm.expect(pm.response.json().ok).to.eql(true); }); }"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "DELETE - Eliminar gasto",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}", "type": "text" }
+        ],
+        "url": "{{baseUrl}}/movimientos/gastos/{{gasto_id}}",
+        "description": "Elimina el gasto indicado. Esta operación es irreversible en el servidor."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Gasto eliminado', function () { pm.expect(pm.response.code).to.be.oneOf([200, 204]); });",
+              "if (pm.response.code !== 204) { pm.test('Respuesta exitosa', function () { pm.expect(pm.response.json().ok).to.eql(true); }); }"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -86,7 +86,7 @@ BoxDecoration clayRaised({
   return BoxDecoration(
     color: color,
     borderRadius: BorderRadius.circular(radius),
-    border: border ?? Border.all(color: AppColors.borderLight, width: 1),
+    border: border,
     boxShadow: const [
       BoxShadow(color: Colors.black54, offset: Offset(6, 8), blurRadius: 16),
       BoxShadow(
@@ -123,7 +123,6 @@ BoxDecoration claySunken({
   return BoxDecoration(
     color: color,
     borderRadius: BorderRadius.circular(radius),
-    border: Border.all(color: AppColors.borderLight, width: 1),
     boxShadow: const [
       BoxShadow(
         color: Colors.black87,

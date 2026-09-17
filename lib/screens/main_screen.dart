@@ -70,7 +70,7 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _tabPrincipal);
-    
+
     // Inicializar accesos directos (RF-27)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       QuickActionsService.init(context);
@@ -96,7 +96,9 @@ class _MainScreenState extends State<MainScreen> {
     final seleccion = await showModalBottomSheet<int>(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => _MenuMasSheet(indiceActivo: _mostrandoSecundaria ? _indiceSecundario : null),
+      builder: (ctx) => _MenuMasSheet(
+        indiceActivo: _mostrandoSecundaria ? _indiceSecundario : null,
+      ),
     );
     if (seleccion == null) return;
     setState(() {
@@ -162,7 +164,9 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _buildNavItem(IconData icon, String label, int index) {
     final bool isActive = !_mostrandoSecundaria && _tabPrincipal == index;
-    final color = isActive ? AppColors.accent : AppColors.navInactive;
+    final color = isActive
+        ? (index == 1 ? AppColors.success : AppColors.accent)
+        : AppColors.navInactive;
 
     return Expanded(
       child: InkWell(
@@ -231,7 +235,9 @@ class _MenuMasSheet extends StatelessWidget {
       child: Container(
         decoration: const BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadius.lg),
+          ),
         ),
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
         child: Column(
@@ -270,7 +276,9 @@ class _MenuMasSheet extends StatelessWidget {
                     children: [
                       Icon(
                         item.icon,
-                        color: activo ? AppColors.accent : AppColors.textPrimary,
+                        color: activo
+                            ? AppColors.accent
+                            : AppColors.textPrimary,
                         size: 22,
                       ),
                       const SizedBox(width: 16),
@@ -278,14 +286,22 @@ class _MenuMasSheet extends StatelessWidget {
                         child: Text(
                           item.label,
                           style: TextStyle(
-                            color: activo ? AppColors.accent : AppColors.textPrimary,
+                            color: activo
+                                ? AppColors.accent
+                                : AppColors.textPrimary,
                             fontSize: 15,
-                            fontWeight: activo ? FontWeight.w700 : FontWeight.w500,
+                            fontWeight: activo
+                                ? FontWeight.w700
+                                : FontWeight.w500,
                           ),
                         ),
                       ),
                       if (activo)
-                        const Icon(Icons.check, color: AppColors.accent, size: 18),
+                        const Icon(
+                          Icons.check,
+                          color: AppColors.accent,
+                          size: 18,
+                        ),
                     ],
                   ),
                 ),
@@ -297,7 +313,9 @@ class _MenuMasSheet extends StatelessWidget {
               onTap: () async {
                 await AuthService.instance.logout();
                 if (context.mounted) {
-                  Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                  Navigator.of(
+                    context,
+                  ).pushNamedAndRemoveUntil('/login', (route) => false);
                 }
               },
               child: const Padding(

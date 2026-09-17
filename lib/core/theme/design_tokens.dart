@@ -7,9 +7,11 @@ class AppColors {
 
   // Fondos
   static const Color background = Color(0xFF0E1124);
-  static const Color surface = Color(0xFF141730);      // antes kSecondaryBgColor
-  static const Color surfaceAlt = Color(0xFF1E2230);    // heredado de Juan, variación de superficie
-  static const Color inset = Color(0xFF080A15);         // antes kInsetBg
+  static const Color surface = Color(0xFF141730); // antes kSecondaryBgColor
+  static const Color surfaceAlt = Color(
+    0xFF1E2230,
+  ); // heredado de Juan, variación de superficie
+  static const Color inset = Color(0xFF080A15); // antes kInsetBg
 
   // Acento
   static const Color accent = Color(0xFFFFB800);
@@ -18,17 +20,19 @@ class AppColors {
   // Semánticos
   static const Color success = Color(0xFF34D399);
   static const Color successSoft = Color(0x2634D399);
-  static const Color error = Color(0xFFFF6B6B);         // antes kNegativeColor
-  static const Color blue = Color(0xFF2F8BFF);          // nuevo (de Manuel), para info/links
+  static const Color error = Color(0xFFFF6B6B); // antes kNegativeColor
+  static const Color blue = Color(
+    0xFF2F8BFF,
+  ); // nuevo (de Manuel), para info/links
 
   // Texto
   static const Color textPrimary = Colors.white;
   static const Color textSecondary = Color(0xFF7A7D95); // antes kTextSecondary
-  static const Color textMuted = Color(0xFF5B5F70);      // heredado de Juan
-  static const Color muted = textSecondary;               // alias para pantallas de auth
+  static const Color textMuted = Color(0xFF5B5F70); // heredado de Juan
+  static const Color muted = textSecondary; // alias para pantallas de auth
 
   // Navegación
-  static const Color navInactive = Color(0xFF5A5D75);   // antes kNavbarInactive
+  static const Color navInactive = Color(0xFF5A5D75); // antes kNavbarInactive
 
   // Bordes
   static const Color borderLight = Color(0x14FFFFFF);
@@ -38,7 +42,7 @@ class AppColors {
 class AppPresupuestoColors {
   const AppPresupuestoColors._();
 
-  static const Color gastos = AppColors.blue;
+  static const Color gastos = AppColors.accent;
   static const Color deudas = AppCategoryColors.almuerzo;
   static const Color imprevistos = AppColors.accent;
   static const Color ahorros = AppColors.success;

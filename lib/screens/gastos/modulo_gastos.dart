@@ -5,6 +5,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../core/theme/design_tokens.dart';
+import '../../core/theme/app_theme.dart';
 import '../../models/gasto_model.dart';
 import '../../providers/presupuesto_provider.dart';
 import '../../services/local_parser_service.dart';
@@ -40,8 +41,18 @@ class _ModuloGastosState extends State<ModuloGastos>
   String _lastWords = '';
 
   static const List<String> _mesesNom = [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+    'Enero',
+    'Febrero',
+    'Marzo',
+    'Abril',
+    'Mayo',
+    'Junio',
+    'Julio',
+    'Agosto',
+    'Septiembre',
+    'Octubre',
+    'Noviembre',
+    'Diciembre',
   ];
 
   late AnimationController _menuController;
@@ -49,8 +60,11 @@ class _ModuloGastosState extends State<ModuloGastos>
 
   List<GastoModel> get _filteredGastos {
     return _gastos.where((g) {
-      final matchesDate = g.fecha.month == _selectedDate.month && g.fecha.year == _selectedDate.year;
-      final matchesSearch = _searchQuery.isEmpty ||
+      final matchesDate =
+          g.fecha.month == _selectedDate.month &&
+          g.fecha.year == _selectedDate.year;
+      final matchesSearch =
+          _searchQuery.isEmpty ||
           g.description.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           g.titulo.toLowerCase().contains(_searchQuery.toLowerCase());
       return matchesDate && matchesSearch;
@@ -67,7 +81,8 @@ class _ModuloGastosState extends State<ModuloGastos>
 
     // No permitir navegar a meses futuros
     if (delta > 0) {
-      if (newDate.year > now.year || (newDate.year == now.year && newDate.month > now.month)) {
+      if (newDate.year > now.year ||
+          (newDate.year == now.year && newDate.month > now.month)) {
         return;
       }
     }
@@ -123,8 +138,9 @@ class _ModuloGastosState extends State<ModuloGastos>
 
     const double presupuesto = 0;
     final double balance = presupuesto - totalGastos;
-    final double porcentaje =
-    presupuesto > 0 ? (totalGastos / presupuesto * 100).clamp(0, 100) : 0;
+    final double porcentaje = presupuesto > 0
+        ? (totalGastos / presupuesto * 100).clamp(0, 100)
+        : 0;
 
     WidgetService.updateWidgetData(
       balance: _formatCurrency(balance),
@@ -194,7 +210,9 @@ class _ModuloGastosState extends State<ModuloGastos>
     if (!status.isGranted) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Necesitamos el micrófono para usar la voz')),
+          const SnackBar(
+            content: Text('Necesitamos el micrófono para usar la voz'),
+          ),
         );
       }
       return;
@@ -246,7 +264,10 @@ class _ModuloGastosState extends State<ModuloGastos>
         setState(() => _isProcessing = false);
         final resultado = await Navigator.push<bool>(
           context,
-          MaterialPageRoute(builder: (context) => AgregarGastoScreen(gastoParaEditar: parsedGasto)),
+          MaterialPageRoute(
+            builder: (context) =>
+                AgregarGastoScreen(gastoParaEditar: parsedGasto),
+          ),
         );
         if (resultado == true) _loadGastos();
       }
@@ -256,45 +277,54 @@ class _ModuloGastosState extends State<ModuloGastos>
     }
   }
 
-void _processQrResult(String textoQr) async {
-  final GastoModel? parsedGasto = QrParserService.parse(textoQr);
+  void _processQrResult(String textoQr) async {
+    final GastoModel? parsedGasto = QrParserService.parse(textoQr);
 
-  if (parsedGasto == null) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('QR inválido: no se pudo extraer información del comprobante. Intenta agregarlo manualmente.'),
+    if (parsedGasto == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'QR inválido: no se pudo extraer información del comprobante. Intenta agregarlo manualmente.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final resultado = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AgregarGastoScreen(gastoParaEditar: parsedGasto),
       ),
     );
-    return;
+    if (resultado == true) _loadGastos();
   }
 
-  final resultado = await Navigator.push<bool>(
-    context,
-    MaterialPageRoute(builder: (context) => AgregarGastoScreen(gastoParaEditar: parsedGasto)),
-  );
-  if (resultado == true) _loadGastos();
-}
+  void _processOcrResult(String textoOcr) async {
+    final GastoModel? parsedGasto = OcrParserService.parse(textoOcr);
 
-void _processOcrResult(String textoOcr) async {
-  final GastoModel? parsedGasto = OcrParserService.parse(textoOcr);
+    if (parsedGasto == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No se pudo leer el recibo. Intenta con mejor luz o agrégalo manualmente.',
+          ),
+        ),
+      );
+      return;
+    }
 
-  if (parsedGasto == null) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('No se pudo leer el recibo. Intenta con mejor luz o agrégalo manualmente.'),
+    final resultado = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AgregarGastoScreen(gastoParaEditar: parsedGasto),
       ),
     );
-    return;
+    if (resultado == true) _loadGastos();
   }
 
-  final resultado = await Navigator.push<bool>(
-    context,
-    MaterialPageRoute(builder: (context) => AgregarGastoScreen(gastoParaEditar: parsedGasto)),
-  );
-  if (resultado == true) _loadGastos();
-}
   void _showVoiceModal() {
     _isModalShowing = true;
     showGeneralDialog(
@@ -306,23 +336,23 @@ void _processOcrResult(String textoOcr) async {
       pageBuilder: (context, animation, secondaryAnimation) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-                    if (_isListening && !_speech.isListening) {
-                      _speech.listen(
-                        onResult: (val) {
-                          if (mounted) {
-                            setModalState(() => _lastWords = val.recognizedWords);
-                            setState(() => _lastWords = val.recognizedWords);
-                          }
-                        },
-                        listenOptions: stt.SpeechListenOptions(
-                          localeId: 'es_CO',
-                          cancelOnError: true,
-                          listenMode: stt.ListenMode.dictation,
-                          listenFor: const Duration(minutes: 20),
-                          pauseFor: const Duration(minutes: 5),
-                        ),
-                      );
-                    }
+            if (_isListening && !_speech.isListening) {
+              _speech.listen(
+                onResult: (val) {
+                  if (mounted) {
+                    setModalState(() => _lastWords = val.recognizedWords);
+                    setState(() => _lastWords = val.recognizedWords);
+                  }
+                },
+                listenOptions: stt.SpeechListenOptions(
+                  localeId: 'es_CO',
+                  cancelOnError: true,
+                  listenMode: stt.ListenMode.dictation,
+                  listenFor: const Duration(minutes: 20),
+                  pauseFor: const Duration(minutes: 5),
+                ),
+              );
+            }
 
             return AnimatedBuilder(
               animation: animation,
@@ -335,11 +365,16 @@ void _processOcrResult(String textoOcr) async {
                         _speech.stop();
                         _closeVoiceModal();
                       },
-                      child: Container(color: Colors.black.withValues(alpha: 0.45 * t)),
+                      child: Container(
+                        color: Colors.black.withValues(alpha: 0.45 * t),
+                      ),
                     ),
                     Positioned.fill(
                       child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 10 * t, sigmaY: 10 * t),
+                        filter: ImageFilter.blur(
+                          sigmaX: 10 * t,
+                          sigmaY: 10 * t,
+                        ),
                         child: const SizedBox.expand(),
                       ),
                     ),
@@ -359,7 +394,7 @@ void _processOcrResult(String textoOcr) async {
                 );
               },
             );
-          }
+          },
         );
       },
     );
@@ -406,7 +441,11 @@ void _processOcrResult(String textoOcr) async {
               padding: EdgeInsets.only(top: 4),
               child: Text(
                 'Toca el botón para detener',
-                style: TextStyle(color: AppColors.accent, fontSize: 12, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  color: AppColors.accent,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           const SizedBox(height: 12),
@@ -420,7 +459,11 @@ void _processOcrResult(String textoOcr) async {
               child: Text(
                 _lastWords,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontStyle: FontStyle.italic),
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 14,
+                  fontStyle: FontStyle.italic,
+                ),
               ),
             )
           else if (_isListening)
@@ -438,7 +481,11 @@ void _processOcrResult(String textoOcr) async {
               },
               child: const Text(
                 'Cancelar',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
         ],
@@ -480,10 +527,7 @@ void _processOcrResult(String textoOcr) async {
                   builder: (context, child) {
                     final t = _menuController.value;
                     return BackdropFilter(
-                      filter: ImageFilter.blur(
-                        sigmaX: 10 * t,
-                        sigmaY: 10 * t,
-                      ),
+                      filter: ImageFilter.blur(sigmaX: 10 * t, sigmaY: 10 * t),
                       child: GestureDetector(
                         onTap: _toggleMenu,
                         child: Container(
@@ -555,7 +599,10 @@ void _processOcrResult(String textoOcr) async {
     required VoidCallback onTap,
   }) {
     return SlideTransition(
-      position: Tween<Offset>(begin: const Offset(0.4, 0), end: Offset.zero).animate(animation),
+      position: Tween<Offset>(
+        begin: const Offset(0.4, 0),
+        end: Offset.zero,
+      ).animate(animation),
       child: FadeTransition(
         opacity: animation,
         child: Row(
@@ -563,19 +610,23 @@ void _processOcrResult(String textoOcr) async {
           children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.4), blurRadius: 10, offset: const Offset(0, 4))],
+              decoration: clayRaised(radius: AppRadius.sm),
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-              child: Text(label, style: const TextStyle(color: AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
             ),
             const SizedBox(width: 12),
             GestureDetector(
               onTap: onTap,
               child: Container(
-                width: 50, height: 50,
-                decoration: const BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
+                width: 50,
+                height: 50,
+                decoration: clayRaised(color: AppColors.surface, radius: 25),
                 child: Icon(icon, color: AppColors.accent, size: 22),
               ),
             ),
@@ -588,12 +639,9 @@ void _processOcrResult(String textoOcr) async {
   Widget _buildFAB() {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      width: 60, height: 60,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: const RadialGradient(colors: [Color(0xFFFFD700), AppColors.accent]),
-        border: Border.all(color: Colors.white.withValues(alpha: _isMenuOpen ? 0.9 : 0), width: 2),
-      ),
+      width: 60,
+      height: 60,
+      decoration: clayGlow(color: AppColors.accent, radius: 30),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -614,34 +662,63 @@ void _processOcrResult(String textoOcr) async {
 
   Widget _buildHeader() {
     final now = DateTime.now();
-    final isCurrentMonth = _selectedDate.year == now.year && _selectedDate.month == now.month;
+    final isCurrentMonth =
+        _selectedDate.year == now.year && _selectedDate.month == now.month;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Row(
           children: [
-            _NeumorphicIcon(icon: Icons.arrow_back_ios, size: 12, onTap: () => _changeMonth(-1)),
+            _NeumorphicIcon(
+              icon: Icons.arrow_back_ios,
+              size: 12,
+              onTap: () => _changeMonth(-1),
+            ),
             const SizedBox(width: 12),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_mesesNom[_selectedDate.month - 1], style: const TextStyle(color: AppColors.textPrimary, fontSize: 22, fontWeight: FontWeight.bold)),
-                Text('${_selectedDate.year}', style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                Text(
+                  _mesesNom[_selectedDate.month - 1],
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  '${_selectedDate.year}',
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                  ),
+                ),
               ],
             ),
             const SizedBox(width: 12),
-            if (!isCurrentMonth) _NeumorphicIcon(icon: Icons.arrow_forward_ios, size: 12, onTap: () => _changeMonth(1))
-            else const SizedBox(width: 40),
+            if (!isCurrentMonth)
+              _NeumorphicIcon(
+                icon: Icons.arrow_forward_ios,
+                size: 12,
+                onTap: () => _changeMonth(1),
+              )
+            else
+              const SizedBox(width: 40),
           ],
         ),
         Row(
           children: [
-            _NeumorphicIcon(icon: Icons.notifications_outlined, size: 22, onTap: () {}),
+            _NeumorphicIcon(
+              icon: Icons.notifications_outlined,
+              size: 22,
+              onTap: () {},
+            ),
             const SizedBox(width: 12),
             Container(
-              width: 36, height: 36,
-              decoration: const BoxDecoration(shape: BoxShape.circle, gradient: LinearGradient(colors: [AppColors.accent, Color(0xFFFF8C00)])),
+              width: 36,
+              height: 36,
+              decoration: clayGlow(color: AppColors.accent, radius: 18),
               child: const Icon(Icons.person, color: Colors.white, size: 20),
             ),
           ],
@@ -651,25 +728,47 @@ void _processOcrResult(String textoOcr) async {
   }
 
   Widget _buildSearchBar() {
-    return _NeumorphicContainer(
-      borderRadius: 16,
+    return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: claySunken(radius: AppRadius.md),
       child: TextField(
         onChanged: (value) => setState(() => _searchQuery = value),
+        cursorColor: AppColors.accent,
         style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
         decoration: InputDecoration(
           hintText: 'Buscar gasto o categoría...',
-          hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.5)),
+          hintStyle: TextStyle(
+            color: AppColors.textSecondary.withValues(alpha: 0.5),
+          ),
+          filled: false,
+          fillColor: Colors.transparent,
           border: InputBorder.none,
-          icon: const Icon(Icons.search, color: AppColors.accent, size: 20),
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          errorBorder: InputBorder.none,
+          focusedErrorBorder: InputBorder.none,
+          prefixIcon: const Icon(
+            Icons.search,
+            color: AppColors.accent,
+            size: 20,
+          ),
+          prefixIconConstraints: const BoxConstraints(
+            minWidth: 28,
+            minHeight: 20,
+          ),
+          contentPadding: const EdgeInsets.symmetric(vertical: 17),
         ),
       ),
     );
   }
 
   String _formatCurrency(double amount) {
-    String integerPart = amount.toStringAsFixed(0).replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
+    String integerPart = amount
+        .toStringAsFixed(0)
+        .replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]}.',
+        );
     return '\$$integerPart';
   }
 
@@ -683,9 +782,11 @@ void _processOcrResult(String textoOcr) async {
     for (var g in filtered) {
       totalGastos += g.monto;
     }
-    
+
     final double disponible = presupuesto - totalGastos;
-    final double porcentaje = presupuesto > 0 ? (totalGastos / presupuesto).clamp(0.0, 1.0) : 0.0;
+    final double porcentaje = presupuesto > 0
+        ? (totalGastos / presupuesto).clamp(0.0, 1.0)
+        : 0.0;
 
     return _NeumorphicContainer(
       borderRadius: 24,
@@ -700,9 +801,28 @@ void _processOcrResult(String textoOcr) async {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('TOTAL GASTOS', style: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1)),
+                    const Text(
+                      'TOTAL GASTOS',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1,
+                      ),
+                    ),
                     const SizedBox(height: 8),
-                    FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Text(_formatCurrency(totalGastos), style: const TextStyle(color: AppColors.textPrimary, fontSize: 32, fontWeight: FontWeight.bold))),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        _formatCurrency(totalGastos),
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -711,9 +831,28 @@ void _processOcrResult(String textoOcr) async {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    const Text('PRESUPUESTO', style: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1)),
+                    const Text(
+                      'PRESUPUESTO',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1,
+                      ),
+                    ),
                     const SizedBox(height: 8),
-                    FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerRight, child: Text(_formatCurrency(presupuesto), style: const TextStyle(color: AppPresupuestoColors.gastos, fontSize: 28, fontWeight: FontWeight.bold))),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        _formatCurrency(presupuesto),
+                        style: const TextStyle(
+                          color: AppPresupuestoColors.gastos,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -725,19 +864,39 @@ void _processOcrResult(String textoOcr) async {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('${(porcentaje * 100).toStringAsFixed(0)}% utilizado', style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
-              Text('${filtered.length} registros', style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+              Text(
+                '${(porcentaje * 100).toStringAsFixed(0)}% utilizado',
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 11,
+                ),
+              ),
+              Text(
+                '${filtered.length} registros',
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 11,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),
           RichText(
             text: TextSpan(
               children: [
-                const TextSpan(text: 'Disponible: ', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+                const TextSpan(
+                  text: 'Disponible: ',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 14,
+                  ),
+                ),
                 TextSpan(
                   text: _formatCurrency(disponible),
                   style: TextStyle(
-                    color: disponible >= 0 ? AppPresupuestoColors.gastos : AppColors.error,
+                    color: disponible >= 0
+                        ? AppPresupuestoColors.gastos
+                        : AppColors.error,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
@@ -753,12 +912,26 @@ void _processOcrResult(String textoOcr) async {
   Widget _buildProgressBar(double porcentaje, Color color) {
     return Container(
       height: 10,
-      decoration: BoxDecoration(color: AppColors.inset, borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.black.withValues(alpha: 0.3), width: 1)),
+      decoration: BoxDecoration(
+        color: AppColors.inset,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: Colors.black.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
       child: Align(
         alignment: Alignment.centerLeft,
         child: FractionallySizedBox(
           widthFactor: porcentaje,
-          child: Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [color, color.withValues(alpha: 0.7)]), borderRadius: BorderRadius.circular(10))),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [color, color.withValues(alpha: 0.7)],
+              ),
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
         ),
       ),
     );
@@ -768,17 +941,62 @@ void _processOcrResult(String textoOcr) async {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text('Gastos del mes', style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
-        Text('${_filteredGastos.length} total', style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+        const Text(
+          'Gastos del mes',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          '${_filteredGastos.length} total',
+          style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+        ),
       ],
     );
   }
 
   Widget _buildExpensesList() {
-    if (_isLoading) return const Center(child: Padding(padding: EdgeInsets.only(top: 40), child: CircularProgressIndicator(color: AppColors.accent)));
+    if (_isLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.only(top: 40),
+          child: CircularProgressIndicator(color: AppColors.accent),
+        ),
+      );
+    }
     final filtered = _filteredGastos.reversed.toList();
-    if (filtered.isEmpty) return Center(child: Padding(padding: const EdgeInsets.only(top: 40), child: Column(children: [Icon(Icons.receipt_long, color: AppColors.textSecondary.withValues(alpha: 0.3), size: 64), const SizedBox(height: 16), const Text('No hay gastos registrados', style: TextStyle(color: AppColors.textSecondary, fontSize: 14))])));
-    return Column(children: List.generate(filtered.length, (index) => Padding(padding: const EdgeInsets.only(bottom: 14), child: _buildExpenseCard(filtered[index], index))));
+    if (filtered.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.only(top: 40),
+          child: Column(
+            children: [
+              Icon(
+                Icons.receipt_long,
+                color: AppColors.textSecondary.withValues(alpha: 0.3),
+                size: 64,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'No hay gastos registrados',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return Column(
+      children: List.generate(
+        filtered.length,
+        (index) => Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: _buildExpenseCard(filtered[index], index),
+        ),
+      ),
+    );
   }
 
   Widget _buildExpenseCard(GastoModel expense, int index) {
@@ -794,12 +1012,57 @@ void _processOcrResult(String textoOcr) async {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  Container(width: 44, height: 44, decoration: BoxDecoration(color: expense.color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)), child: Icon(expense.icono, color: expense.color, size: 24)),
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: expense.color.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(expense.icono, color: expense.color, size: 24),
+                  ),
                   const SizedBox(width: 14),
-                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(expense.titulo, style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)), const SizedBox(height: 4), Text(expense.subtitulo, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12))])),
-                  Text('-${_formatCurrency(expense.monto)}', style: const TextStyle(color: AppColors.error, fontSize: 16, fontWeight: FontWeight.bold)),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          expense.titulo,
+                          style: const TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          expense.subtitulo,
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    '-${_formatCurrency(expense.monto)}',
+                    style: const TextStyle(
+                      color: AppColors.error,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(width: 8),
-                  AnimatedRotation(turns: isExpanded ? 0.5 : 0.0, duration: const Duration(milliseconds: 200), child: const Icon(Icons.expand_more, color: AppColors.textSecondary, size: 20)),
+                  AnimatedRotation(
+                    turns: isExpanded ? 0.5 : 0.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: const Icon(
+                      Icons.expand_more,
+                      color: AppColors.textSecondary,
+                      size: 20,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -809,18 +1072,60 @@ void _processOcrResult(String textoOcr) async {
                 padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
                 child: Column(
                   children: [
-                    Row(children: [_buildDetailItem('CATEGORÍA', expense.titulo), _buildDetailItem('FECHA', '${expense.fecha.day.toString().padLeft(2, '0')}/${expense.fecha.month.toString().padLeft(2, '0')}/${expense.fecha.year}')]),
+                    Row(
+                      children: [
+                        _buildDetailItem('CATEGORÍA', expense.titulo),
+                        _buildDetailItem(
+                          'FECHA',
+                          '${expense.fecha.day.toString().padLeft(2, '0')}/${expense.fecha.month.toString().padLeft(2, '0')}/${expense.fecha.year}',
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 18),
-                    Row(children: [_buildDetailItem('DESCRIPCIÓN', expense.description), _buildDetailItem('MONTO', '-${_formatCurrency(expense.monto)}', color: AppColors.error)]),
+                    Row(
+                      children: [
+                        _buildDetailItem('DESCRIPCIÓN', expense.description),
+                        _buildDetailItem(
+                          'MONTO',
+                          '-${_formatCurrency(expense.monto)}',
+                          color: AppColors.error,
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 24),
                     Row(
                       children: [
-                        Expanded(child: _buildActionButton(label: 'Editar', icon: Icons.edit_outlined, color: const Color(0xFF4ADE80), onTap: () async {
-                          final resultado = await Navigator.push<bool>(context, MaterialPageRoute(builder: (context) => AgregarGastoScreen(gastoParaEditar: expense)));
-                          if (resultado == true) { setState(() => _expandedIndex = null); _loadGastos(); }
-                        })),
+                        Expanded(
+                          child: _buildActionButton(
+                            label: 'Editar',
+                            icon: Icons.edit_outlined,
+                            color: AppColors.accent,
+                            onTap: () async {
+                              final resultado = await Navigator.push<bool>(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AgregarGastoScreen(
+                                    gastoParaEditar: expense,
+                                  ),
+                                ),
+                              );
+                              if (resultado == true) {
+                                setState(() => _expandedIndex = null);
+                                _loadGastos();
+                              }
+                            },
+                          ),
+                        ),
                         const SizedBox(width: 16),
-                        Expanded(child: _buildActionButton(label: 'Eliminar', icon: Icons.delete_outline, color: AppColors.error, onTap: () => _mostrarDialogoConfirmacion(context, expense))),
+                        Expanded(
+                          child: _buildActionButton(
+                            label: 'Eliminar',
+                            icon: Icons.delete_outline,
+                            color: AppColors.error,
+                            onTap: () =>
+                                _mostrarDialogoConfirmacion(context, expense),
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -840,20 +1145,50 @@ void _processOcrResult(String textoOcr) async {
         filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
         child: AlertDialog(
           backgroundColor: AppColors.background,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: const Text('Confirmar eliminación', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
-          content: const Text('¿Seguro de que quieres eliminar este gasto?', style: TextStyle(color: AppColors.textSecondary), textAlign: TextAlign.center),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          title: const Text(
+            'Confirmar eliminación',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          content: const Text(
+            '¿Seguro de que quieres eliminar este gasto?',
+            style: TextStyle(color: AppColors.textSecondary),
+            textAlign: TextAlign.center,
+          ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary))),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'Cancelar',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            ),
             ElevatedButton(
               onPressed: () async {
                 if (expense.id != null) {
-                  final success = await GastosService.eliminarGasto(expense.id!);
-                  if (success) { setState(() => _expandedIndex = null); _loadGastos(); }
+                  final success = await GastosService.eliminarGasto(
+                    expense.id!,
+                  );
+                  if (success) {
+                    setState(() => _expandedIndex = null);
+                    _loadGastos();
+                  }
                 }
                 if (context.mounted) Navigator.pop(context);
               },
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.error.withValues(alpha: 0.2), foregroundColor: AppColors.error, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error.withValues(alpha: 0.2),
+                foregroundColor: AppColors.error,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
               child: const Text('Eliminar'),
             ),
           ],
@@ -863,16 +1198,65 @@ void _processOcrResult(String textoOcr) async {
   }
 
   Widget _buildDetailItem(String label, String value, {Color? color}) {
-    return Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5)), const SizedBox(height: 5), Text(value, style: TextStyle(color: color ?? AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis)]));
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            value,
+            style: TextStyle(
+              color: color ?? AppColors.textPrimary,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
   }
 
-  Widget _buildActionButton({required String label, required IconData icon, required Color color, required VoidCallback onTap}) {
+  Widget _buildActionButton({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         height: 48,
-        decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(14), border: Border.all(color: color.withValues(alpha: 0.4), width: 1)),
-        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(icon, color: color, size: 18), const SizedBox(width: 8), Text(label, style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.bold))]),
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withValues(alpha: 0.4), width: 1),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 18),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -901,14 +1285,44 @@ class _VoicePulseButtonState extends State<_VoicePulseButton>
   @override
   void initState() {
     super.initState();
-    _pulseController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))..repeat();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
   }
+
   @override
-  void dispose() { _pulseController.dispose(); super.dispose(); }
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.isProcessing) {
-      return SizedBox(width: 150, height: 150, child: Stack(alignment: Alignment.center, children: [const CircularProgressIndicator(color: AppColors.accent), Container(width: 60, height: 60, decoration: const BoxDecoration(color: AppColors.surface, shape: BoxShape.circle), child: const Icon(Icons.auto_awesome, color: AppColors.accent, size: 28))]));
+      return SizedBox(
+        width: 150,
+        height: 150,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            const CircularProgressIndicator(color: AppColors.accent),
+            Container(
+              width: 60,
+              height: 60,
+              decoration: const BoxDecoration(
+                color: AppColors.surface,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.auto_awesome,
+                color: AppColors.accent,
+                size: 28,
+              ),
+            ),
+          ],
+        ),
+      );
     }
     return GestureDetector(
       onTap: widget.onTap,
@@ -917,7 +1331,8 @@ class _VoicePulseButtonState extends State<_VoicePulseButton>
         scale: widget.isListening ? 0.9 : 1.0,
         duration: const Duration(milliseconds: 150),
         child: SizedBox(
-          width: 150, height: 150,
+          width: 150,
+          height: 150,
           child: Stack(
             alignment: Alignment.center,
             children: [
@@ -929,15 +1344,40 @@ class _VoicePulseButtonState extends State<_VoicePulseButton>
                       final t = (_pulseController.value + i * 0.33) % 1.0;
                       final scale = 1.0 + 0.8 * t;
                       final opacity = (1 - t) * 0.5;
-                      return Transform.scale(scale: scale, child: Container(width: 96, height: 96, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.error.withValues(alpha: opacity), width: 2))));
+                      return Transform.scale(
+                        scale: scale,
+                        child: Container(
+                          width: 96,
+                          height: 96,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: AppColors.error.withValues(alpha: opacity),
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                      );
                     },
                   );
                 }),
               AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                width: 96, height: 96,
-                decoration: BoxDecoration(shape: BoxShape.circle, gradient: RadialGradient(colors: widget.isListening ? [const Color(0xFFFF8A8A), AppColors.error] : [const Color(0xFFFFD700), AppColors.accent])),
-                child: Icon(widget.isListening ? Icons.stop : Icons.mic, color: widget.isListening ? Colors.white : Colors.black, size: 40),
+                width: 96,
+                height: 96,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: widget.isListening
+                        ? [const Color(0xFFFF8A8A), AppColors.error]
+                        : [const Color(0xFFFFD700), AppColors.accent],
+                  ),
+                ),
+                child: Icon(
+                  widget.isListening ? Icons.stop : Icons.mic,
+                  color: widget.isListening ? Colors.white : Colors.black,
+                  size: 40,
+                ),
               ),
             ],
           ),
@@ -951,10 +1391,18 @@ class _NeumorphicContainer extends StatelessWidget {
   final Widget child;
   final double borderRadius;
   final EdgeInsets padding;
-  const _NeumorphicContainer({required this.child, this.borderRadius = 16, this.padding = const EdgeInsets.all(16)});
+  const _NeumorphicContainer({
+    required this.child,
+    this.borderRadius = 16,
+    this.padding = const EdgeInsets.all(16),
+  });
   @override
   Widget build(BuildContext context) {
-    return Container(padding: padding, decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(borderRadius), boxShadow: const [BoxShadow(color: Color(0xFF05060D), offset: Offset(4, 4), blurRadius: 12), BoxShadow(color: Color(0xFF1A1D3A), offset: Offset(-4, -4), blurRadius: 12)]), child: child);
+    return Container(
+      padding: padding,
+      decoration: clayRaised(color: AppColors.surface, radius: borderRadius),
+      child: child,
+    );
   }
 }
 
@@ -962,9 +1410,21 @@ class _NeumorphicIcon extends StatelessWidget {
   final IconData icon;
   final double size;
   final VoidCallback onTap;
-  const _NeumorphicIcon({required this.icon, required this.size, required this.onTap});
+  const _NeumorphicIcon({
+    required this.icon,
+    required this.size,
+    required this.onTap,
+  });
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(onTap: onTap, child: Container(width: 40, height: 40, decoration: const BoxDecoration(color: AppColors.background, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 8), BoxShadow(color: Color(0xFF1A1D3A), offset: Offset(-3, -3), blurRadius: 8)]), child: Icon(icon, color: AppColors.textSecondary, size: size)));
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: clayRaised(color: AppColors.surface, radius: 20),
+        child: Icon(icon, color: AppColors.textSecondary, size: size),
+      ),
+    );
   }
 }

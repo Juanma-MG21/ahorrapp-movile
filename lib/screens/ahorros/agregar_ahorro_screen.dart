@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../core/theme/design_tokens.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/network/api_client.dart';
 import '../../models/ahorro_model.dart';
 import '../../models/categoria_model.dart';
@@ -33,7 +34,8 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
     _loadCategorias();
     if (widget.ahorroParaEditar != null) {
       _nombreController.text = widget.ahorroParaEditar!.nombre;
-      _montoController.text = widget.ahorroParaEditar!.montoObjetivo.toStringAsFixed(0);
+      _montoController.text = widget.ahorroParaEditar!.montoObjetivo
+          .toStringAsFixed(0);
       _descripcionController.text = widget.ahorroParaEditar!.descripcion ?? '';
       _fechaLimite = widget.ahorroParaEditar!.fechaLimite;
       _selectedCategoriaId = widget.ahorroParaEditar!.idCategoria;
@@ -83,7 +85,9 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
 
     if (nombre.isEmpty || monto <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, ingresa un nombre y monto válido (>0)')),
+        const SnackBar(
+          content: Text('Por favor, ingresa un nombre y monto válido (>0)'),
+        ),
       );
       return;
     }
@@ -96,7 +100,9 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
       montoObjetivo: monto,
       montoActual: widget.ahorroParaEditar?.montoActual ?? 0,
       fechaLimite: _fechaLimite,
-      descripcion: _descripcionController.text.trim().isEmpty ? null : _descripcionController.text.trim(),
+      descripcion: _descripcionController.text.trim().isEmpty
+          ? null
+          : _descripcionController.text.trim(),
       idCategoria: _selectedCategoriaId,
       estado: widget.ahorroParaEditar?.estado ?? 'Activo',
     );
@@ -115,9 +121,9 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
       if (!mounted) return;
 
       setState(() => _isSaving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
     }
   }
 
@@ -149,16 +155,27 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
   Widget _buildHeader() {
     return Row(
       children: [
-        _NeumorphicIcon(icon: Icons.arrow_back, size: 20, onTap: () => Navigator.pop(context)),
+        _NeumorphicIcon(
+          icon: Icons.arrow_back,
+          size: 20,
+          onTap: () => Navigator.pop(context),
+        ),
         const SizedBox(width: 16),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               widget.ahorroParaEditar != null ? 'Editar Meta' : 'Nueva Meta',
-              style: const TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            const Text('Registrar objetivo de ahorro', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+            const Text(
+              'Registrar objetivo de ahorro',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+            ),
           ],
         ),
       ],
@@ -174,11 +191,18 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
         children: [
           _buildLabel('Nombre de la meta', required: true),
           const SizedBox(height: 8),
-          _buildTextField(controller: _nombreController, hint: 'Ej: Viaje a la playa'),
+          _buildTextField(
+            controller: _nombreController,
+            hint: 'Ej: Viaje a la playa',
+          ),
           const SizedBox(height: 18),
           _buildLabel('Monto objetivo', required: true),
           const SizedBox(height: 8),
-          _buildTextField(controller: _montoController, hint: '\$0', keyboardType: TextInputType.number),
+          _buildTextField(
+            controller: _montoController,
+            hint: '\$0',
+            keyboardType: TextInputType.number,
+          ),
           const SizedBox(height: 18),
           _buildLabel('Categoría'),
           const SizedBox(height: 8),
@@ -186,7 +210,11 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
           const SizedBox(height: 18),
           _buildLabel('Descripción'),
           const SizedBox(height: 8),
-          _buildTextField(controller: _descripcionController, hint: 'Ej: Para el retiro del 2024', maxLines: 3),
+          _buildTextField(
+            controller: _descripcionController,
+            hint: 'Ej: Para el retiro del 2024',
+            maxLines: 3,
+          ),
           const SizedBox(height: 18),
           _buildLabel('Fecha límite (opcional)'),
           const SizedBox(height: 8),
@@ -200,9 +228,23 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
     return RichText(
       text: TextSpan(
         children: [
-          TextSpan(text: text, style: const TextStyle(color: AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
+          TextSpan(
+            text: text,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           if (required)
-            const TextSpan(text: ' *', style: TextStyle(color: AppColors.error, fontSize: 13, fontWeight: FontWeight.w600)),
+            const TextSpan(
+              text: ' *',
+              style: TextStyle(
+                color: AppColors.error,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
         ],
       ),
     );
@@ -215,7 +257,10 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
     int maxLines = 1,
   }) {
     return Container(
-      decoration: BoxDecoration(color: AppColors.inset, borderRadius: BorderRadius.circular(14)),
+      decoration: BoxDecoration(
+        color: AppColors.inset,
+        borderRadius: BorderRadius.circular(14),
+      ),
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
@@ -225,7 +270,10 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
           hintText: hint,
           hintStyle: const TextStyle(color: AppColors.textSecondary),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
         ),
       ),
     );
@@ -234,7 +282,10 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
   Widget _buildCategoriaField() {
     final cat = _categoriaSeleccionada;
     return Container(
-      decoration: BoxDecoration(color: AppColors.inset, borderRadius: BorderRadius.circular(14)),
+      decoration: BoxDecoration(
+        color: AppColors.inset,
+        borderRadius: BorderRadius.circular(14),
+      ),
       child: InkWell(
         onTap: _showCategorySheet,
         borderRadius: BorderRadius.circular(14),
@@ -243,12 +294,36 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
           child: Row(
             children: [
               if (cat != null) ...[
-                Icon(_getIconForCategory(cat.nombre), color: _getColorForCategory(cat.nombre), size: 20),
+                Icon(
+                  _getIconForCategory(cat.nombre),
+                  color: _getColorForCategory(cat.nombre),
+                  size: 20,
+                ),
                 const SizedBox(width: 10),
-                Expanded(child: Text(cat.nombre, style: const TextStyle(color: AppColors.textPrimary, fontSize: 14))),
+                Expanded(
+                  child: Text(
+                    cat.nombre,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
               ] else
-                const Expanded(child: Text('Seleccionar categoría', style: TextStyle(color: AppColors.textSecondary, fontSize: 14))),
-              const Icon(Icons.expand_more, color: AppColors.textSecondary, size: 20),
+                const Expanded(
+                  child: Text(
+                    'Seleccionar categoría',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              const Icon(
+                Icons.expand_more,
+                color: AppColors.textSecondary,
+                size: 20,
+              ),
             ],
           ),
         ),
@@ -272,7 +347,9 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
               children: [
                 GestureDetector(
                   onTap: () => Navigator.of(context).pop(),
-                  child: Container(color: Colors.black.withValues(alpha: 0.4 * t)),
+                  child: Container(
+                    color: Colors.black.withValues(alpha: 0.4 * t),
+                  ),
                 ),
                 Positioned.fill(
                   child: BackdropFilter(
@@ -286,7 +363,10 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
                   bottom: 0,
                   child: FractionalTranslation(
                     translation: Offset(0, 1 - t),
-                    child: Material(type: MaterialType.transparency, child: sheet),
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: sheet,
+                    ),
                   ),
                 ),
               ],
@@ -303,7 +383,10 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
     return StatefulBuilder(
       builder: (context, setSheetState) {
         return Container(
-          decoration: const BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
           child: SafeArea(
             top: false,
@@ -311,21 +394,41 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.navInactive, borderRadius: BorderRadius.circular(2)))),
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.navInactive,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 16),
-                const Text('Seleccionar categoría', style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
+                const Text(
+                  'Seleccionar categoría',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 16),
                 Stack(
                   alignment: Alignment.bottomCenter,
                   children: [
                     ConstrainedBox(
-                      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.55),
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(context).size.height * 0.55,
+                      ),
                       child: NotificationListener<ScrollNotification>(
                         onNotification: (scroll) {
                           if (scroll.metrics.extentAfter > 10) {
-                            if (!_showScrollIndicator) setSheetState(() => _showScrollIndicator = true);
+                            if (!_showScrollIndicator)
+                              setSheetState(() => _showScrollIndicator = true);
                           } else {
-                            if (_showScrollIndicator) setSheetState(() => _showScrollIndicator = false);
+                            if (_showScrollIndicator)
+                              setSheetState(() => _showScrollIndicator = false);
                           }
                           return false;
                         },
@@ -333,13 +436,20 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
                           controller: _categoryScrollController,
                           shrinkWrap: true,
                           itemCount: _categorias.length,
-                          separatorBuilder: (_, _) => const SizedBox(height: 12),
+                          separatorBuilder: (_, _) =>
+                              const SizedBox(height: 12),
                           itemBuilder: (context, index) {
                             WidgetsBinding.instance.addPostFrameCallback((_) {
                               if (_categoryScrollController.hasClients) {
-                                final hasMore = _categoryScrollController.position.extentAfter > 10;
+                                final hasMore =
+                                    _categoryScrollController
+                                        .position
+                                        .extentAfter >
+                                    10;
                                 if (hasMore != _showScrollIndicator) {
-                                  setSheetState(() => _showScrollIndicator = hasMore);
+                                  setSheetState(
+                                    () => _showScrollIndicator = hasMore,
+                                  );
                                 }
                               }
                             });
@@ -349,10 +459,7 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
                       ),
                     ),
                     if (_showScrollIndicator)
-                      Positioned(
-                        bottom: 0,
-                        child: _ArrowIndicator(),
-                      ),
+                      Positioned(bottom: 0, child: _ArrowIndicator()),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -360,7 +467,7 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
             ),
           ),
         );
-      }
+      },
     );
   }
 
@@ -369,25 +476,62 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
     final icon = _getIconForCategory(cat.nombre);
     final color = _getColorForCategory(cat.nombre);
     return GestureDetector(
-      onTap: () { setState(() => _selectedCategoriaId = cat.id); Navigator.pop(context); },
+      onTap: () {
+        setState(() => _selectedCategoriaId = cat.id);
+        Navigator.pop(context);
+      },
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: AppColors.background,
           borderRadius: BorderRadius.circular(18),
-          border: isSelected ? Border.all(color: AppColors.accent.withValues(alpha: 0.6), width: 1.5) : null,
-          boxShadow: const [BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 8)],
+          border: isSelected
+              ? Border.all(
+                  color: AppColors.accent.withValues(alpha: 0.6),
+                  width: 1.5,
+                )
+              : null,
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0xFF05060D),
+              offset: Offset(3, 3),
+              blurRadius: 8,
+            ),
+          ],
         ),
         child: Row(
           children: [
-            Container(width: 44, height: 44, decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: color, size: 22)),
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 22),
+            ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(cat.nombre, style: const TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
-                  if (cat.descripcion != null) Text(cat.descripcion!, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11), maxLines: 1),
+                  Text(
+                    cat.nombre,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (cat.descripcion != null)
+                    Text(
+                      cat.descripcion!,
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 11,
+                      ),
+                      maxLines: 1,
+                    ),
                 ],
               ),
             ),
@@ -399,25 +543,39 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
 
   IconData _getIconForCategory(String nombre) {
     switch (nombre) {
-      case 'Alimentación': return Icons.restaurant;
-      case 'Transporte': return Icons.directions_bus;
-      case 'Salud': return Icons.medical_services;
-      case 'Educación': return Icons.school;
-      case 'Entretenimiento': return Icons.movie;
-      case 'Servicios': return Icons.home;
-      default: return Icons.savings_outlined;
+      case 'Alimentación':
+        return Icons.restaurant;
+      case 'Transporte':
+        return Icons.directions_bus;
+      case 'Salud':
+        return Icons.medical_services;
+      case 'Educación':
+        return Icons.school;
+      case 'Entretenimiento':
+        return Icons.movie;
+      case 'Servicios':
+        return Icons.home;
+      default:
+        return Icons.savings_outlined;
     }
   }
 
   Color _getColorForCategory(String nombre) {
     switch (nombre) {
-      case 'Alimentación': return const Color(0xFFA8A2FF);
-      case 'Transporte': return const Color(0xFF60A5FA);
-      case 'Salud': return const Color(0xFFFF6B6B);
-      case 'Educación': return const Color(0xFF4ADE80);
-      case 'Entretenimiento': return const Color(0xFFC084FC);
-      case 'Servicios': return const Color(0xFFFF8C4A);
-      default: return AppColors.accent;
+      case 'Alimentación':
+        return const Color(0xFFA8A2FF);
+      case 'Transporte':
+        return const Color(0xFF60A5FA);
+      case 'Salud':
+        return const Color(0xFFFF6B6B);
+      case 'Educación':
+        return const Color(0xFF4ADE80);
+      case 'Entretenimiento':
+        return const Color(0xFFC084FC);
+      case 'Servicios':
+        return const Color(0xFFFF8C4A);
+      default:
+        return AppColors.accent;
     }
   }
 
@@ -434,10 +592,26 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
     final daysInMonth = DateTime(year, month + 1, 0).day;
     final offset = DateTime(year, month, 1).weekday - 1;
 
-    const List<String> meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    const List<String> meses = [
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre',
+    ];
 
     return Container(
-      decoration: const BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       child: SafeArea(
         top: false,
@@ -445,36 +619,104 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.navInactive, borderRadius: BorderRadius.circular(2)))),
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.navInactive,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
             const SizedBox(height: 16),
-            Text('${meses[month - 1]} $year', style: const TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              '${meses[month - 1]} $year',
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 18),
-            Row(children: ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'].map((d) => Expanded(child: Center(child: Text(d, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11))))).toList()),
+            Row(
+              children: ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do']
+                  .map(
+                    (d) => Expanded(
+                      child: Center(
+                        child: Text(
+                          d,
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
             const SizedBox(height: 10),
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 7, childAspectRatio: 1),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 7,
+                childAspectRatio: 1,
+              ),
               itemCount: offset + daysInMonth,
               itemBuilder: (context, index) {
                 if (index < offset) return const SizedBox.shrink();
                 final day = index - offset + 1;
                 final dayDate = DateTime(year, month, day);
-                final isSelected = _fechaLimite != null &&
+                final isSelected =
+                    _fechaLimite != null &&
                     day == _fechaLimite!.day &&
                     month == _fechaLimite!.month &&
                     year == _fechaLimite!.year;
-                final isPast = dayDate.isBefore(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day));
+                final isPast = dayDate.isBefore(
+                  DateTime(
+                    DateTime.now().year,
+                    DateTime.now().month,
+                    DateTime.now().day,
+                  ),
+                );
                 return GestureDetector(
-                  onTap: isPast ? null : () { setState(() => _fechaLimite = dayDate); Navigator.pop(context); },
+                  onTap: isPast
+                      ? null
+                      : () {
+                          setState(() => _fechaLimite = dayDate);
+                          Navigator.pop(context);
+                        },
                   child: Opacity(
                     opacity: isPast ? 0.25 : 1.0,
                     child: Container(
                       margin: const EdgeInsets.all(3),
                       decoration: isSelected
-                          ? const BoxDecoration(shape: BoxShape.circle, gradient: RadialGradient(colors: [Color(0xFFFFD700), AppColors.accent]))
-                          : const BoxDecoration(color: AppColors.background, shape: BoxShape.circle),
-                      child: Center(child: Text('$day', style: TextStyle(color: isSelected ? Colors.black : AppColors.textPrimary, fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500))),
+                          ? const BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [Color(0xFFFFD700), AppColors.accent],
+                              ),
+                            )
+                          : const BoxDecoration(
+                              color: AppColors.background,
+                              shape: BoxShape.circle,
+                            ),
+                      child: Center(
+                        child: Text(
+                          '$day',
+                          style: TextStyle(
+                            color: isSelected
+                                ? Colors.black
+                                : AppColors.textPrimary,
+                            fontSize: 12,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.w500,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 );
@@ -484,8 +726,17 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
               const SizedBox(height: 12),
               Center(
                 child: TextButton(
-                  onPressed: () { setState(() => _fechaLimite = null); Navigator.pop(context); },
-                  child: const Text('Quitar fecha', style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+                  onPressed: () {
+                    setState(() => _fechaLimite = null);
+                    Navigator.pop(context);
+                  },
+                  child: const Text(
+                    'Quitar fecha',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -497,7 +748,10 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
 
   Widget _buildFechaField() {
     return Container(
-      decoration: BoxDecoration(color: AppColors.inset, borderRadius: BorderRadius.circular(14)),
+      decoration: BoxDecoration(
+        color: AppColors.inset,
+        borderRadius: BorderRadius.circular(14),
+      ),
       child: InkWell(
         onTap: _showCalendarSheet,
         borderRadius: BorderRadius.circular(14),
@@ -505,11 +759,28 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
-              const Icon(Icons.calendar_today, color: AppColors.accent, size: 20),
+              const Icon(
+                Icons.calendar_today,
+                color: AppColors.accent,
+                size: 20,
+              ),
               const SizedBox(width: 10),
-              Text(_fechaLimite == null ? 'Seleccionar fecha' : _formatFecha(_fechaLimite!), style: TextStyle(color: _fechaLimite == null ? AppColors.textSecondary : AppColors.textPrimary)),
+              Text(
+                _fechaLimite == null
+                    ? 'Seleccionar fecha'
+                    : _formatFecha(_fechaLimite!),
+                style: TextStyle(
+                  color: _fechaLimite == null
+                      ? AppColors.textSecondary
+                      : AppColors.textPrimary,
+                ),
+              ),
               const Spacer(),
-              const Icon(Icons.expand_more, color: AppColors.textSecondary, size: 20),
+              const Icon(
+                Icons.expand_more,
+                color: AppColors.textSecondary,
+                size: 20,
+              ),
             ],
           ),
         ),
@@ -521,10 +792,24 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
     return GestureDetector(
       onTap: _isSaving ? null : _guardar,
       child: Container(
-        width: double.infinity, height: 56,
-        decoration: BoxDecoration(gradient: const LinearGradient(colors: [AppColors.accent, Color(0xFFFF8C00)]), borderRadius: BorderRadius.circular(28)),
+        width: double.infinity,
+        height: 56,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [AppColors.accent, Color(0xFFFF8C00)],
+          ),
+          borderRadius: BorderRadius.circular(28),
+        ),
         child: Center(
-          child: _isSaving ? const CircularProgressIndicator(color: Colors.black) : const Text('Guardar Meta', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+          child: _isSaving
+              ? const CircularProgressIndicator(color: Colors.black)
+              : const Text(
+                  'Guardar Meta',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
         ),
       ),
     );
@@ -533,7 +818,15 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
   Widget _buildCancelarButton() {
     return GestureDetector(
       onTap: () => Navigator.pop(context),
-      child: const Center(child: Text('Cancelar', style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600))),
+      child: const Center(
+        child: Text(
+          'Cancelar',
+          style: TextStyle(
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -542,10 +835,18 @@ class _NeumorphicContainer extends StatelessWidget {
   final Widget child;
   final double borderRadius;
   final EdgeInsets padding;
-  const _NeumorphicContainer({required this.child, this.borderRadius = 16, this.padding = const EdgeInsets.all(16)});
+  const _NeumorphicContainer({
+    required this.child,
+    this.borderRadius = 16,
+    this.padding = const EdgeInsets.all(16),
+  });
   @override
   Widget build(BuildContext context) {
-    return Container(padding: padding, decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(borderRadius), boxShadow: const [BoxShadow(color: Color(0xFF05060D), offset: Offset(4, 4), blurRadius: 12)]), child: child);
+    return Container(
+      padding: padding,
+      decoration: clayRaised(color: AppColors.surface, radius: borderRadius),
+      child: child,
+    );
   }
 }
 
@@ -553,10 +854,22 @@ class _NeumorphicIcon extends StatelessWidget {
   final IconData icon;
   final double size;
   final VoidCallback onTap;
-  const _NeumorphicIcon({required this.icon, required this.size, required this.onTap});
+  const _NeumorphicIcon({
+    required this.icon,
+    required this.size,
+    required this.onTap,
+  });
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(onTap: onTap, child: Container(width: 40, height: 40, decoration: const BoxDecoration(color: AppColors.background, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 8)]), child: Icon(icon, color: AppColors.textSecondary, size: size)));
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: clayRaised(color: AppColors.surface, radius: 20),
+        child: Icon(icon, color: AppColors.textSecondary, size: size),
+      ),
+    );
   }
 }
 
@@ -565,15 +878,22 @@ class _ArrowIndicator extends StatefulWidget {
   State<_ArrowIndicator> createState() => _ArrowIndicatorState();
 }
 
-class _ArrowIndicatorState extends State<_ArrowIndicator> with SingleTickerProviderStateMixin {
+class _ArrowIndicatorState extends State<_ArrowIndicator>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000))..repeat(reverse: true);
-    _animation = Tween<double>(begin: 0, end: 8).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
+    _animation = Tween<double>(
+      begin: 0,
+      end: 8,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -594,9 +914,18 @@ class _ArrowIndicatorState extends State<_ArrowIndicator> with SingleTickerProvi
             decoration: BoxDecoration(
               color: AppColors.surface.withValues(alpha: 0.8),
               shape: BoxShape.circle,
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 4,
+                ),
+              ],
             ),
-            child: const Icon(Icons.keyboard_arrow_down, color: AppColors.accent, size: 24),
+            child: const Icon(
+              Icons.keyboard_arrow_down,
+              color: AppColors.accent,
+              size: 24,
+            ),
           ),
         );
       },

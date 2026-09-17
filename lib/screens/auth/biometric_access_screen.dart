@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 import '../../core/theme/design_tokens.dart';
+import '../../core/theme/app_theme.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/auth_widgets.dart';
 import 'auth_gate.dart';
@@ -182,25 +183,9 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         padding: const EdgeInsets.all(35),
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: _isAuthenticating
-              ? AppColors.accent.withValues(alpha: 0.1)
-              : AppColors.surface,
-          border: Border.all(
-            color: _isAuthenticating ? AppColors.accent : AppColors.borderLight,
-            width: 2,
-          ),
-          boxShadow: _isAuthenticating
-              ? [
-                  BoxShadow(
-                    color: AppColors.accent.withValues(alpha: 0.3),
-                    blurRadius: 40,
-                    spreadRadius: 5,
-                  ),
-                ]
-              : [],
-        ),
+        decoration: _isAuthenticating
+            ? clayGlow(color: AppColors.accent.withValues(alpha: 0.18), radius: 90)
+            : clayRaised(radius: 90),
         child: Icon(
           Icons.fingerprint_rounded,
           size: 100,

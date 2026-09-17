@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../core/theme/design_tokens.dart';
+import '../../core/theme/app_theme.dart';
 import '../../models/deuda_model.dart';
 import '../../models/categoria_model.dart';
 import '../../services/deudas_service.dart';
@@ -109,7 +110,9 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
               children: [
                 GestureDetector(
                   onTap: () => Navigator.of(context).pop(),
-                  child: Container(color: Colors.black.withValues(alpha: 0.4 * t)),
+                  child: Container(
+                    color: Colors.black.withValues(alpha: 0.4 * t),
+                  ),
                 ),
                 Positioned.fill(
                   child: BackdropFilter(
@@ -123,7 +126,10 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
                   bottom: 0,
                   child: FractionalTranslation(
                     translation: Offset(0, 1 - t),
-                    child: Material(type: MaterialType.transparency, child: sheet),
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: sheet,
+                    ),
                   ),
                 ),
               ],
@@ -173,9 +179,9 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
       if (!mounted) return;
 
       setState(() => _isSaving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
     }
   }
 
@@ -209,16 +215,27 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
   Widget _buildHeader() {
     return Row(
       children: [
-        _NeumorphicIcon(icon: Icons.arrow_back, size: 20, onTap: () => Navigator.pop(context)),
+        _NeumorphicIcon(
+          icon: Icons.arrow_back,
+          size: 20,
+          onTap: () => Navigator.pop(context),
+        ),
         const SizedBox(width: 16),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               widget.deudaParaEditar != null ? 'Editar Deuda' : 'Nueva Deuda',
-              style: const TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            const Text('Registrar obligación financiera', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+            const Text(
+              'Registrar obligación financiera',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+            ),
           ],
         ),
       ],
@@ -245,7 +262,8 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
             controller: _montoController,
             hint: '\$0',
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            validator: (v) => (double.tryParse(v ?? '') ?? 0) <= 0 ? 'Monto inválido' : null,
+            validator: (v) =>
+                (double.tryParse(v ?? '') ?? 0) <= 0 ? 'Monto inválido' : null,
           ),
           const SizedBox(height: 18),
           _buildLabel('Descripción'),
@@ -280,11 +298,32 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
     return RichText(
       text: TextSpan(
         children: [
-          TextSpan(text: text, style: const TextStyle(color: AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
+          TextSpan(
+            text: text,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           if (required)
-            const TextSpan(text: ' *', style: TextStyle(color: AppColors.error, fontSize: 13, fontWeight: FontWeight.w600))
+            const TextSpan(
+              text: ' *',
+              style: TextStyle(
+                color: AppColors.error,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            )
           else
-            const TextSpan(text: ' (Opcional)', style: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w500)),
+            const TextSpan(
+              text: ' (Opcional)',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
         ],
       ),
     );
@@ -292,11 +331,7 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
 
   Widget _buildInsetBox({required Widget child}) {
     return Container(
-      decoration: BoxDecoration(
-        color: AppColors.inset,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.35)),
-      ),
+      decoration: clayInset(radius: AppRadius.md),
       child: child,
     );
   }
@@ -317,11 +352,17 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
         validator: validator,
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
+          hintStyle: const TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 14,
+          ),
           border: InputBorder.none,
           errorBorder: InputBorder.none,
           focusedErrorBorder: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
           errorStyle: const TextStyle(color: AppColors.error, fontSize: 11),
         ),
       ),
@@ -342,15 +383,43 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
                 const SizedBox(
                   height: 16,
                   width: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.textSecondary),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.textSecondary,
+                  ),
                 )
               else if (cat != null) ...[
-                Icon(_getIconForCategory(cat.nombre), color: _getColorForCategory(cat.nombre), size: 20),
+                Icon(
+                  _getIconForCategory(cat.nombre),
+                  color: _getColorForCategory(cat.nombre),
+                  size: 20,
+                ),
                 const SizedBox(width: 10),
-                Expanded(child: Text(cat.nombre, style: const TextStyle(color: AppColors.textPrimary, fontSize: 14))),
+                Expanded(
+                  child: Text(
+                    cat.nombre,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
               ] else
-                const Expanded(child: Text('Sin categoría', style: TextStyle(color: AppColors.textSecondary, fontSize: 14))),
-              if (!_isLoadingCategorias) const Icon(Icons.expand_more, color: AppColors.textSecondary, size: 20),
+                const Expanded(
+                  child: Text(
+                    'Sin categoría',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              if (!_isLoadingCategorias)
+                const Icon(
+                  Icons.expand_more,
+                  color: AppColors.textSecondary,
+                  size: 20,
+                ),
             ],
           ),
         ),
@@ -367,14 +436,27 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
-              const Icon(Icons.calendar_month, color: AppColors.error, size: 20),
+              const Icon(
+                Icons.calendar_month,
+                color: AppColors.error,
+                size: 20,
+              ),
               const SizedBox(width: 10),
               Text(
                 _fechaFin == null ? 'Sin definir' : _formatFecha(_fechaFin!),
-                style: TextStyle(color: _fechaFin == null ? AppColors.textSecondary : AppColors.textPrimary, fontSize: 14),
+                style: TextStyle(
+                  color: _fechaFin == null
+                      ? AppColors.textSecondary
+                      : AppColors.textPrimary,
+                  fontSize: 14,
+                ),
               ),
               const Spacer(),
-              const Icon(Icons.expand_more, color: AppColors.textSecondary, size: 20),
+              const Icon(
+                Icons.expand_more,
+                color: AppColors.textSecondary,
+                size: 20,
+              ),
             ],
           ),
         ),
@@ -392,10 +474,26 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
     final daysInMonth = DateTime(year, month + 1, 0).day;
     final offset = DateTime(year, month, 1).weekday - 1;
 
-    const List<String> meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    const List<String> meses = [
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre',
+    ];
 
     return Container(
-      decoration: const BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       child: SafeArea(
         top: false,
@@ -403,33 +501,93 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.navInactive, borderRadius: BorderRadius.circular(2)))),
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.navInactive,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
             const SizedBox(height: 16),
-            Text('${meses[month - 1]} $year', style: const TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              '${meses[month - 1]} $year',
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 18),
-            Row(children: ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'].map((d) => Expanded(child: Center(child: Text(d, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11))))).toList()),
+            Row(
+              children: ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do']
+                  .map(
+                    (d) => Expanded(
+                      child: Center(
+                        child: Text(
+                          d,
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
             const SizedBox(height: 10),
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 7, childAspectRatio: 1),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 7,
+                childAspectRatio: 1,
+              ),
               itemCount: offset + daysInMonth,
               itemBuilder: (context, index) {
                 if (index < offset) return const SizedBox.shrink();
                 final day = index - offset + 1;
                 final dayDate = DateTime(year, month, day);
-                final isSelected = _fechaFin != null &&
+                final isSelected =
+                    _fechaFin != null &&
                     day == _fechaFin!.day &&
                     month == _fechaFin!.month &&
                     year == _fechaFin!.year;
                 return GestureDetector(
-                  onTap: () { setState(() => _fechaFin = dayDate); Navigator.pop(context); },
+                  onTap: () {
+                    setState(() => _fechaFin = dayDate);
+                    Navigator.pop(context);
+                  },
                   child: Container(
                     margin: const EdgeInsets.all(3),
                     decoration: isSelected
-                        ? const BoxDecoration(shape: BoxShape.circle, gradient: LinearGradient(colors: [AppColors.error, Color(0xFFFF8A8A)]))
-                        : const BoxDecoration(color: AppColors.background, shape: BoxShape.circle),
-                    child: Center(child: Text('$day', style: TextStyle(color: isSelected ? Colors.white : AppColors.textPrimary, fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500))),
+                        ? const BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: [AppColors.error, Color(0xFFFF8A8A)],
+                            ),
+                          )
+                        : const BoxDecoration(
+                            color: AppColors.background,
+                            shape: BoxShape.circle,
+                          ),
+                    child: Center(
+                      child: Text(
+                        '$day',
+                        style: TextStyle(
+                          color: isSelected
+                              ? Colors.white
+                              : AppColors.textPrimary,
+                          fontSize: 12,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.w500,
+                        ),
+                      ),
+                    ),
                   ),
                 );
               },
@@ -438,8 +596,17 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
               const SizedBox(height: 12),
               Center(
                 child: TextButton(
-                  onPressed: () { setState(() => _fechaFin = null); Navigator.pop(context); },
-                  child: const Text('Quitar fecha', style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+                  onPressed: () {
+                    setState(() => _fechaFin = null);
+                    Navigator.pop(context);
+                  },
+                  child: const Text(
+                    'Quitar fecha',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -456,7 +623,10 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
     return StatefulBuilder(
       builder: (context, setSheetState) {
         return Container(
-          decoration: const BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
           child: SafeArea(
             top: false,
@@ -464,21 +634,41 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.navInactive, borderRadius: BorderRadius.circular(2)))),
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.navInactive,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 16),
-                const Text('Seleccionar categoría', style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
+                const Text(
+                  'Seleccionar categoría',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 16),
                 Stack(
                   alignment: Alignment.bottomCenter,
                   children: [
                     ConstrainedBox(
-                      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.55),
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(context).size.height * 0.55,
+                      ),
                       child: NotificationListener<ScrollNotification>(
                         onNotification: (scroll) {
                           if (scroll.metrics.extentAfter > 10) {
-                            if (!_showScrollIndicator) setSheetState(() => _showScrollIndicator = true);
+                            if (!_showScrollIndicator)
+                              setSheetState(() => _showScrollIndicator = true);
                           } else {
-                            if (_showScrollIndicator) setSheetState(() => _showScrollIndicator = false);
+                            if (_showScrollIndicator)
+                              setSheetState(() => _showScrollIndicator = false);
                           }
                           return false;
                         },
@@ -486,13 +676,20 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
                           controller: _categoryScrollController,
                           shrinkWrap: true,
                           itemCount: _categorias.length + 1,
-                          separatorBuilder: (_, _) => const SizedBox(height: 12),
+                          separatorBuilder: (_, _) =>
+                              const SizedBox(height: 12),
                           itemBuilder: (context, index) {
                             WidgetsBinding.instance.addPostFrameCallback((_) {
                               if (_categoryScrollController.hasClients) {
-                                final hasMore = _categoryScrollController.position.extentAfter > 10;
+                                final hasMore =
+                                    _categoryScrollController
+                                        .position
+                                        .extentAfter >
+                                    10;
                                 if (hasMore != _showScrollIndicator) {
-                                  setSheetState(() => _showScrollIndicator = hasMore);
+                                  setSheetState(
+                                    () => _showScrollIndicator = hasMore,
+                                  );
                                 }
                               }
                             });
@@ -503,10 +700,7 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
                       ),
                     ),
                     if (_showScrollIndicator)
-                      Positioned(
-                        bottom: 0,
-                        child: _ArrowIndicator(),
-                      ),
+                      Positioned(bottom: 0, child: _ArrowIndicator()),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -521,20 +715,53 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
   Widget _buildSinCategoriaCard() {
     final isSelected = _categoriaSeleccionada == null;
     return GestureDetector(
-      onTap: () { setState(() => _categoriaSeleccionada = null); Navigator.pop(context); },
+      onTap: () {
+        setState(() => _categoriaSeleccionada = null);
+        Navigator.pop(context);
+      },
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: AppColors.background,
           borderRadius: BorderRadius.circular(18),
-          border: isSelected ? Border.all(color: AppColors.error.withValues(alpha: 0.6), width: 1.5) : null,
-          boxShadow: const [BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 8)],
+          border: isSelected
+              ? Border.all(
+                  color: AppColors.error.withValues(alpha: 0.6),
+                  width: 1.5,
+                )
+              : null,
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0xFF05060D),
+              offset: Offset(3, 3),
+              blurRadius: 8,
+            ),
+          ],
         ),
         child: Row(
           children: [
-            Container(width: 44, height: 44, decoration: BoxDecoration(color: AppColors.textSecondary.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.block, color: AppColors.textSecondary, size: 22)),
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.textSecondary.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.block,
+                color: AppColors.textSecondary,
+                size: 22,
+              ),
+            ),
             const SizedBox(width: 14),
-            const Text('Sin categoría', style: TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
+            const Text(
+              'Sin categoría',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
         ),
       ),
@@ -546,25 +773,62 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
     final icon = _getIconForCategory(cat.nombre);
     final color = _getColorForCategory(cat.nombre);
     return GestureDetector(
-      onTap: () { setState(() => _categoriaSeleccionada = cat.id); Navigator.pop(context); },
+      onTap: () {
+        setState(() => _categoriaSeleccionada = cat.id);
+        Navigator.pop(context);
+      },
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: AppColors.background,
           borderRadius: BorderRadius.circular(18),
-          border: isSelected ? Border.all(color: AppColors.error.withValues(alpha: 0.6), width: 1.5) : null,
-          boxShadow: const [BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 8)],
+          border: isSelected
+              ? Border.all(
+                  color: AppColors.error.withValues(alpha: 0.6),
+                  width: 1.5,
+                )
+              : null,
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0xFF05060D),
+              offset: Offset(3, 3),
+              blurRadius: 8,
+            ),
+          ],
         ),
         child: Row(
           children: [
-            Container(width: 44, height: 44, decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: color, size: 22)),
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 22),
+            ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(cat.nombre, style: const TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
-                  if (cat.descripcion != null) Text(cat.descripcion!, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11), maxLines: 1),
+                  Text(
+                    cat.nombre,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (cat.descripcion != null)
+                    Text(
+                      cat.descripcion!,
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 11,
+                      ),
+                      maxLines: 1,
+                    ),
                 ],
               ),
             ),
@@ -581,14 +845,37 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
         width: double.infinity,
         height: 56,
         decoration: BoxDecoration(
-          gradient: const LinearGradient(colors: [AppColors.error, Color(0xFFFF8A8A)]),
+          gradient: const LinearGradient(
+            colors: [AppColors.error, Color(0xFFFF8A8A)],
+          ),
           borderRadius: BorderRadius.circular(28),
-          boxShadow: [BoxShadow(color: AppColors.error.withValues(alpha: 0.4), blurRadius: 20)],
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.error.withValues(alpha: 0.4),
+              blurRadius: 20,
+            ),
+          ],
         ),
         child: Center(
           child: _isSaving
-              ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-              : Text(widget.deudaParaEditar != null ? 'Guardar cambios' : 'Guardar Deuda', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+              : Text(
+                  widget.deudaParaEditar != null
+                      ? 'Guardar cambios'
+                      : 'Guardar Deuda',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
         ),
       ),
     );
@@ -600,33 +887,59 @@ class _AgregarDeudaScreenState extends State<AgregarDeudaScreen> {
       child: Container(
         width: double.infinity,
         height: 52,
-        decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(26)),
-        child: const Center(child: Text('Cancelar', style: TextStyle(color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w600))),
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(26),
+        ),
+        child: const Center(
+          child: Text(
+            'Cancelar',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
       ),
     );
   }
 
   IconData _getIconForCategory(String nombre) {
     switch (nombre) {
-      case 'Alimentación': return Icons.restaurant;
-      case 'Transporte': return Icons.directions_bus;
-      case 'Salud': return Icons.medical_services;
-      case 'Educación': return Icons.school;
-      case 'Entretenimiento': return Icons.movie;
-      case 'Servicios': return Icons.home;
-      default: return Icons.account_balance;
+      case 'Alimentación':
+        return Icons.restaurant;
+      case 'Transporte':
+        return Icons.directions_bus;
+      case 'Salud':
+        return Icons.medical_services;
+      case 'Educación':
+        return Icons.school;
+      case 'Entretenimiento':
+        return Icons.movie;
+      case 'Servicios':
+        return Icons.home;
+      default:
+        return Icons.account_balance;
     }
   }
 
   Color _getColorForCategory(String nombre) {
     switch (nombre) {
-      case 'Alimentación': return const Color(0xFFA8A2FF);
-      case 'Transporte': return const Color(0xFF60A5FA);
-      case 'Salud': return const Color(0xFFFF6B6B);
-      case 'Educación': return const Color(0xFF4ADE80);
-      case 'Entretenimiento': return const Color(0xFFC084FC);
-      case 'Servicios': return const Color(0xFFFF8C4A);
-      default: return AppColors.error;
+      case 'Alimentación':
+        return const Color(0xFFA8A2FF);
+      case 'Transporte':
+        return const Color(0xFF60A5FA);
+      case 'Salud':
+        return const Color(0xFFFF6B6B);
+      case 'Educación':
+        return const Color(0xFF4ADE80);
+      case 'Entretenimiento':
+        return const Color(0xFFC084FC);
+      case 'Servicios':
+        return const Color(0xFFFF8C4A);
+      default:
+        return AppColors.error;
     }
   }
 }
@@ -636,15 +949,22 @@ class _ArrowIndicator extends StatefulWidget {
   State<_ArrowIndicator> createState() => _ArrowIndicatorState();
 }
 
-class _ArrowIndicatorState extends State<_ArrowIndicator> with SingleTickerProviderStateMixin {
+class _ArrowIndicatorState extends State<_ArrowIndicator>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000))..repeat(reverse: true);
-    _animation = Tween<double>(begin: 0, end: 8).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
+    _animation = Tween<double>(
+      begin: 0,
+      end: 8,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -665,9 +985,18 @@ class _ArrowIndicatorState extends State<_ArrowIndicator> with SingleTickerProvi
             decoration: BoxDecoration(
               color: AppColors.surface.withValues(alpha: 0.8),
               shape: BoxShape.circle,
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 4,
+                ),
+              ],
             ),
-            child: const Icon(Icons.keyboard_arrow_down, color: AppColors.error, size: 24),
+            child: const Icon(
+              Icons.keyboard_arrow_down,
+              color: AppColors.error,
+              size: 24,
+            ),
           ),
         );
       },
@@ -681,7 +1010,11 @@ class _NeumorphicContainer extends StatelessWidget {
   const _NeumorphicContainer({required this.child, this.borderRadius = 16});
   @override
   Widget build(BuildContext context) {
-    return Container(padding: const EdgeInsets.all(20), decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(borderRadius), boxShadow: const [BoxShadow(color: Color(0xFF05060D), offset: Offset(4, 4), blurRadius: 12), BoxShadow(color: Color(0xFF1A1D3A), offset: Offset(-4, -4), blurRadius: 12)]), child: child);
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: clayRaised(color: AppColors.surface, radius: borderRadius),
+      child: child,
+    );
   }
 }
 
@@ -689,9 +1022,21 @@ class _NeumorphicIcon extends StatelessWidget {
   final IconData icon;
   final double size;
   final VoidCallback onTap;
-  const _NeumorphicIcon({required this.icon, required this.size, required this.onTap});
+  const _NeumorphicIcon({
+    required this.icon,
+    required this.size,
+    required this.onTap,
+  });
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(onTap: onTap, child: Container(width: 40, height: 40, decoration: const BoxDecoration(color: AppColors.background, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Color(0xFF05060D), offset: Offset(3, 3), blurRadius: 8), BoxShadow(color: Color(0xFF1A1D3A), offset: Offset(-3, -3), blurRadius: 8)]), child: Icon(icon, color: AppColors.textSecondary, size: size)));
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: clayRaised(color: AppColors.surface, radius: 20),
+        child: Icon(icon, color: AppColors.textSecondary, size: size),
+      ),
+    );
   }
 }

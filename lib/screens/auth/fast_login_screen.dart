@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 import '../../core/theme/design_tokens.dart';
+import '../../core/theme/app_theme.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/auth_widgets.dart';
 
@@ -109,18 +110,7 @@ class _FastLoginScreenState extends State<FastLoginScreen> {
     return Container(
       width: 100,
       height: 100,
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        shape: BoxShape.circle,
-        border: Border.all(color: AppColors.accent, width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.accent.withValues(alpha: 0.2),
-            blurRadius: 20,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
+      decoration: clayRaised(radius: 50),
       child: const Icon(Icons.person_rounded, size: 60, color: Colors.white),
     );
   }
@@ -141,14 +131,7 @@ class _AccessBtn extends StatelessWidget {
           child: Container(
             width: 80,
             height: 80,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.borderLight),
-              boxShadow: const [
-                BoxShadow(color: Colors.black45, offset: Offset(4, 4), blurRadius: 10),
-              ],
-            ),
+            decoration: clayRaised(radius: AppRadius.md),
             child: Icon(icon, color: AppColors.accent, size: 36),
           ),
         ),
