@@ -12,6 +12,8 @@ import 'presupuestos/modulo_presupuestos.dart';
 import '../services/quick_actions_service.dart';
 import '../screens/reportes/reportes_screen.dart';
 import 'cuenta/mi_cuenta_screen.dart';
+import '../screens/dependientes/dependientes_screen.dart';
+import 'categorias/categorias_screen.dart';
 
 /// Metadata (icono + label) de cada pantalla accesible desde el menú
 /// "Más". El índice de cada _MenuItem debe corresponder al mismo
@@ -32,6 +34,8 @@ const List<_MenuItem> _itemsMas = [
   _MenuItem(icon: Icons.savings_outlined, label: 'Ahorros'),
   _MenuItem(icon: Icons.credit_card, label: 'Deudas'),
   _MenuItem(icon: Icons.calendar_month_outlined, label: 'Calendario'),
+  _MenuItem(icon: Icons.people, label: 'Dependientes'),
+  _MenuItem(icon: Icons.category_outlined, label: 'Categorías'),
   _MenuItem(icon: Icons.report_outlined, label: 'Reportes'),
   _MenuItem(icon: Icons.person_outline, label: 'Mi Cuenta'),
 ];
@@ -59,6 +63,8 @@ class _MainScreenState extends State<MainScreen> {
     ModuloAhorros(),
     ModuloDeudas(),
     CalendarioScreen(),
+    PanelDependientesScreen(),
+    ModuloCategoriasScreen(),
     ReportesScreen(),
     MiCuentaScreen(),
   ];
@@ -75,7 +81,7 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _tabPrincipal);
-    
+
     // Inicializar accesos directos (RF-27)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       QuickActionsService.init(context);

@@ -18,7 +18,7 @@ class ApiException implements Exception {
 /// Centraliza URL base, headers y parseo/errores comunes, para que
 /// los servicios (AuthService, GastosService, etc.) no repitan lógica.
 class ApiClient {
-  ApiClient({String? baseUrl}) : baseUrl = baseUrl ?? _defaultBaseUrl;
+  const ApiClient({String? baseUrl}) : baseUrl = baseUrl ?? _defaultBaseUrl;
 
   static const String _defaultBaseUrl =
       'https://ahorrapp-react-pkj9.onrender.com/api';
@@ -42,9 +42,14 @@ class ApiClient {
   Map<String, String> _headers({String? token}) {
     return {
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
       if (token != null) 'Authorization': 'Bearer $token',
     };
   }
+
+  // ============================================================
+  // MÉTODOS GENÉRICOS (esperan respuesta { ok, ... } del backend)
+  // ============================================================
 
   /// POST genérico. [path] empieza con '/', ej: '/auth/login'.
   Future<Map<String, dynamic>> post(
@@ -88,6 +93,7 @@ class ApiClient {
     );
   }
 
+  /// PATCH genérico.
   Future<Map<String, dynamic>> patch(
     String path, {
     Map<String, dynamic>? body,
@@ -101,6 +107,10 @@ class ApiClient {
       ),
     );
   }
+
+  // ============================================================
+  // GET PARA RESPUESTAS DE TIPO LISTA
+  // ============================================================
 
   /// GET para endpoints que responden un array plano en vez de { ok, ... },
   /// como GET /movimientos/ingresos.
@@ -146,6 +156,68 @@ class ApiClient {
     }
   }
 
+  // ============================================================
+  // POST "CRUDO" — no asume { ok, ... }
+  // ============================================================
+
+  /// POST que NO espera el formato { ok, ... } del backend.
+  /// Se usa, por ejemplo, para flujos de auth con Google donde
+  /// el backend devuelve directamente { token, usuario } u otro shape.
+  /// Acepta [token] igual que el resto del cliente, y [headers] extra
+  /// por si algún flujo puntual necesita un encabezado adicional.
+  Future<Map<String, dynamic>> postRaw(
+    String path, {
+    Object? body,
+    String? token,
+    Map<String, String>? headers,
+  }) async {
+    late final http.Response response;
+
+    try {
+      response = await http
+          .post(
+            _uri(path),
+            headers: {
+              ..._headers(token: token),
+              ...?headers,
+            },
+            body: body == null ? null : jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 45));
+    } on TimeoutException {
+      throw ApiException(
+        'El servidor está tardando demasiado en responder. Puede estar iniciándose; inténtalo de nuevo en unos segundos.',
+      );
+    } catch (e) {
+      throw ApiException(
+        'No se pudo conectar con el servidor ($e). Revisa tu conexión.',
+      );
+    }
+
+    Map<String, dynamic> decoded;
+    try {
+      decoded = jsonDecode(response.body) as Map<String, dynamic>;
+    } catch (e) {
+      throw ApiException(
+        'Respuesta del servidor no es JSON válido (posible error 404 o 500 HTML). Detalles: $e',
+        statusCode: response.statusCode,
+      );
+    }
+
+    if (response.statusCode >= 400) {
+      final mensaje = decoded['mensaje'] as String? ??
+          decoded['message'] as String? ??
+          'Ocurrió un error inesperado (código ${response.statusCode})';
+      throw ApiException(mensaje, statusCode: response.statusCode);
+    }
+
+    return decoded;
+  }
+
+  // ============================================================
+  // ENVÍO INTERNO CON TIMEOUT Y PARSEO ESTÁNDAR
+  // ============================================================
+
   Future<Map<String, dynamic>> _send(
     Future<http.Response> Function() request,
   ) async {
@@ -176,67 +248,12 @@ class ApiClient {
     final bool ok = decoded['ok'] == true;
 
     if (!ok || response.statusCode >= 400) {
-      final mensaje =
-          decoded['mensaje'] as String? ??
+      final mensaje = decoded['mensaje'] as String? ??
           decoded['message'] as String? ??
           'Ocurrió un error inesperado (código ${response.statusCode})';
       throw ApiException(mensaje, statusCode: response.statusCode);
     }
 
     return decoded;
-  }
-
-  /// POST especial para flujos como login con Google, donde el backend
-  /// puede devolver estructuras algo distintas al { ok, mensaje } estándar.
-  /// Aportado por Manuel para el flujo de autenticación con Google.
-  Future<Map<String, dynamic>> postRaw(
-    String path, {
-    required Map<String, dynamic> body,
-    String? token,
-  }) async {
-    try {
-      final response = await http
-          .post(
-            _uri(path),
-            headers: _headers(token: token),
-            body: jsonEncode(body),
-          )
-          .timeout(const Duration(seconds: 45));
-
-      try {
-        final decoded = jsonDecode(response.body) as Map<String, dynamic>;
-
-        if (response.statusCode >= 400 && decoded['mensaje'] != null) {
-          throw ApiException(
-            decoded['mensaje'] as String,
-            statusCode: response.statusCode,
-          );
-        }
-
-        if (response.statusCode >= 400) {
-          throw ApiException(
-            'Error del servidor (${response.statusCode})',
-            statusCode: response.statusCode,
-          );
-        }
-
-        return decoded;
-      } catch (error) {
-        if (error is ApiException) rethrow;
-        throw ApiException(
-          'Respuesta inesperada del servidor al iniciar sesión con Google.',
-          statusCode: response.statusCode,
-        );
-      }
-    } on TimeoutException {
-      throw ApiException(
-        'El servidor está tardando demasiado en responder. Puede estar iniciándose; inténtalo de nuevo en unos segundos.',
-      );
-    } catch (error) {
-      if (error is ApiException) rethrow;
-      throw ApiException(
-        'No se pudo conectar con el servidor (${error.toString()}). Revisa tu conexión.',
-      );
-    }
   }
 }

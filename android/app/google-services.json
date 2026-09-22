@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "578886282711",
+    "project_id": "ahorrapp-5b863",
+    "storage_bucket": "ahorrapp-5b863.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:578886282711:android:eb2dfa279789819cb5ef92",
+        "android_client_info": {
+          "package_name": "com.example.ahorrapp_movil"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnbJXpbZy7_sYFSMq_bA9vkFkiifaI-qM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
