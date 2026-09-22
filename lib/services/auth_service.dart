@@ -62,6 +62,7 @@ class AuthService {
   static const _tokenKey = 'auth_token';
   static const _userKey = 'auth_user';
   static const _pinKey = 'auth_pin';
+  static const _biometricKey = 'biometric_enabled';
 
   String? _memoryToken;
   Usuario? _memoryUser;
@@ -79,10 +80,11 @@ class AuthService {
 
   /// Decisión de equipo: el chequeo de hardware biométrico vive aquí
   /// (antes vivía en la UI, en LoginScreen). Centraliza la regla de
-  /// "solo ofrecer biometría si hay sesión guardada y el dispositivo
-  /// la soporta" para que cualquier pantalla la reutilice igual.
+  /// "solo ofrecer biometría si hay sesión guardada, el usuario la
+  /// activó explícitamente y el dispositivo la soporta" para que
+  /// cualquier pantalla la reutilice igual.
   Future<bool> canUseBiometricAccess() async {
-    if (!await hasSession()) return false;
+    if (!await hasSession() || !await isBiometricEnabled()) return false;
 
     try {
       return await _localAuth.canCheckBiometrics &&
@@ -120,11 +122,14 @@ class AuthService {
     }
   }
 
-  /// PIN local del dispositivo, usado como segunda verificación para
-  /// confirmar acciones sensibles (cambiar contraseña, editar datos
-  /// personales, etc.) sobre una sesión ya autenticada. No se envía al
-  /// backend: vive solo en secure storage, igual que el token.
+  // --- LÓGICA DE PIN ---
+  // PIN local del dispositivo, usado como segunda verificación para
+  // confirmar acciones sensibles (cambiar contraseña, editar datos
+  // personales, etc.) sobre una sesión ya autenticada. No se envía al
+  // backend: vive solo en secure storage, igual que el token.
+
   Future<bool> hasPinSet() async {
+    if (!await hasSession()) return false;
     if (_memoryPin != null) return true;
     final stored = await _storage.read(key: _pinKey);
     if (stored != null) {
@@ -135,11 +140,18 @@ class AuthService {
   }
 
   Future<void> savePin(String pin) async {
+    if (!await hasSession()) {
+      throw ApiException('Debes iniciar sesión antes de configurar un PIN.');
+    }
+    if (!RegExp(r'^\d{4}$').hasMatch(pin)) {
+      throw ApiException('El PIN debe tener exactamente 4 dígitos.');
+    }
     _memoryPin = pin;
     await _storage.write(key: _pinKey, value: pin);
   }
 
   Future<bool> verifyPin(String pin) async {
+    if (!await hasSession()) return false;
     final stored = _memoryPin ?? await _storage.read(key: _pinKey);
     return stored != null && stored == pin;
   }
@@ -148,6 +160,67 @@ class AuthService {
     _memoryPin = null;
     await _storage.delete(key: _pinKey);
   }
+
+  // --- LÓGICA DE BIOMETRÍA ---
+  // A diferencia del PIN, la biometría requiere que el usuario la
+  // active explícitamente (confirmando su identidad una vez) antes de
+  // poder usarla como acceso rápido.
+
+  Future<bool> isBiometricEnabled() async {
+    if (!await hasSession()) return false;
+    return await _storage.read(key: _biometricKey) == 'true';
+  }
+
+  Future<void> configureBiometrics() async {
+    if (!await hasSession()) {
+      throw ApiException(
+        'Debes iniciar sesión antes de configurar la biometría.',
+      );
+    }
+
+    try {
+      final supported = await _localAuth.canCheckBiometrics &&
+          await _localAuth.isDeviceSupported();
+      if (!supported) {
+        throw ApiException(
+          'Este dispositivo no tiene biometría disponible o configurada.',
+        );
+      }
+
+      final authenticated = await _localAuth.authenticate(
+        localizedReason: 'Confirma tu identidad para activar la biometría',
+        options: const AuthenticationOptions(
+          stickyAuth: true,
+          biometricOnly: true,
+        ),
+      );
+      if (!authenticated) {
+        throw ApiException('No se pudo confirmar tu identidad.');
+      }
+      await _storage.write(key: _biometricKey, value: 'true');
+    } on ApiException {
+      rethrow;
+    } catch (error) {
+      throw ApiException('No se pudo configurar la biometría: $error');
+    }
+  }
+
+  Future<bool> authenticateBiometric() async {
+    if (!await hasSession() || !await isBiometricEnabled()) return false;
+    try {
+      return await _localAuth.authenticate(
+        localizedReason: 'Confirma tu identidad para continuar',
+        options: const AuthenticationOptions(
+          stickyAuth: true,
+          biometricOnly: true,
+        ),
+      );
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // --- LÓGICA DE AUTH ---
 
   Future<Usuario> login({
     required String email,
@@ -279,7 +352,9 @@ class AuthService {
     final data = await _api.post('/auth/forgot-password', body: {
       'Email': email,
     });
-    return data['mensaje'] as String? ?? 'Se ha enviado un correo';
+    return data['mensaje'] as String? ??
+        data['message'] as String? ??
+        'Se ha enviado un correo';
   }
 
   Future<String> verifyResetCode({
@@ -290,7 +365,7 @@ class AuthService {
       'Email': email,
       'code': code,
     });
-    return data['resetToken'] as String? ?? '';
+    return data['resetToken'] as String? ?? data['token'] as String? ?? '';
   }
 
   Future<void> resetPassword({
@@ -303,7 +378,27 @@ class AuthService {
     });
   }
 
-  /// NUEVO — agregado para soportar la vista de "Mi cuenta" en móvil.
+  /// Usado por ChangePasswordScreen (con confirmación previa por PIN).
+  Future<void> changePassword({
+    required String passwordActual,
+    required String passwordNueva,
+  }) async {
+    final token = await getToken();
+    if (token == null || token.isEmpty) {
+      throw ApiException('Debes iniciar sesión para cambiar tu contraseña.');
+    }
+
+    await _api.put(
+      '/auth/mi-cuenta/password',
+      token: token,
+      body: {
+        'passwordActual': passwordActual,
+        'passwordNueva': passwordNueva,
+      },
+    );
+  }
+
+  /// Agregado para soportar la vista de "Mi cuenta" en móvil.
   /// Actualiza el usuario cacheado (en memoria y, si la sesión se
   /// guardó con "recordar sesión", también en secure storage) sin
   /// necesidad de volver a hacer login. Se usa después de editar el
@@ -331,5 +426,6 @@ class AuthService {
     await _storage.delete(key: _tokenKey);
     await _storage.delete(key: _userKey);
     await _storage.delete(key: _pinKey);
+    await _storage.delete(key: _biometricKey);
   }
 }

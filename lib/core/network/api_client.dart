@@ -25,7 +25,19 @@ class ApiClient {
 
   final String baseUrl;
 
-  Uri _uri(String path) => Uri.parse('$baseUrl$path');
+  /// Arma la URI final a partir de [baseUrl] y [path], evitando problemas
+  /// si [baseUrl] termina en '/' o si [path] ya trae un prefijo '/api/'
+  /// duplicado.
+  Uri _uri(String path) {
+    final normalizedBase = baseUrl.endsWith('/')
+        ? baseUrl.substring(0, baseUrl.length - 1)
+        : baseUrl;
+    final normalizedPath = path.startsWith('/') ? path : '/$path';
+    final apiPath = normalizedPath.startsWith('/api/')
+        ? normalizedPath.substring(4)
+        : normalizedPath;
+    return Uri.parse('$normalizedBase$apiPath');
+  }
 
   Map<String, String> _headers({String? token}) {
     return {
@@ -36,12 +48,12 @@ class ApiClient {
 
   /// POST genérico. [path] empieza con '/', ej: '/auth/login'.
   Future<Map<String, dynamic>> post(
-      String path, {
-        Map<String, dynamic>? body,
-        String? token,
-      }) {
+    String path, {
+    Map<String, dynamic>? body,
+    String? token,
+  }) {
     return _send(
-          () => http.post(
+      () => http.post(
         _uri(path),
         headers: _headers(token: token),
         body: jsonEncode(body ?? {}),
@@ -51,19 +63,17 @@ class ApiClient {
 
   /// GET genérico. Para endpoints que responden { ok, ... }.
   Future<Map<String, dynamic>> get(String path, {String? token}) {
-    return _send(
-          () => http.get(_uri(path), headers: _headers(token: token)),
-    );
+    return _send(() => http.get(_uri(path), headers: _headers(token: token)));
   }
 
   /// PUT genérico.
   Future<Map<String, dynamic>> put(
-      String path, {
-        Map<String, dynamic>? body,
-        String? token,
-      }) {
+    String path, {
+    Map<String, dynamic>? body,
+    String? token,
+  }) {
     return _send(
-          () => http.put(
+      () => http.put(
         _uri(path),
         headers: _headers(token: token),
         body: jsonEncode(body ?? {}),
@@ -74,17 +84,17 @@ class ApiClient {
   /// DELETE genérico. Para endpoints que responden { ok, ... }.
   Future<Map<String, dynamic>> delete(String path, {String? token}) {
     return _send(
-          () => http.delete(_uri(path), headers: _headers(token: token)),
+      () => http.delete(_uri(path), headers: _headers(token: token)),
     );
   }
 
   Future<Map<String, dynamic>> patch(
-      String path, {
-        Map<String, dynamic>? body,
-        String? token,
-      }) {
+    String path, {
+    Map<String, dynamic>? body,
+    String? token,
+  }) {
     return _send(
-          () => http.patch(
+      () => http.patch(
         _uri(path),
         headers: _headers(token: token),
         body: jsonEncode(body ?? {}),
@@ -110,9 +120,13 @@ class ApiClient {
       try {
         final decoded = jsonDecode(response.body) as Map<String, dynamic>;
         throw ApiException(
-          decoded['mensaje'] as String? ?? 'Error del servidor',
+          decoded['mensaje'] as String? ??
+              decoded['message'] as String? ??
+              'Error del servidor',
           statusCode: response.statusCode,
         );
+      } on ApiException {
+        rethrow;
       } catch (_) {
         throw ApiException(
           'Ocurrió un error inesperado (código ${response.statusCode})',
@@ -133,8 +147,8 @@ class ApiClient {
   }
 
   Future<Map<String, dynamic>> _send(
-      Future<http.Response> Function() request,
-      ) async {
+    Future<http.Response> Function() request,
+  ) async {
     late final http.Response response;
 
     try {
@@ -162,7 +176,9 @@ class ApiClient {
     final bool ok = decoded['ok'] == true;
 
     if (!ok || response.statusCode >= 400) {
-      final mensaje = decoded['mensaje'] as String? ??
+      final mensaje =
+          decoded['mensaje'] as String? ??
+          decoded['message'] as String? ??
           'Ocurrió un error inesperado (código ${response.statusCode})';
       throw ApiException(mensaje, statusCode: response.statusCode);
     }
@@ -174,17 +190,17 @@ class ApiClient {
   /// puede devolver estructuras algo distintas al { ok, mensaje } estándar.
   /// Aportado por Manuel para el flujo de autenticación con Google.
   Future<Map<String, dynamic>> postRaw(
-      String path, {
-        required Map<String, dynamic> body,
-        String? token,
-      }) async {
+    String path, {
+    required Map<String, dynamic> body,
+    String? token,
+  }) async {
     try {
       final response = await http
           .post(
-        _uri(path),
-        headers: _headers(token: token),
-        body: jsonEncode(body),
-      )
+            _uri(path),
+            headers: _headers(token: token),
+            body: jsonEncode(body),
+          )
           .timeout(const Duration(seconds: 45));
 
       try {

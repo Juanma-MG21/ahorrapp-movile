@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:local_auth/local_auth.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/auth_widgets.dart';
@@ -12,7 +11,6 @@ class FastLoginScreen extends StatefulWidget {
 }
 
 class _FastLoginScreenState extends State<FastLoginScreen> {
-  final LocalAuthentication auth = LocalAuthentication();
   String? _displayName;
 
   @override
@@ -36,9 +34,12 @@ class _FastLoginScreenState extends State<FastLoginScreen> {
   Future<void> _tryAutoBiometric() async {
     if (!await AuthService.instance.hasSession()) return;
 
-    final canCheck = await auth.canCheckBiometrics;
-    final isSupported = await auth.isDeviceSupported();
-    if (!canCheck || !isSupported) return;
+    // Solo redirigimos automáticamente si el usuario ya activó la
+    // biometría; si no la tiene configurada, dejamos que la active
+    // manualmente con el botón "Huella" en vez de forzar el flujo de
+    // configuración apenas entra a esta pantalla.
+    final biometricEnabled = await AuthService.instance.isBiometricEnabled();
+    if (!biometricEnabled) return;
 
     if (!mounted) return;
     Navigator.of(context).pushReplacementNamed('/biometric-access');

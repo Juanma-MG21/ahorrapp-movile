@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:local_auth/local_auth.dart';
+import '../../core/network/api_client.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/auth_widgets.dart';
@@ -13,8 +13,8 @@ class BiometricAccessScreen extends StatefulWidget {
 }
 
 class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
-  final LocalAuthentication auth = LocalAuthentication();
   bool _isAuthenticating = false;
+  bool _isConfiguring = false;
   String _authStatus = 'Cargando...';
 
   @override
@@ -23,9 +23,9 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
     _startBiometric();
   }
 
-  // Paso 1 (de V2): antes de pedir biometría, confirmamos que exista
-  // una sesión guardada. Si no hay sesión, no tiene sentido molestar
-  // al usuario con el prompt de huella/rostro.
+  // Antes de pedir biometría, confirmamos que exista una sesión guardada.
+  // Si no hay sesión, no tiene sentido molestar al usuario con el prompt
+  // de huella/rostro.
   Future<void> _startBiometric() async {
     if (!await AuthService.instance.hasSession()) {
       if (!mounted) return;
@@ -33,23 +33,19 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
       return;
     }
 
-    final canCheck = await auth.canCheckBiometrics;
-    final isSupported = await auth.isDeviceSupported();
-
-    if (!mounted) return;
-
-    if (!canCheck || !isSupported) {
-      setState(() => _authStatus = 'Biometría no soportada en este dispositivo');
-      return;
+    // Si el usuario aún no activó la biometría en esta cuenta, la
+    // configuramos primero en vez de intentar autenticar directamente.
+    if (await AuthService.instance.isBiometricEnabled()) {
+      _authenticate();
+    } else {
+      _configure();
     }
-
-    _authenticate();
   }
 
   Future<void> _authenticate() async {
     try {
-      // Doble chequeo (de V2): protege contra condiciones de carrera
-      // si el usuario se ausentó y volvió antes de tocar el ícono.
+      // Doble chequeo: protege contra condiciones de carrera si el
+      // usuario se ausentó y volvió antes de tocar el ícono.
       if (!await AuthService.instance.hasSession()) {
         if (mounted) {
           setState(() => _authStatus = 'Tu sesión ya no está disponible');
@@ -62,13 +58,8 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
         _authStatus = 'Escaneando huella / rostro...';
       });
 
-      final bool authenticated = await auth.authenticate(
-        localizedReason: 'Accede de forma segura a AhorrApp',
-        options: const AuthenticationOptions(
-          stickyAuth: true,
-          biometricOnly: true,
-        ),
-      );
+      final bool authenticated =
+          await AuthService.instance.authenticateBiometric();
 
       setState(() {
         _isAuthenticating = false;
@@ -76,10 +67,10 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
       });
 
       if (authenticated && mounted) {
-        // Chequeo final (de V1): el escaneo pudo tardar varios segundos,
-        // así que volvemos a confirmar que la sesión siga viva antes de
-        // navegar. Si ya no es válida, dejamos que AuthGate decida el
-        // flujo correcto en vez de forzar '/home' sin sesión real.
+        // El escaneo pudo tardar varios segundos, así que volvemos a
+        // confirmar que la sesión siga viva antes de navegar. Si ya no
+        // es válida, dejamos que AuthGate decida el flujo correcto en
+        // vez de forzar '/home' sin sesión real.
         final tieneSesion = await AuthService.instance.hasSession();
 
         if (!mounted) return;
@@ -101,6 +92,42 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
     } catch (e) {
       setState(() {
         _isAuthenticating = false;
+        _authStatus = 'Error: $e';
+      });
+    }
+  }
+
+  Future<void> _configure() async {
+    setState(() {
+      _isAuthenticating = true;
+      _isConfiguring = true;
+      _authStatus = 'Confirma tu identidad para activar la biometría...';
+    });
+
+    try {
+      await AuthService.instance.configureBiometrics();
+      if (!mounted) return;
+      setState(() {
+        _isAuthenticating = false;
+        _isConfiguring = false;
+        _authStatus = 'Biometría configurada';
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Biometría configurada correctamente')),
+      );
+      Navigator.of(context).pop(true);
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _isAuthenticating = false;
+        _isConfiguring = false;
+        _authStatus = error.message;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isAuthenticating = false;
+        _isConfiguring = false;
         _authStatus = 'Error: $e';
       });
     }
@@ -135,7 +162,7 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
             ),
           ),
           const SizedBox(height: 30),
-          if (!_isAuthenticating)
+          if (!_isAuthenticating && !_isConfiguring)
             TextButton.icon(
               onPressed: _authenticate,
               icon: const Icon(Icons.refresh_rounded),
@@ -178,7 +205,7 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
 
   Widget _buildBiometricIcon() {
     return GestureDetector(
-      onTap: _isAuthenticating ? null : _authenticate,
+      onTap: (_isAuthenticating || _isConfiguring) ? null : _authenticate,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         padding: const EdgeInsets.all(35),

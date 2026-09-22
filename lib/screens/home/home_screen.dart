@@ -13,6 +13,23 @@ class HomeScreen extends StatelessWidget {
         backgroundColor: AppColors.surface,
         foregroundColor: Colors.white,
         actions: [
+          IconButton(
+            tooltip: 'Configurar PIN',
+            onPressed: () => Navigator.of(context).pushNamed('/pin-access'),
+            icon: const Icon(Icons.pin_rounded, color: AppColors.accent),
+          ),
+          IconButton(
+            tooltip: 'Configurar biometría',
+            onPressed: () =>
+                Navigator.of(context).pushNamed('/biometric-access'),
+            icon: const Icon(Icons.fingerprint_rounded, color: AppColors.accent),
+          ),
+          IconButton(
+            tooltip: 'Cambiar contraseña',
+            onPressed: () =>
+                Navigator.of(context).pushNamed('/change-password'),
+            icon: const Icon(Icons.lock_reset_rounded, color: AppColors.accent),
+          ),
           TextButton.icon(
             onPressed: () async {
               await AuthService.instance.logout();

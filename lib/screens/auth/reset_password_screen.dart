@@ -32,7 +32,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     // El resetToken llega como argumento de ruta desde
-    // forgot_password_screen.dart (Navigator.pushNamed con arguments).
+    // forgot_password_screen.dart (Navigator.pushNamed con arguments),
+    // ya verificado por verifyResetCode en ese paso previo.
     final resetToken = ModalRoute.of(context)?.settings.arguments as String?;
 
     if (resetToken == null) {
