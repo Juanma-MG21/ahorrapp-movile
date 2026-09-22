@@ -1,24 +1,26 @@
 import 'dart:convert';
 
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/categoria_model.dart';
+import 'auth_service.dart';
 
 class CategoriasService {
   static const String _baseUrl = 'https://ahorrapp-react-pkj9.onrender.com/api';
 
-  final FlutterSecureStorage _storage;
-
-  CategoriasService({
-    FlutterSecureStorage? storage,
-  }) : _storage = storage ?? const FlutterSecureStorage();
+  CategoriasService();
 
   // ============================================================
   // HEADERS
   // ============================================================
 
   Future<Map<String, String>> _headers() async {
-    final token = await _storage.read(key: 'token');
+    final token = await AuthService.instance.getToken();
+
+    debugPrint(
+      '🔑 Token leído: '
+      '${token == null ? "NULL" : "(${token.length} chars)"}',
+    );
 
     final headers = <String, String>{
       'Content-Type': 'application/json',
@@ -27,6 +29,8 @@ class CategoriasService {
 
     if (token != null && token.isNotEmpty) {
       headers['Authorization'] = 'Bearer $token';
+    } else {
+      debugPrint('⚠️ NO se agregó Authorization (token null o vacío)');
     }
 
     return headers;
@@ -45,13 +49,7 @@ class CategoriasService {
     return _procesarLista(response);
   }
 
-  // ============================================================
-  // PROCESAR LISTAS
-  // ============================================================
-
-  List<Map<String, dynamic>> _procesarLista(
-    http.Response response,
-  ) {
+  List<Map<String, dynamic>> _procesarLista(http.Response response) {
     final decoded = jsonDecode(response.body);
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -68,7 +66,6 @@ class CategoriasService {
 
     if (decoded is Map<String, dynamic>) {
       final data = decoded['data'];
-
       if (data is List) {
         return data
             .map((item) => Map<String, dynamic>.from(item as Map))
@@ -76,7 +73,6 @@ class CategoriasService {
       }
 
       final categorias = decoded['categorias'];
-
       if (categorias is List) {
         return categorias
             .map((item) => Map<String, dynamic>.from(item as Map))
@@ -93,12 +89,9 @@ class CategoriasService {
 
   Future<List<CategoriaModel>> getCategorias() async {
     final data = await _getLista('/categorias');
-
     return data.map((json) => CategoriaModel.fromJson(json)).toList();
   }
 
-  // ✅ NUEVO: alias estático que usan los formularios que llaman
-  //     CategoriasService.obtenerCategorias() sin instanciar.
   static Future<List<CategoriaModel>> obtenerCategorias() {
     return CategoriasService().getCategorias();
   }
@@ -128,7 +121,7 @@ class CategoriasService {
   }
 
   // ============================================================
-  // CREAR CATEGORÍA
+  // CREAR
   // ============================================================
 
   Future<Map<String, dynamic>> crearCategoria({
@@ -143,12 +136,11 @@ class CategoriasService {
         'descripcion': descripcion,
       }),
     );
-
     return _procesarRespuesta(response);
   }
 
   // ============================================================
-  // EDITAR CATEGORÍA
+  // EDITAR
   // ============================================================
 
   Future<Map<String, dynamic>> editarCategoria(
@@ -164,12 +156,11 @@ class CategoriasService {
         'descripcion': descripcion,
       }),
     );
-
     return _procesarRespuesta(response);
   }
 
   // ============================================================
-  // DESHABILITAR
+  // DESHABILITAR / HABILITAR
   // ============================================================
 
   Future<Map<String, dynamic>> deshabilitarCategoria(int id) async {
@@ -177,20 +168,14 @@ class CategoriasService {
       Uri.parse('$_baseUrl/categorias/$id/deshabilitar'),
       headers: await _headers(),
     );
-
     return _procesarRespuesta(response);
   }
-
-  // ============================================================
-  // HABILITAR
-  // ============================================================
 
   Future<Map<String, dynamic>> habilitarCategoria(int id) async {
     final response = await http.patch(
       Uri.parse('$_baseUrl/categorias/$id/habilitar'),
       headers: await _headers(),
     );
-
     return _procesarRespuesta(response);
   }
 
@@ -203,12 +188,11 @@ class CategoriasService {
       Uri.parse('$_baseUrl/categorias/$id'),
       headers: await _headers(),
     );
-
     return _procesarRespuesta(response);
   }
 
   // ============================================================
-  // PROCESAR RESPUESTAS CRUD
+  // RESPUESTAS CRUD
   // ============================================================
 
   Map<String, dynamic> _procesarRespuesta(http.Response response) {
@@ -224,25 +208,16 @@ class CategoriasService {
       return decoded;
     }
 
-    return {
-      'ok': true,
-      'data': decoded,
-    };
+    return {'ok': true, 'data': decoded};
   }
-
-  // ============================================================
-  // OBTENER MENSAJE DE ERROR
-  // ============================================================
 
   String? _obtenerMensajeError(dynamic decoded) {
     if (decoded is Map<String, dynamic>) {
       final mensaje = decoded['mensaje'] ?? decoded['message'];
-
       if (mensaje is String && mensaje.isNotEmpty) {
         return mensaje;
       }
     }
-
     return null;
   }
 }
