@@ -17,17 +17,20 @@ import 'package:fl_chart/fl_chart.dart';
 // 'intl' trae NumberFormat, que reemplaza a `n.toLocaleString("es-CO")`.
 import 'package:intl/intl.dart';
 
-import '../../services/notificacion_services.dart';
+// import '../../services/notificacion_services.dart'; // este import fue comentado debido a que el archivo al que busca es inexistente
 
-import '../../models/notificaciones.dart';
+// import '../../models/notificaciones.dart'; // este import fue comentado debido a que el archivo al que busca es inexistente
 
-import '../../widgets/notificacion_panel.dart';
+// import '../../widgets/notificacion_panel.dart'; // este import fue comentado debido a que el archivo al que busca es inexistente
 
-// Punto de entrada de toda app Flutter. Es literalmente el
-// `ReactDOM.render(<App />)` de una app web: arranca el widget raíz.
-void main() {
-  runApp(const AhorrApp());
-}
+// NOTA DE REVISIÓN: este archivo traía su propio `void main()` y su propia
+// clase `AhorrApp`, duplicando el punto de entrada real de la app
+// (lib/main.dart -> lib/app.dart). Eso generaba un símbolo `AhorrApp`
+// repetido en el proyecto. Se comenta aquí porque este screen NO es el
+// punto de entrada: la app arranca siempre desde lib/main.dart.
+// void main() {
+//   runApp(const AhorrApp());
+// }
 
 // ─────────────────────────────────────────────────────────────────────
 // SECCIÓN 1 · TOKENS DE DISEÑO
@@ -964,46 +967,23 @@ class NotificacionPanel extends StatefulWidget {
   State<NotificacionPanel> createState() => _NotificacionPanelState();
 }
 
+// NOTA DE REVISIÓN: la implementación original de este State dependía de
+// `NotificacionesServices` y `Notificacion`, definidos en los archivos
+// importados más arriba que fueron comentados por ser inexistentes en el
+// proyecto (no hay servicio ni modelo de notificaciones implementado en
+// el backend/lib actual). Para que este widget compile y no rompa el
+// resto de la app, se deja como un placeholder sin datos reales.
+// Cuando exista el endpoint de notificaciones, crea:
+//   lib/models/notificacion_model.dart  (clase Notificacion)
+//   lib/services/notificacion_service.dart (clase NotificacionesServices,
+//     siguiendo el mismo patrón de ApiClient que usan los demás servicios)
+// y restaura la lógica de carga/marcado como leída aquí.
 class _NotificacionPanelState extends State<NotificacionPanel> {
-final NotificacionesServices _service = NotificacionesServices();
-List<Notificacion> _notificaciones = [];
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _cargarNotificaciones();
-  }
-
-  Future<void> _cargarNotificaciones() async {
-    setState(() => _isLoading = true);
-    try {
-      final data = await _service.getNotificaciones(widget.idUsuario);
-      setState(() {
-        _notificaciones = data;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-      // Muestra un mensaje de error si algo falla
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-      );
-    }
-  }
+  bool _isLoading = false;
+  final List<dynamic> _notificaciones = const [];
 
   Future<void> _marcarComoLeida(int id) async {
-    try {
-      await _service.marcarComoLeida(id);
-      setState(() {
-        final index = _notificaciones.indexWhere((n) => n.idNotificacion == id);
-        if (index != -1) {
-          _notificaciones[index] = _notificaciones[index].copyWith(leida: true);
-        }
-      });
-    } catch (e) {
-      // Manejar error
-    }
+    // Placeholder: sin servicio de notificaciones real disponible.
   }
 
   @override
@@ -1270,22 +1250,26 @@ class DashboardContent extends StatelessWidget {
 // equivalente directo de tu `useState` en el componente `App`.
 // ─────────────────────────────────────────────────────────────────────
 
-class AhorrApp extends StatelessWidget {
-  const AhorrApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    // `MaterialApp` es la raíz obligatoria de cualquier app Flutter con
-    // Material Design; equivale a envolver tu `<App />` en un
-    // `<ThemeProvider>` + `<BrowserRouter>` en la web.
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'AhorrApp',
-      theme: ThemeData(fontFamily: 'Inter', useMaterial3: true),
-      home: const DashboardScreen(),
-    );
-  }
-}
+// NOTA DE REVISIÓN: esta clase `AhorrApp` se comenta porque duplicaba el
+// nombre de la clase raíz real de la aplicación (definida en lib/app.dart
+// y usada por lib/main.dart). Tener dos clases `AhorrApp` en el proyecto
+// generaba una colisión de nombres/lógica de arranque inconsistente.
+// Si en algún momento quieres previsualizar este dashboard de forma
+// aislada, usa un nombre distinto, por ejemplo `_DashboardPreviewApp`.
+//
+// class AhorrApp extends StatelessWidget {
+//   const AhorrApp({super.key});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       debugShowCheckedModeBanner: false,
+//       title: 'AhorrApp',
+//       theme: ThemeData(fontFamily: 'Inter', useMaterial3: true),
+//       home: const DashboardScreen(),
+//     );
+//   }
+// }
 
 // Un StatefulWidget en Dart siempre viene en DOS partes:
 // 1) la clase pública, inmutable, que declara "qué props recibe".

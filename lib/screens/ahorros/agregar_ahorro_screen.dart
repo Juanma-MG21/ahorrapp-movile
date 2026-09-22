@@ -333,7 +333,7 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
                           controller: _categoryScrollController,
                           shrinkWrap: true,
                           itemCount: _categorias.length,
-                          separatorBuilder: (_, _) => const SizedBox(height: 12),
+                          separatorBuilder: (_, __) => const SizedBox(height: 12),
                           itemBuilder: (context, index) {
                             WidgetsBinding.instance.addPostFrameCallback((_) {
                               if (_categoryScrollController.hasClients) {

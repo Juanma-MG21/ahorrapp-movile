@@ -497,7 +497,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
                           controller: _categoryScrollController,
                           shrinkWrap: true,
                           itemCount: _listaCategorias.length,
-                          separatorBuilder: (_, _) => const SizedBox(height: 12),
+                          separatorBuilder: (_, __) => const SizedBox(height: 12),
                           itemBuilder: (context, index) {
                             // Verificación inicial de scroll al construir
                             WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -579,7 +579,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
             ListView.separated(
               shrinkWrap: true,
               itemCount: _listaDependientes.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 12),
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, index) => _buildDependentCard(_listaDependientes[index]),
             ),
           ],

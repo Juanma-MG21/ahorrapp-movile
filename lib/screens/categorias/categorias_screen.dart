@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import '../../models/categorias_model.dart';
+import '../../models/categoria_model.dart';
 import '../../services/categorias_service.dart';
 import 'agregar_categorias_screen.dart'; // ajusta la ruta si la carpeta es distinta
 

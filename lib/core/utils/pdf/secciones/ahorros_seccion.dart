@@ -1,7 +1,7 @@
 import 'package:pdf/widgets.dart' as pw;
 
 import '../../../../core/utils/presupuestos_parsing.dart';
-import '../../../../../models/reportes/ahorros_reporte_model.dart';
+import '../../../../models/reportes/ahorros_reporte_model.dart';
 import '../pdf_theme.dart';
 
 pw.Page construirPaginaAhorros({

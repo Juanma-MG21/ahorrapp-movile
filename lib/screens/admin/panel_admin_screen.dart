@@ -144,7 +144,7 @@ class _PanelAdminScreenState extends State<PanelAdminScreen> {
                         title: 'Panel de dependientes',
                         subtitle: 'Dependientes de todos los usuarios',
                         onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const PanelDependientesScreen()),
+                          MaterialPageRoute(builder: (_) => const PanelDependientesAdminScreen()),
                         ),
                       ),
                     ],

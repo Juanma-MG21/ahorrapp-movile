@@ -42,6 +42,9 @@ dependencies:
   local_auth: ^2.3.0
   flutter_secure_storage: ^9.2.2
 
+  # Preferencias locales (usado en login_screen.dart, faltaba declararlo)
+  shared_preferences: ^2.3.2   # 👈 AGREGADO: el código lo importa pero no estaba en pubspec
+
   # State management
   provider: ^6.1.5+1
 

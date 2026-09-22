@@ -9,14 +9,14 @@ import '../cuenta/widgets/seccion_card.dart';
 /// Muestra TODOS los dependientes del sistema (de cualquier usuario),
 /// no solo los del usuario logueado; es la gestión global que ve el
 /// administrador.
-class PanelDependientesScreen extends StatefulWidget {
-  const PanelDependientesScreen({super.key});
+class PanelDependientesAdminScreen extends StatefulWidget {
+  const PanelDependientesAdminScreen({super.key});
 
   @override
-  State<PanelDependientesScreen> createState() => _PanelDependientesScreenState();
+  State<PanelDependientesAdminScreen> createState() => _PanelDependientesAdminScreenState();
 }
 
-class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
+class _PanelDependientesAdminScreenState extends State<PanelDependientesAdminScreen> {
   List<DependienteAdmin> _dependientes = [];
   bool _cargando = true;
   String? _error;

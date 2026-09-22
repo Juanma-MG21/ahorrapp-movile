@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/design_tokens.dart';
-import '../../models/categorias_model.dart';
+import '../../models/categoria_model.dart';
 import '../../services/categorias_service.dart';
 import '../../core/theme/app_theme.dart'; // ajusta la ruta si la carpeta es distinta
-import '../../core/theme/design_tokens.dart';
+
 class AgregarCategoriaScreen extends StatefulWidget {
   // Igual que en dependientes: si viene null, el formulario está en
   // modo "crear"; si trae una categoría, está en modo "editar".

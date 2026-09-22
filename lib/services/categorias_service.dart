@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
-import '../models/categorias_model.dart';
+import '../models/categoria_model.dart';
 
 class CategoriasService {
   static const String _baseUrl = 'https://ahorrapp-react-pkj9.onrender.com/api';
