@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/theme/design_tokens.dart';
 import '../../models/periodo_presupuesto_model.dart';
 import '../../models/reportes/informe_completo.dart';
 import '../../services/reportes_service.dart';
@@ -242,7 +243,7 @@ class _ReportesScreenState extends State<ReportesScreen> {
               style: Theme.of(context)
                   .textTheme
                   .bodySmall
-                  ?.copyWith(color: Colors.grey),
+                  ?.copyWith(color: AppColors.textMuted),
             ),
             const SizedBox(height: 16),
             Wrap(
@@ -332,11 +333,11 @@ class _ReportesScreenState extends State<ReportesScreen> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.red.withOpacity(0.1),
-        border: Border.all(color: Colors.red.withOpacity(0.3)),
+        color: AppColors.error.withOpacity(0.1),
+        border: Border.all(color: AppColors.error.withOpacity(0.3)),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(mensaje, style: const TextStyle(color: Colors.red)),
+      child: Text(mensaje, style: const TextStyle(color: AppColors.error)),
     );
   }
 
@@ -367,7 +368,7 @@ class _ReportesScreenState extends State<ReportesScreen> {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.withOpacity(0.3)),
+        border: Border.all(color: AppColors.textMuted.withOpacity(0.3)),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -377,7 +378,7 @@ class _ReportesScreenState extends State<ReportesScreen> {
           Text(
             disponible ? 'Disponible' : 'Sin datos',
             style: TextStyle(
-              color: disponible ? Colors.green : Colors.grey,
+              color: disponible ? AppColors.success : AppColors.textMuted,
               fontWeight: FontWeight.w600,
               fontSize: 12,
             ),

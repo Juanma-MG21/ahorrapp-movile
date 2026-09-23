@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/design_tokens.dart';
 
 import '../../models/movimiento.dart';
 import '../../services/cuenta_service.dart';
@@ -64,15 +65,15 @@ class _MisMovimientosScreenState extends State<MisMovimientosScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: CuentaColors.background,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: CuentaColors.background,
+        backgroundColor: AppColors.background,
         elevation: 0,
         title: const Text(
           'Mis movimientos',
-          style: TextStyle(color: CuentaColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w700),
+          style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w700),
         ),
-        iconTheme: const IconThemeData(color: CuentaColors.textPrimary),
+        iconTheme: const IconThemeData(color: AppColors.textPrimary),
       ),
       body: SafeArea(
         child: FutureBuilder<List<Movimiento>>(
@@ -80,7 +81,7 @@ class _MisMovimientosScreenState extends State<MisMovimientosScreen> {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(
-                child: CircularProgressIndicator(color: CuentaColors.accent),
+                child: CircularProgressIndicator(color: AppColors.accent),
               );
             }
 
@@ -88,18 +89,18 @@ class _MisMovimientosScreenState extends State<MisMovimientosScreen> {
 
             if (movimientos.isEmpty) {
               return RefreshIndicator(
-                color: CuentaColors.accent,
+                color: AppColors.accent,
                 onRefresh: _recargar,
                 child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: const [
                     SizedBox(height: 120),
-                    Icon(Icons.receipt_long_outlined, color: CuentaColors.textMuted, size: 40),
+                    Icon(Icons.receipt_long_outlined, color: AppColors.textMuted, size: 40),
                     SizedBox(height: 12),
                     Center(
                       child: Text(
                         'Todavía no tienes movimientos registrados',
-                        style: TextStyle(color: CuentaColors.textMuted, fontSize: 13.5),
+                        style: TextStyle(color: AppColors.textMuted, fontSize: 13.5),
                       ),
                     ),
                   ],
@@ -111,7 +112,7 @@ class _MisMovimientosScreenState extends State<MisMovimientosScreen> {
             final claves = grupos.keys.toList();
 
             return RefreshIndicator(
-              color: CuentaColors.accent,
+              color: AppColors.accent,
               onRefresh: _recargar,
               child: ListView.builder(
                 physics: const AlwaysScrollableScrollPhysics(),

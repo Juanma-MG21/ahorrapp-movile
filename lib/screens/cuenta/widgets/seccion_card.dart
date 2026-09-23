@@ -1,22 +1,5 @@
 import 'package:flutter/material.dart';
-
-/// Paleta local, independiente de core/theme/design_tokens.dart, para
-/// no asumir tokens que no están confirmados en el proyecto. Los
-/// valores replican la paleta ya usada en la web (PanelAdmin/Micuenta),
-/// así la app móvil se ve consistente con el panel de administración.
-class CuentaColors {
-  static const background = Color(0xFF0B1120);
-  static const surface = Color(0xFF0D1526);
-  static const surfaceAlt = Color(0xFF111A2E);
-  static const border = Color(0xFF1C2942);
-  static const accent = Color(0xFFE0B855);
-  static const textPrimary = Color(0xFFF4F1E8);
-  static const textSecondary = Color(0xFF9AA6C4);
-  static const textMuted = Color(0xFF7D8AA8);
-  static const danger = Color(0xFFE24B4A);
-  static const success = Color(0xFF97C459);
-  static const info = Color(0xFF85B7EB);
-}
+import '../../../core/theme/design_tokens.dart';
 
 /// Tarjeta contenedora de una sección (agrupa varias [SeccionTile]).
 class SeccionCard extends StatelessWidget {
@@ -36,7 +19,7 @@ class SeccionCard extends StatelessWidget {
             child: Text(
               title!.toUpperCase(),
               style: const TextStyle(
-                color: CuentaColors.textMuted,
+                color: AppColors.textMuted,
                 fontSize: 11.5,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.6,
@@ -46,9 +29,9 @@ class SeccionCard extends StatelessWidget {
         ],
         Container(
           decoration: BoxDecoration(
-            color: CuentaColors.surface,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: CuentaColors.border),
+            border: Border.all(color: AppColors.borderLight),
           ),
           clipBehavior: Clip.antiAlias,
           child: Column(
@@ -56,7 +39,7 @@ class SeccionCard extends StatelessWidget {
               for (int i = 0; i < children.length; i++) ...[
                 children[i],
                 if (i != children.length - 1)
-                  const Divider(height: 1, color: CuentaColors.border),
+                  const Divider(height: 1, color: AppColors.borderLight),
               ],
             ],
           ),
@@ -91,7 +74,7 @@ class SeccionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = destructive ? CuentaColors.danger : (iconColor ?? CuentaColors.accent);
+    final color = destructive ? AppColors.error : (iconColor ?? AppColors.accent);
 
     return InkWell(
       onTap: onTap,
@@ -116,7 +99,7 @@ class SeccionTile extends StatelessWidget {
                   Text(
                     title,
                     style: TextStyle(
-                      color: destructive ? CuentaColors.danger : CuentaColors.textPrimary,
+                      color: destructive ? AppColors.error : AppColors.textPrimary,
                       fontSize: 14.5,
                       fontWeight: FontWeight.w600,
                     ),
@@ -126,7 +109,7 @@ class SeccionTile extends StatelessWidget {
                     Text(
                       subtitle!,
                       style: const TextStyle(
-                        color: CuentaColors.textMuted,
+                        color: AppColors.textMuted,
                         fontSize: 12,
                       ),
                     ),
@@ -136,7 +119,7 @@ class SeccionTile extends StatelessWidget {
             ),
             trailing ??
                 (onTap != null
-                    ? const Icon(Icons.chevron_right_rounded, color: CuentaColors.textMuted, size: 20)
+                    ? const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted, size: 20)
                     : const SizedBox.shrink()),
           ],
         ),

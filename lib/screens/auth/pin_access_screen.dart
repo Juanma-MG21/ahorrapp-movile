@@ -3,54 +3,104 @@ import '../../core/theme/design_tokens.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/auth_widgets.dart';
 
-/// Pantalla de segunda verificación por PIN. Se usa con push + await
-/// desde flujos ya autenticados que requieren confirmar la identidad
-/// del usuario antes de una acción sensible (cambiar contraseña,
-/// editar datos personales, etc.):
+/// Modo en el que se abre [PinAccessScreen]:
+///  - [manage]: se usa desde la pantalla de Inicio para registrar un PIN
+///    nuevo o editar (cambiar) el que ya existe. Siempre resuelve con
+///    Navigator.pop(true) al terminar con éxito, o pop(false) si el
+///    usuario cancela.
+///  - [confirm]: segunda verificación para una acción sensible ya en
+///    curso (cambiar contraseña, editar datos personales, etc.) sobre
+///    una sesión ya autenticada. Si el usuario no tiene PIN configurado
+///    todavía, lo configura ahí mismo como parte del flujo. Ofrece
+///    "Usar huella en su lugar" cuando el usuario ya activó la
+///    biometría, para no obligarlo a teclear el PIN.
+enum PinAccessMode { manage, confirm }
+
+/// Helper para pantallas fuera de auth/ (ej. Mi Cuenta) que necesitan
+/// confirmar un cambio sensible (contraseña, correo, datos personales)
+/// con el PIN antes de ejecutar la acción. La propia pantalla ofrece
+/// "Usar huella en su lugar" si el usuario ya la activó. Devuelve
+/// true solo si el usuario confirmó correctamente.
+Future<bool> confirmarConPin(BuildContext context) async {
+  final confirmado = await Navigator.of(context).push<bool>(
+    MaterialPageRoute(
+      builder: (_) => const PinAccessScreen(mode: PinAccessMode.confirm),
+    ),
+  );
+  return confirmado == true;
+}
+
+/// Pantalla de PIN. Se usa con push + await:
 ///
 ///   final ok = await Navigator.of(context).push<bool>(
-///     MaterialPageRoute(builder: (_) => const PinAccessScreen()),
+///     MaterialPageRoute(
+///       builder: (_) => const PinAccessScreen(mode: PinAccessMode.confirm),
+///     ),
 ///   );
 ///   if (ok == true) { ...continuar con la acción sensible... }
 ///
 /// No navega a '/home': siempre resuelve con Navigator.pop(true/false).
 class PinAccessScreen extends StatefulWidget {
-  const PinAccessScreen({super.key});
+  const PinAccessScreen({super.key, this.mode = PinAccessMode.confirm});
+
+  final PinAccessMode mode;
 
   @override
   State<PinAccessScreen> createState() => _PinAccessScreenState();
 }
 
+enum _Paso {
+  cargando,
+  verificarActual, // modo manage con PIN ya existente: pide el PIN actual antes de dejar editarlo
+  definirNuevo, // primera captura de un PIN nuevo (setup o edición)
+  confirmarNuevo, // segunda captura, debe coincidir con la primera
+  confirmarAccion, // modo confirm con PIN ya existente: solo valida
+}
+
 class _PinAccessScreenState extends State<PinAccessScreen> {
   String _pin = '';
   final int _pinLength = 4;
-  bool _isSettingPin = false;
-  String _firstPinEntry = '';
+  String _primeraCaptura = '';
+  _Paso _paso = _Paso.cargando;
   String _statusMessage = 'Cargando...';
+  bool _biometriaDisponible = false;
+
+  bool get _esGestion => widget.mode == PinAccessMode.manage;
 
   @override
   void initState() {
     super.initState();
-    _checkPinStatus();
+    _inicializar();
   }
 
-  Future<void> _checkPinStatus() async {
+  Future<void> _inicializar() async {
     if (!await AuthService.instance.hasSession()) {
       if (!mounted) return;
       setState(() {
-        _isSettingPin = false;
         _statusMessage = 'Inicia sesión con tu correo y contraseña';
       });
       return;
     }
 
     final hasPin = await AuthService.instance.hasPinSet();
+    final biometria = await AuthService.instance.isBiometricEnabled();
+
     if (!mounted) return;
+
     setState(() {
-      _isSettingPin = !hasPin;
-      _statusMessage = _isSettingPin
-          ? 'Configura un PIN para confirmar acciones sensibles'
-          : 'Confirma la acción con tu PIN';
+      _biometriaDisponible = biometria && !_esGestion;
+      if (!hasPin) {
+        _paso = _Paso.definirNuevo;
+        _statusMessage = _esGestion
+            ? 'Crea un PIN de 4 dígitos'
+            : 'Configura un PIN para confirmar acciones sensibles';
+      } else if (_esGestion) {
+        _paso = _Paso.verificarActual;
+        _statusMessage = 'Ingresa tu PIN actual para editarlo';
+      } else {
+        _paso = _Paso.confirmarAccion;
+        _statusMessage = 'Confirma la acción con tu PIN';
+      }
     });
   }
 
@@ -58,7 +108,7 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
     if (_pin.length < _pinLength) {
       setState(() => _pin += number);
       if (_pin.length == _pinLength) {
-        _processPin();
+        _procesarPin();
       }
     }
   }
@@ -69,8 +119,8 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
     }
   }
 
-  Future<void> _processPin() async {
-    await Future.delayed(const Duration(milliseconds: 300));
+  Future<void> _procesarPin() async {
+    await Future.delayed(const Duration(milliseconds: 250));
     if (!mounted) return;
 
     // Chequeo defensivo: la sesión pudo expirar mientras el usuario
@@ -83,41 +133,87 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
       return;
     }
 
-    if (_isSettingPin) {
-      if (_firstPinEntry.isEmpty) {
+    switch (_paso) {
+      case _Paso.verificarActual:
+        final valido = await AuthService.instance.verifyPin(_pin);
+        if (!mounted) return;
+        if (valido) {
+          setState(() {
+            _pin = '';
+            _paso = _Paso.definirNuevo;
+            _statusMessage = 'Ingresa tu nuevo PIN';
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('PIN incorrecto'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+          setState(() => _pin = '');
+        }
+        break;
+
+      case _Paso.definirNuevo:
         setState(() {
-          _firstPinEntry = _pin;
+          _primeraCaptura = _pin;
           _pin = '';
+          _paso = _Paso.confirmarNuevo;
           _statusMessage = 'Confirma tu nuevo PIN';
         });
-      } else if (_pin == _firstPinEntry) {
-        await AuthService.instance.savePin(_pin);
+        break;
+
+      case _Paso.confirmarNuevo:
+        if (_pin == _primeraCaptura) {
+          await AuthService.instance.savePin(_pin);
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('PIN guardado correctamente')),
+          );
+          Navigator.of(context).pop(true);
+        } else {
+          setState(() {
+            _pin = '';
+            _primeraCaptura = '';
+            _paso = _Paso.definirNuevo;
+            _statusMessage = 'Los PIN no coinciden. Intenta de nuevo';
+          });
+        }
+        break;
+
+      case _Paso.confirmarAccion:
+        final valido = await AuthService.instance.verifyPin(_pin);
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('PIN configurado para confirmar acciones')),
-        );
-        Navigator.of(context).pop(true);
-      } else {
-        setState(() {
-          _pin = '';
-          _firstPinEntry = '';
-          _statusMessage = 'Los PIN no coinciden. Intenta de nuevo';
-        });
-      }
+        if (valido) {
+          Navigator.of(context).pop(true);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('PIN Incorrecto'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+          setState(() => _pin = '');
+        }
+        break;
+
+      case _Paso.cargando:
+        break;
+    }
+  }
+
+  Future<void> _usarHuella() async {
+    final ok = await AuthService.instance.authenticateBiometric();
+    if (!mounted) return;
+    if (ok) {
+      Navigator.of(context).pop(true);
     } else {
-      final isValid = await AuthService.instance.verifyPin(_pin);
-      if (!mounted) return;
-      if (isValid) {
-        Navigator.of(context).pop(true);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('PIN Incorrecto'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-        setState(() => _pin = '');
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo confirmar con biometría'),
+          backgroundColor: AppColors.error,
+        ),
+      );
     }
   }
 
@@ -150,7 +246,18 @@ class _PinAccessScreenState extends State<PinAccessScreen> {
           _buildPinIndicators(),
           const SizedBox(height: 60),
           _buildNumpad(),
-          const SizedBox(height: 40),
+          if (_biometriaDisponible) ...[
+            const SizedBox(height: 20),
+            TextButton.icon(
+              onPressed: _usarHuella,
+              icon: const Icon(Icons.fingerprint_rounded, color: AppColors.accent),
+              label: const Text(
+                'Usar huella en su lugar',
+                style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+          const SizedBox(height: 20),
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
             child: const Text(

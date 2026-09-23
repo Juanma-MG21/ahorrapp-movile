@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import '../../core/theme/design_tokens.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -8,18 +9,18 @@ import '../../models/categoria_model.dart';
 import '../../services/categorias_service.dart';
 import 'agregar_categorias_screen.dart';
 
-const Color _emerald400 = Color(0xFF34d399);
-const Color _emerald500 = Color(0xFF10b981);
-const Color _amber300  = Color(0xFFfcd34d);
-const Color _amber400  = Color(0xFFfbbf24);
-const Color _orange400 = Color(0xFFfb923c);
-const Color _indigo300 = Color(0xFFa5b4fc);
-const Color _indigo400 = Color(0xFF818cf8);
-const Color _zinc100   = Color(0xFFf4f4f5);
-const Color _zinc400   = Color(0xFFa1a1aa);
-const Color _zinc500   = Color(0xFF71717a);
-const Color _zinc600   = Color(0xFF52525b);
-const Color _slate950  = Color(0xFF020617);
+const Color _emerald400 = AppColors.success;
+const Color _emerald500 = AppColors.success;
+const Color _amber300  = AppColors.accent;
+const Color _amber400  = AppColors.accent;
+const Color _orange400 = AppColors.accent;
+const Color _indigo300 = AppCategoryColors.almuerzo;
+const Color _indigo400 = AppCategoryColors.almuerzo;
+const Color _zinc100   = AppColors.textPrimary;
+const Color _zinc400   = AppColors.textSecondary;
+const Color _zinc500   = AppColors.textMuted;
+const Color _zinc600   = AppColors.textMuted;
+const Color _slate950  = AppColors.background;
 
 class ModuloCategoriasScreen extends StatefulWidget {
   const ModuloCategoriasScreen({super.key});
@@ -109,7 +110,7 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error al cargar categorías: $error'),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: AppColors.error,
           duration: const Duration(seconds: 5),
         ),
       );
@@ -267,7 +268,7 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0f172a),
+      backgroundColor: AppColors.surface,
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
@@ -277,7 +278,7 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
-                color: Colors.white,
+                color: AppColors.textPrimary,
               ),
             ),
             const Padding(
@@ -310,7 +311,7 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        border: Border.all(color: AppColors.textPrimary.withOpacity(0.1)),
         gradient: LinearGradient(
           colors: [
             _emerald500.withOpacity(0.2),
@@ -341,7 +342,7 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
                 style: const TextStyle(
                   fontSize: 30,
                   fontWeight: FontWeight.w900,
-                  color: Colors.white,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ],
@@ -373,8 +374,8 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
   Widget _seccionCategorias() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        color: AppColors.textPrimary.withOpacity(0.04),
+        border: Border.all(color: AppColors.textPrimary.withOpacity(0.1)),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -384,7 +385,7 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Colors.white12)),
+              border: Border(bottom: BorderSide(color: AppColors.borderLight)),
             ),
             child: const Text(
               '📋 Módulo de Categorías',
@@ -452,8 +453,8 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.05),
-            border: Border.all(color: Colors.white.withOpacity(0.1)),
+            color: AppColors.textPrimary.withOpacity(0.05),
+            border: Border.all(color: AppColors.textPrimary.withOpacity(0.1)),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
@@ -493,9 +494,9 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.04),
+                            color: AppColors.textPrimary.withOpacity(0.04),
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.1),
+                              color: AppColors.textPrimary.withOpacity(0.1),
                             ),
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -651,8 +652,8 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.04),
-          border: Border.all(color: Colors.white.withOpacity(0.1)),
+          color: AppColors.textPrimary.withOpacity(0.04),
+          border: Border.all(color: AppColors.textPrimary.withOpacity(0.1)),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(

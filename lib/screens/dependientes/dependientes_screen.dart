@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/design_tokens.dart';
 
 import '../../models/dependiente_model.dart';
 import '../../services/dependiente_services.dart';
@@ -15,11 +16,11 @@ const Map<int, String> _pesoLabels = {
 
 Color _pesoColor(int? peso) {
   final p = peso ?? 3;
-  if (p <= 1) return const Color(0xFF34d399);
-  if (p <= 2) return const Color(0xFF60a5fa);
-  if (p <= 3) return const Color(0xFFfbbf24);
-  if (p <= 4) return const Color(0xFFfb923c);
-  return const Color(0xFFf87171);
+  if (p <= 1) return AppColors.success;
+  if (p <= 2) return AppCategoryColors.transporte;
+  if (p <= 3) return AppColors.accent;
+  if (p <= 4) return AppColors.accent;
+  return AppColors.error;
 }
 
 class PanelDependientesScreen extends StatefulWidget {
@@ -130,14 +131,14 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF0f172a),
+        backgroundColor: AppColors.surface,
         title: const Text(
           'Eliminar dependiente',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: AppColors.textPrimary),
         ),
         content: Text(
           '¿Seguro que deseas eliminar a "${dep.nombre}"? Esta acción no se puede deshacer.',
-          style: const TextStyle(color: Color(0xFFa1a1aa)),
+          style: const TextStyle(color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(
@@ -146,7 +147,7 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
             child: const Text('Eliminar'),
           ),
         ],
@@ -182,7 +183,7 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.message),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: AppColors.error,
         ),
       );
     } catch (e) {
@@ -191,7 +192,7 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Error al eliminar el dependiente'),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: AppColors.error,
         ),
       );
     }
@@ -209,7 +210,7 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
           gradient: RadialGradient(
             center: Alignment(-0.4, -0.6),
             radius: 1.4,
-            colors: [Color(0xFF1e3a5f), Color(0xFF0f172a), Color(0xFF1a0f2e)],
+            colors: [AppColors.surfaceAlt, AppColors.surface, AppColors.background],
             stops: [0.1, 0.6, 1.0],
           ),
         ),
@@ -237,13 +238,13 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withOpacity(0.1)),
+          border: Border.all(color: AppColors.textPrimary.withOpacity(0.1)),
           gradient: LinearGradient(
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
             colors: [
-              const Color(0xFF6366f1).withOpacity(0.35),
-              const Color(0xFF4f46e5).withOpacity(0.04),
+              AppCategoryColors.almuerzo.withOpacity(0.35),
+              AppCategoryColors.almuerzo.withOpacity(0.04),
             ],
           ),
         ),
@@ -259,7 +260,7 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.2,
-                    color: Color(0xFF818cf8),
+                    color: AppCategoryColors.almuerzo,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -268,7 +269,7 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
                   style: const TextStyle(
                     fontSize: 34,
                     fontWeight: FontWeight.w900,
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ],
@@ -276,8 +277,8 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
             ElevatedButton(
               onPressed: _abrirAgregarDependiente,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6366f1),
-                foregroundColor: Colors.white,
+                backgroundColor: AppCategoryColors.almuerzo,
+                foregroundColor: AppColors.textPrimary,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -301,7 +302,7 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
           padding: EdgeInsets.only(top: 40),
           child: Text(
             'Cargando dependientes...',
-            style: TextStyle(fontSize: 13, color: Color(0xFFa1a1aa)),
+            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
           ),
         ),
       );
@@ -313,14 +314,14 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
           margin: const EdgeInsets.symmetric(horizontal: 16),
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
           decoration: BoxDecoration(
-            color: Colors.red.withOpacity(0.1),
-            border: Border.all(color: Colors.red.withOpacity(0.3)),
+            color: AppColors.error.withOpacity(0.1),
+            border: Border.all(color: AppColors.error.withOpacity(0.3)),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
             _error!,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 13, color: Colors.redAccent),
+            style: const TextStyle(fontSize: 13, color: AppColors.error),
           ),
         ),
       );
@@ -331,7 +332,7 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
         padding: EdgeInsets.all(24),
         child: Text(
           'No hay dependientes registrados. Agrega tu primer dependiente para comenzar.',
-          style: TextStyle(fontSize: 13, color: Color(0xFF71717a)),
+          style: TextStyle(fontSize: 13, color: AppColors.textMuted),
         ),
       );
     }
@@ -380,8 +381,8 @@ class _DependienteCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        border: Border.all(color: Colors.white.withOpacity(0.09)),
+        color: AppColors.textPrimary.withOpacity(0.05),
+        border: Border.all(color: AppColors.textPrimary.withOpacity(0.09)),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -400,7 +401,7 @@ class _DependienteCard extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFFf4f4f5),
+                        color: AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -410,7 +411,7 @@ class _DependienteCard extends StatelessWidget {
                           .join(' · '),
                       style: const TextStyle(
                         fontSize: 12,
-                        color: Color(0xFFa1a1aa),
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ],
@@ -420,7 +421,7 @@ class _DependienteCard extends StatelessWidget {
               IconButton(
                 onPressed: onEditar,
                 icon: const Icon(Icons.edit_outlined),
-                color: const Color(0xFF60a5fa),
+                color: AppCategoryColors.transporte,
                 tooltip: 'Editar dependiente',
                 splashRadius: 22,
               ),
@@ -428,7 +429,7 @@ class _DependienteCard extends StatelessWidget {
               IconButton(
                 onPressed: onEliminar,
                 icon: const Icon(Icons.delete_outline),
-                color: Colors.redAccent,
+                color: AppColors.error,
                 tooltip: 'Eliminar dependiente',
                 splashRadius: 22,
               ),
@@ -438,7 +439,7 @@ class _DependienteCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               'Nac: $fechaFormateada',
-              style: const TextStyle(fontSize: 11, color: Color(0xFF71717a)),
+              style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
             ),
           ],
           const SizedBox(height: 10),

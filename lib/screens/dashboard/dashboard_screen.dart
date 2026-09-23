@@ -8,6 +8,7 @@
 // Design (Scaffold, Container, Text, Column, Row, etc.). Es el
 // equivalente a importar React + los componentes HTML base a la vez.
 import 'package:flutter/material.dart';
+import '../../core/theme/design_tokens.dart';
 // PRUEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 // fl_chart es la librería de gráficas más usada en Flutter; cumple el
 // mismo rol que 'recharts' en el original. Hay que agregarla en
@@ -37,55 +38,8 @@ import 'package:intl/intl.dart';
 // En React usabas un objeto plano `TOKEN = {...}`. En Dart, como es un
 // lenguaje fuertemente tipado, lo natural es una `class` con campos
 // `static const` (constantes de clase, no hace falta instanciarla:
-// se usa como `Tokens.amber`, nunca `Tokens().amber`).
+// se usa como `AppColors.accent`, nunca `Tokens().amber`).
 // ─────────────────────────────────────────────────────────────────────
-
-class Tokens {
-  // Constructor privado (el guion bajo `_` antes del nombre) para que
-  // nadie pueda hacer `Tokens()` por accidente; esta clase es solo un
-  // "namespace" de constantes, como un enum de valores.
-  Tokens._();
-
-  // Colores base. `Color(0xFF1e3a5f)` es Dart para un color hex:
-  // 0xFF = canal alpha (opacidad, FF = 100%), seguido del RGB.
-  static const Color bgTop = Color(0xFF1e3a5f);
-  static const Color bgMid = Color(0xFF0f172a);
-  static const Color bgBottom = Color(0xFF1a0f2e);
-
-  // `withOpacity(0.05)` es el equivalente a `rgba(255,255,255,0.05)`:
-  // toma un color base y le baja la opacidad a ese porcentaje (0.0–1.0).
-  static Color card = Colors.white.withOpacity(0.05);
-  static Color cardBorder = Colors.white.withOpacity(0.09);
-  static Color glassBorder = Colors.white.withOpacity(0.13);
-
-  static const Color amber = Color(0xFFfbbf24);
-  static Color amberDim = amber.withOpacity(0.15);
-  static const Color green = Color(0xFF34d399);
-  static const Color red = Color(0xFFf87171);
-  static const Color purple = Color(0xFFa78bfa);
-
-  static const Color textPrimary = Color(0xFFf4f4f5);
-  static const Color textSecondary = Color(0xFFa1a1aa);
-  static const Color textMuted = Color(0xFF71717a);
-
-  // `double` porque los radios de borde en Flutter siempre son
-  // números de punto flotante (BorderRadius los exige así).
-  static const double radius = 18;
-  static const double radiusSm = 12;
-
-  // El "radial-gradient" de CSS se modela en Flutter con la clase
-  // `RadialGradient`. `Alignment(-0.4, -0.6)` ubica el centro del
-  // degradado (el sistema de Alignment va de -1 a 1 en cada eje,
-  // por eso convertí el "30% 20%" del CSS a esa escala).
-  static const RadialGradient background = RadialGradient(
-    center: Alignment(-0.4, -0.6),
-    radius: 1.2,
-    colors: [bgTop, bgMid, bgBottom],
-    // `stops` marca en qué punto (0.0–1.0) empieza cada color,
-    // igual que los porcentajes "10%, 60%, 100%" del CSS original.
-    stops: [0.10, 0.60, 1.0],
-  );
-}
 
 // ─────────────────────────────────────────────────────────────────────
 // SECCIÓN 2 · DATOS MOCK
@@ -140,10 +94,10 @@ class StatCardData {
 // `const` al inicio = la lista entera es inmutable y se calcula una
 // sola vez, no en cada rebuild (optimización que React no ofrece así).
 const List<StatCardData> statCards = [
-  StatCardData(label: 'Ingresos', emoji: '💰', value: 4500000, sub: 'Período activo', accent: Tokens.green),
-  StatCardData(label: 'Gastos', emoji: '💸', value: 2150000, sub: 'Período activo', accent: Tokens.red),
-  StatCardData(label: 'Ahorros', emoji: '🎯', value: 1200000, sub: 'Período activo', accent: Tokens.amber),
-  StatCardData(label: 'Balance', emoji: '💜', value: 1150000, sub: 'Disponible este período', accent: Tokens.purple),
+  StatCardData(label: 'Ingresos', emoji: '💰', value: 4500000, sub: 'Período activo', accent: AppColors.success),
+  StatCardData(label: 'Gastos', emoji: '💸', value: 2150000, sub: 'Período activo', accent: AppColors.error),
+  StatCardData(label: 'Ahorros', emoji: '🎯', value: 1200000, sub: 'Período activo', accent: AppColors.accent),
+  StatCardData(label: 'Balance', emoji: '💜', value: 1150000, sub: 'Disponible este período', accent: AppMovimientoColors.ahorro),
 ];
 
 class BolsaItem {
@@ -221,8 +175,8 @@ class Skeleton extends StatelessWidget {
     return Container(
       height: h,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(Tokens.radiusSm),
-        color: Colors.white.withOpacity(0.07),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        color: AppColors.textPrimary.withOpacity(0.07),
       ),
       // Flutter no tiene un equivalente 1:1 de `animation: pulse` en
       // CSS puro; la forma idiomática es envolver esto en un
@@ -257,13 +211,13 @@ class PeriodChip extends StatelessWidget {
       margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
+        color: AppColors.textPrimary.withOpacity(0.04),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.07)),
+        border: Border.all(color: AppColors.textPrimary.withOpacity(0.07)),
       ),
       // `Text` es el `<p>`/`<span>` de Flutter. El `style` recibe un
       // `TextStyle`, no un mapa CSS.
-      child: Text(text, style: const TextStyle(fontSize: 11, color: Tokens.textMuted)),
+      child: Text(text, style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
     );
   }
 }
@@ -301,7 +255,7 @@ class ChartLegend extends StatelessWidget {
                   : BoxDecoration(color: item.color, borderRadius: BorderRadius.circular(1)),
             ),
             const SizedBox(width: 6),
-            Text(item.label, style: const TextStyle(fontSize: 11, color: Tokens.textSecondary)),
+            Text(item.label, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
           ],
         );
       }).toList(),
@@ -336,9 +290,9 @@ class ChartCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(Tokens.radius),
-        border: Border.all(color: Tokens.glassBorder),
-        color: Tokens.card,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.borderLight),
+        color: AppColors.surface,
         // El `backdropFilter: blur()` de CSS no existe como propiedad
         // de Container; en Flutter se logra envolviendo el contenido
         // en un `BackdropFilter` + `ImageFilter.blur`. Lo omito aquí
@@ -349,9 +303,9 @@ class ChartCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Tokens.amber, letterSpacing: -0.3)),
+          Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.accent, letterSpacing: -0.3)),
           const SizedBox(height: 2),
-          Text(subtitle, style: const TextStyle(fontSize: 12, color: Tokens.textSecondary)),
+          Text(subtitle, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
           // `if (period != null) ...` es "spread condicional": solo
           // agrega el widget a la lista si la condición es verdadera.
           // Es el equivalente Dart de `{period && <PeriodChip .../>}`.
@@ -387,17 +341,17 @@ class MobileHeader extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('AhorrApp', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Tokens.amber, letterSpacing: -0.5)),
+                const Text('AhorrApp', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.accent, letterSpacing: -0.5)),
                 Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.06),
-                        border: Border.all(color: Colors.white.withOpacity(0.1)),
+                        color: AppColors.textPrimary.withOpacity(0.06),
+                        border: Border.all(color: AppColors.textPrimary.withOpacity(0.1)),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Text('Dashboard', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Tokens.textSecondary)),
+                      child: const Text('Dashboard', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
                     ),
                     const SizedBox(width: 10),
                     // Botón de notificaciones. `GestureDetector` es el
@@ -414,10 +368,10 @@ class MobileHeader extends StatelessWidget {
                             height: 38,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border: Border.all(color: Tokens.glassBorder),
-                              color: Colors.white.withOpacity(0.06),
+                              border: Border.all(color: AppColors.borderLight),
+                              color: AppColors.textPrimary.withOpacity(0.06),
                             ),
-                            child: const Icon(Icons.notifications_none, size: 17, color: Tokens.amber),
+                            child: const Icon(Icons.notifications_none, size: 17, color: AppColors.accent),
                           ),
                           Positioned(
                             top: 6,
@@ -427,8 +381,8 @@ class MobileHeader extends StatelessWidget {
                               height: 8,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: Tokens.amber,
-                                border: Border.all(color: Tokens.bgMid, width: 1.5),
+                                color: AppColors.accent,
+                                border: Border.all(color: AppColors.background, width: 1.5),
                               ),
                             ),
                           ),
@@ -447,7 +401,7 @@ class MobileHeader extends StatelessWidget {
           height: 1,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Colors.transparent, Tokens.amber.withOpacity(0.3), Colors.transparent],
+              colors: [Colors.transparent, AppColors.accent.withOpacity(0.3), Colors.transparent],
             ),
           ),
         ),
@@ -470,9 +424,9 @@ class WelcomeSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: const [
-          Text('Bienvenido de vuelta', style: TextStyle(fontSize: 12, color: Tokens.textSecondary, fontWeight: FontWeight.w500)),
+          Text('Bienvenido de vuelta', style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
           SizedBox(height: 2),
-          Text('Carlos 👋', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Tokens.textPrimary, letterSpacing: -0.5)),
+          Text('Carlos 👋', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary, letterSpacing: -0.5)),
         ],
       ),
     );
@@ -493,9 +447,9 @@ class StatCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       constraints: const BoxConstraints(minHeight: 96),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(Tokens.radius),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
-        color: Tokens.card,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.textPrimary.withOpacity(0.08)),
+        color: AppColors.surface,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -508,7 +462,7 @@ class StatCard extends StatelessWidget {
               children: [
                 Text(
                   data.label.toUpperCase(),
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Tokens.textMuted, letterSpacing: 0.07 * 16),
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textMuted, letterSpacing: 0.07 * 16),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 3),
@@ -517,7 +471,7 @@ class StatCard extends StatelessWidget {
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: data.accent, letterSpacing: -0.5, height: 1.1),
                   ),
                 ),
-                Text(data.sub, style: const TextStyle(fontSize: 11, color: Tokens.textMuted)),
+                Text(data.sub, style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
               ],
             ),
           ),
@@ -572,27 +526,27 @@ class BolsaWidget extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.03),
-              border: Border.all(color: Colors.white.withOpacity(0.06)),
-              borderRadius: BorderRadius.circular(Tokens.radiusSm),
+              color: AppColors.textPrimary.withOpacity(0.03),
+              border: Border.all(color: AppColors.textPrimary.withOpacity(0.06)),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(s.ticker, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Tokens.textPrimary)),
+                Text(s.ticker, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                 Row(
                   children: [
-                    Text(s.price, style: const TextStyle(fontSize: 13, color: Tokens.textSecondary)),
+                    Text(s.price, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
                     const SizedBox(width: 10),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: (s.up ? Tokens.green : Tokens.red).withOpacity(0.1),
+                        color: (s.up ? AppColors.success : AppColors.error).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         s.change,
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: s.up ? Tokens.green : Tokens.red),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: s.up ? AppColors.success : AppColors.error),
                       ),
                     ),
                   ],
@@ -661,7 +615,7 @@ class BudgetChart extends StatelessWidget {
                             // índice entero para buscar la categoría.
                             final index = value.toInt();
                             if (index < 0 || index >= budgetData.length) return const SizedBox.shrink();
-                            return Text(budgetData[index].cat, style: const TextStyle(fontSize: 11, color: Tokens.textMuted));
+                            return Text(budgetData[index].cat, style: const TextStyle(fontSize: 11, color: AppColors.textMuted));
                           },
                         ),
                       ),
@@ -669,13 +623,13 @@ class BudgetChart extends StatelessWidget {
                         sideTitles: SideTitles(
                           showTitles: true,
                           reservedSize: 44,
-                          getTitlesWidget: (value, meta) => Text('\$${(value / 1e6).toStringAsFixed(1)}M', style: const TextStyle(fontSize: 10, color: Tokens.textMuted)),
+                          getTitlesWidget: (value, meta) => Text('\$${(value / 1e6).toStringAsFixed(1)}M', style: const TextStyle(fontSize: 10, color: AppColors.textMuted)),
                         ),
                       ),
                       topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                       rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                     ),
-                    gridData: FlGridData(show: true, drawVerticalLine: false, getDrawingHorizontalLine: (v) => FlLine(color: Colors.white.withOpacity(0.06), strokeWidth: 1)),
+                    gridData: FlGridData(show: true, drawVerticalLine: false, getDrawingHorizontalLine: (v) => FlLine(color: AppColors.textPrimary.withOpacity(0.06), strokeWidth: 1)),
                     borderData: FlBorderData(show: false),
                   ),
                 ),
@@ -732,9 +686,9 @@ class WeeklyFlowChart extends StatelessWidget {
             child: LineChart(
               LineChartData(
                 lineBarsData: [
-                  _series(weeklyData.map((w) => w.ingresos).toList(), Tokens.green),
-                  _series(weeklyData.map((w) => w.gastos).toList(), Tokens.red),
-                  _series(weeklyData.map((w) => w.balance).toList(), Tokens.purple, dashed: true),
+                  _series(weeklyData.map((w) => w.ingresos).toList(), AppColors.success),
+                  _series(weeklyData.map((w) => w.gastos).toList(), AppColors.error),
+                  _series(weeklyData.map((w) => w.balance).toList(), AppMovimientoColors.ahorro, dashed: true),
                 ],
                 titlesData: FlTitlesData(
                   bottomTitles: AxisTitles(
@@ -743,7 +697,7 @@ class WeeklyFlowChart extends StatelessWidget {
                       getTitlesWidget: (value, meta) {
                         final index = value.toInt();
                         if (index < 0 || index >= weeklyData.length) return const SizedBox.shrink();
-                        return Text(weeklyData[index].semana, style: const TextStyle(fontSize: 11, color: Tokens.textMuted));
+                        return Text(weeklyData[index].semana, style: const TextStyle(fontSize: 11, color: AppColors.textMuted));
                       },
                     ),
                   ),
@@ -751,22 +705,22 @@ class WeeklyFlowChart extends StatelessWidget {
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 44,
-                      getTitlesWidget: (value, meta) => Text('\$${(value / 1e6).toStringAsFixed(1)}M', style: const TextStyle(fontSize: 10, color: Tokens.textMuted)),
+                      getTitlesWidget: (value, meta) => Text('\$${(value / 1e6).toStringAsFixed(1)}M', style: const TextStyle(fontSize: 10, color: AppColors.textMuted)),
                     ),
                   ),
                   topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 ),
-                gridData: FlGridData(show: true, drawVerticalLine: false, getDrawingHorizontalLine: (v) => FlLine(color: Colors.white.withOpacity(0.06), strokeWidth: 1)),
+                gridData: FlGridData(show: true, drawVerticalLine: false, getDrawingHorizontalLine: (v) => FlLine(color: AppColors.textPrimary.withOpacity(0.06), strokeWidth: 1)),
                 borderData: FlBorderData(show: false),
               ),
             ),
           ),
           const SizedBox(height: 10),
           const ChartLegend(items: [
-            LegendItemData(label: 'Ingresos', color: Tokens.green),
-            LegendItemData(label: 'Gastos', color: Tokens.red),
-            LegendItemData(label: 'Balance', color: Tokens.purple, dashed: true),
+            LegendItemData(label: 'Ingresos', color: AppColors.success),
+            LegendItemData(label: 'Gastos', color: AppColors.error),
+            LegendItemData(label: 'Balance', color: AppMovimientoColors.ahorro, dashed: true),
           ]),
         ],
       ),
@@ -808,15 +762,15 @@ class ErrorState extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 28),
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(Tokens.radius),
-        border: Border.all(color: Tokens.red.withOpacity(0.2)),
-        color: Tokens.red.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.error.withOpacity(0.2)),
+        color: AppColors.error.withOpacity(0.06),
       ),
       child: Column(
         children: [
-          const Text('No pudimos cargar esta información.', textAlign: TextAlign.center, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Tokens.red)),
+          const Text('No pudimos cargar esta información.', textAlign: TextAlign.center, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.error)),
           const SizedBox(height: 6),
-          const Text('Intenta nuevamente.', style: TextStyle(fontSize: 13, color: Tokens.textSecondary)),
+          const Text('Intenta nuevamente.', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
           const SizedBox(height: 16),
           // `TextButton` / `ElevatedButton` reemplazan al `<button>`.
           // Uso `TextButton.styleFrom` para personalizar look, como el
@@ -824,12 +778,12 @@ class ErrorState extends StatelessWidget {
           TextButton(
             onPressed: onRetry,
             style: TextButton.styleFrom(
-              backgroundColor: Tokens.red.withOpacity(0.12),
-              foregroundColor: Tokens.red,
+              backgroundColor: AppColors.error.withOpacity(0.12),
+              foregroundColor: AppColors.error,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
-                side: BorderSide(color: Tokens.red.withOpacity(0.3)),
+                side: BorderSide(color: AppColors.error.withOpacity(0.3)),
               ),
             ),
             child: const Text('Reintentar', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
@@ -888,7 +842,7 @@ class BottomNavBar extends StatelessWidget {
         decoration: BoxDecoration(
           color: const Color(0xB80f172a),
           borderRadius: BorderRadius.circular(32),
-          border: Border.all(color: Colors.white.withOpacity(0.14)),
+          border: Border.all(color: AppColors.textPrimary.withOpacity(0.14)),
           boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.45), blurRadius: 32, offset: const Offset(0, 8))],
         ),
         child: Row(
@@ -901,15 +855,15 @@ class BottomNavBar extends StatelessWidget {
                 constraints: const BoxConstraints(minWidth: 52),
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: isActive ? Tokens.amber.withOpacity(0.15) : Colors.transparent,
+                  color: isActive ? AppColors.accent.withOpacity(0.15) : Colors.transparent,
                   borderRadius: BorderRadius.circular(22),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(item.icon, size: 20, color: isActive ? Tokens.amber : Colors.white.withOpacity(0.7)),
+                    Icon(item.icon, size: 20, color: isActive ? AppColors.accent : AppColors.textPrimary.withOpacity(0.7)),
                     const SizedBox(height: 3),
-                    Text(item.label, style: TextStyle(fontSize: 10, fontWeight: isActive ? FontWeight.w700 : FontWeight.w500, color: isActive ? Tokens.amber : Colors.white.withOpacity(0.7))),
+                    Text(item.label, style: TextStyle(fontSize: 10, fontWeight: isActive ? FontWeight.w700 : FontWeight.w500, color: isActive ? AppColors.accent : AppColors.textPrimary.withOpacity(0.7))),
                   ],
                 ),
               ),
@@ -1008,7 +962,7 @@ class _NotificacionPanelState extends State<NotificacionPanel> {
               height: 4,
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
+                color: AppColors.textPrimary.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1022,12 +976,12 @@ class _NotificacionPanelState extends State<NotificacionPanel> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: Colors.amber,
+                  color: AppColors.accent,
                 ),
               ),
               GestureDetector(
                 onTap: () => Navigator.of(context).pop(),
-                child: const Icon(Icons.close, size: 18, color: Colors.grey),
+                child: const Icon(Icons.close, size: 18, color: AppColors.textMuted),
               ),
             ],
           ),
@@ -1036,13 +990,13 @@ class _NotificacionPanelState extends State<NotificacionPanel> {
           Expanded(
             child: _isLoading
                 ? const Center(
-                    child: CircularProgressIndicator(color: Colors.amber),
+                    child: CircularProgressIndicator(color: AppColors.accent),
                   )
                 : _notificaciones.isEmpty
                     ? const Center(
                         child: Text(
                           'No hay notificaciones',
-                          style: TextStyle(color: Colors.grey),
+                          style: TextStyle(color: AppColors.textMuted),
                         ),
                       )
                     : ListView.builder(
@@ -1073,12 +1027,12 @@ class _NotificacionPanelState extends State<NotificacionPanel> {
                               ),
                               decoration: BoxDecoration(
                                 color: notif.leida
-                                    ? Colors.white.withOpacity(0.04)
-                                    : Colors.amber.withOpacity(0.1),
+                                    ? AppColors.textPrimary.withOpacity(0.04)
+                                    : AppColors.accent.withOpacity(0.1),
                                 border: Border.all(
                                   color: notif.leida
-                                      ? Colors.white.withOpacity(0.07)
-                                      : Colors.amber.withOpacity(0.3),
+                                      ? AppColors.textPrimary.withOpacity(0.07)
+                                      : AppColors.accent.withOpacity(0.3),
                                 ),
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -1110,7 +1064,7 @@ class _NotificacionPanelState extends State<NotificacionPanel> {
                                                           .only(right: 6),
                                                       decoration:
                                                           const BoxDecoration(
-                                                        color: Colors.amber,
+                                                        color: AppColors.accent,
                                                         shape: BoxShape.circle,
                                                       ),
                                                     ),
@@ -1121,8 +1075,8 @@ class _NotificacionPanelState extends State<NotificacionPanel> {
                                                       fontWeight:
                                                           FontWeight.w700,
                                                       color: notif.leida
-                                                          ? Colors.grey[400]
-                                                          : Colors.white,
+                                                          ? AppColors.textMuted
+                                                          : AppColors.textPrimary,
                                                     ),
                                                   ),
                                                 ],
@@ -1132,7 +1086,7 @@ class _NotificacionPanelState extends State<NotificacionPanel> {
                                               _formatFecha(notif.fecha),
                                               style: const TextStyle(
                                                 fontSize: 10,
-                                                color: Colors.grey,
+                                                color: AppColors.textMuted,
                                               ),
                                             ),
                                           ],
@@ -1143,8 +1097,8 @@ class _NotificacionPanelState extends State<NotificacionPanel> {
                                           style: TextStyle(
                                             fontSize: 12,
                                             color: notif.leida
-                                                ? Colors.grey[500]
-                                                : Colors.white,
+                                                ? AppColors.textMuted
+                                                : AppColors.textPrimary,
                                             height: 1.4,
                                           ),
                                         ),
@@ -1198,9 +1152,9 @@ class ModulePlaceholder extends StatelessWidget {
           children: [
             Text(emoji, style: const TextStyle(fontSize: 48)),
             const SizedBox(height: 12),
-            Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Tokens.textPrimary)),
+            Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
             const SizedBox(height: 12),
-            const Text('Esta sección está en desarrollo. Próximamente disponible.', textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: Tokens.textMuted)),
+            const Text('Esta sección está en desarrollo. Próximamente disponible.', textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: AppColors.textMuted)),
           ],
         ),
       ),
@@ -1235,7 +1189,7 @@ class DashboardContent extends StatelessWidget {
         SizedBox(height: 90),
         Padding(
           padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
-          child: Text('© 2026 AhorrApp. Todos los derechos reservados.', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: Tokens.textMuted)),
+          child: Text('© 2026 AhorrApp. Todos los derechos reservados.', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
         ),
         SizedBox(height: 16),
       ],
@@ -1316,8 +1270,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // (equivalente a tu `<div className="w-full min-h-screen ...">`).
     return Scaffold(
       body: Container(
-        // El degradado de fondo, definido una vez en Tokens.
-        decoration: const BoxDecoration(gradient: Tokens.background),
+        // Color de fondo sólido, definido en AppColors.
+        decoration: const BoxDecoration(color: AppColors.background),
         child: SafeArea(
           // `Center` + `ConstrainedBox` reproduce tu
           // `maxWidth: 430, margin: "0 auto"` para que en pantallas

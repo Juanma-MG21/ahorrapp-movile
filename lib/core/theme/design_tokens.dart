@@ -64,6 +64,8 @@ class AppMovimientoColors {
   static const Color gasto = AppColors.accent;
   static const Color imprevisto = AppColors.error;
   static const Color ahorro = Color(0xFFA8A2FF);
+  static const Color deuda = AppCategoryColors.transporte;
+  static const Color emergencia = Color(0xFF22D3EE);
 }
 
 class AppRadius {

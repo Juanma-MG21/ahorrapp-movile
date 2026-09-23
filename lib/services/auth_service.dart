@@ -78,22 +78,6 @@ class AuthService {
     return false;
   }
 
-  /// Decisión de equipo: el chequeo de hardware biométrico vive aquí
-  /// (antes vivía en la UI, en LoginScreen). Centraliza la regla de
-  /// "solo ofrecer biometría si hay sesión guardada, el usuario la
-  /// activó explícitamente y el dispositivo la soporta" para que
-  /// cualquier pantalla la reutilice igual.
-  Future<bool> canUseBiometricAccess() async {
-    if (!await hasSession() || !await isBiometricEnabled()) return false;
-
-    try {
-      return await _localAuth.canCheckBiometrics &&
-          await _localAuth.isDeviceSupported();
-    } catch (_) {
-      return false;
-    }
-  }
-
   Future<String?> getToken() async {
     if (_memoryToken != null) return _memoryToken;
     _memoryToken = await _storage.read(key: _tokenKey);
@@ -203,6 +187,13 @@ class AuthService {
     } catch (error) {
       throw ApiException('No se pudo configurar la biometría: $error');
     }
+  }
+
+  /// Desactiva la biometría configurada. Se usa desde la pantalla de
+  /// gestión (Inicio) para que el usuario pueda "editar" (apagar) la
+  /// biometría, no solo activarla una vez.
+  Future<void> disableBiometrics() async {
+    await _storage.delete(key: _biometricKey);
   }
 
   Future<bool> authenticateBiometric() async {
@@ -378,7 +369,7 @@ class AuthService {
     });
   }
 
-  /// Usado por ChangePasswordScreen (con confirmación previa por PIN).
+  /// Usado por CambiarPasswordScreen (con confirmación previa por PIN).
   Future<void> changePassword({
     required String passwordActual,
     required String passwordNueva,

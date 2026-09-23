@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/design_tokens.dart';
 
 import '../../core/network/api_client.dart';
 import '../../services/cuenta_service.dart';
+import '../auth/pin_access_screen.dart';
 import 'widgets/seccion_card.dart';
 
 /// Formulario de cambio de contraseña, en su propia pantalla (igual
@@ -52,6 +54,12 @@ class _CambiarPasswordScreenState extends State<CambiarPasswordScreen> {
       return;
     }
 
+    // Confirmación con PIN (o huella, si el usuario ya la activó) antes
+    // de aplicar el cambio, igual que el resto de acciones sensibles de
+    // la cuenta.
+    final confirmado = await confirmarConPin(context);
+    if (!mounted || !confirmado) return;
+
     setState(() => _guardando = true);
     try {
       final mensaje = await CuentaService.instance.cambiarMiPassword(
@@ -61,7 +69,7 @@ class _CambiarPasswordScreenState extends State<CambiarPasswordScreen> {
       if (!mounted) return;
       Navigator.of(context).pop(true);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(mensaje), backgroundColor: CuentaColors.success),
+        SnackBar(content: Text(mensaje), backgroundColor: AppColors.success),
       );
     } on ApiException catch (e) {
       setState(() => _error = e.message);
@@ -75,13 +83,13 @@ class _CambiarPasswordScreenState extends State<CambiarPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: CuentaColors.background,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: CuentaColors.background,
+        backgroundColor: AppColors.background,
         elevation: 0,
         title: const Text('Cambiar contraseña',
-            style: TextStyle(color: CuentaColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
-        iconTheme: const IconThemeData(color: CuentaColors.textPrimary),
+            style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
+        iconTheme: const IconThemeData(color: AppColors.textPrimary),
       ),
       body: SafeArea(
         child: ListView(
@@ -89,7 +97,7 @@ class _CambiarPasswordScreenState extends State<CambiarPasswordScreen> {
           children: [
             const Text(
               'Debes confirmar tu contraseña actual para poder cambiarla.',
-              style: TextStyle(color: CuentaColors.textMuted, fontSize: 13),
+              style: TextStyle(color: AppColors.textMuted, fontSize: 13),
             ),
             const SizedBox(height: 16),
             if (_error != null) ...[
@@ -97,23 +105,23 @@ class _CambiarPasswordScreenState extends State<CambiarPasswordScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: CuentaColors.danger.withValues(alpha: 0.12),
+                  color: AppColors.error.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: CuentaColors.danger.withValues(alpha: 0.35)),
+                  border: Border.all(color: AppColors.error.withValues(alpha: 0.35)),
                 ),
-                child: Text(_error!, style: const TextStyle(color: CuentaColors.danger, fontSize: 13)),
+                child: Text(_error!, style: const TextStyle(color: AppColors.error, fontSize: 13)),
               ),
               const SizedBox(height: 14),
             ],
             TextField(
               controller: _actualCtrl,
               obscureText: !_verActual,
-              style: const TextStyle(color: CuentaColors.textPrimary),
+              style: const TextStyle(color: AppColors.textPrimary),
               decoration: _decoracion(
                 'Contraseña actual',
                 suffix: IconButton(
                   icon: Icon(_verActual ? Icons.visibility_off : Icons.visibility,
-                      color: CuentaColors.textMuted, size: 19),
+                      color: AppColors.textMuted, size: 19),
                   onPressed: () => setState(() => _verActual = !_verActual),
                 ),
               ),
@@ -122,12 +130,12 @@ class _CambiarPasswordScreenState extends State<CambiarPasswordScreen> {
             TextField(
               controller: _nuevaCtrl,
               obscureText: !_verNueva,
-              style: const TextStyle(color: CuentaColors.textPrimary),
+              style: const TextStyle(color: AppColors.textPrimary),
               decoration: _decoracion(
                 'Nueva contraseña',
                 suffix: IconButton(
                   icon: Icon(_verNueva ? Icons.visibility_off : Icons.visibility,
-                      color: CuentaColors.textMuted, size: 19),
+                      color: AppColors.textMuted, size: 19),
                   onPressed: () => setState(() => _verNueva = !_verNueva),
                 ),
               ),
@@ -136,7 +144,7 @@ class _CambiarPasswordScreenState extends State<CambiarPasswordScreen> {
             TextField(
               controller: _confirmarCtrl,
               obscureText: !_verNueva,
-              style: const TextStyle(color: CuentaColors.textPrimary),
+              style: const TextStyle(color: AppColors.textPrimary),
               decoration: _decoracion('Confirmar nueva contraseña'),
             ),
             const SizedBox(height: 22),
@@ -145,15 +153,15 @@ class _CambiarPasswordScreenState extends State<CambiarPasswordScreen> {
               child: ElevatedButton(
                 onPressed: _guardando ? null : _guardar,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: CuentaColors.accent,
-                  foregroundColor: const Color(0xFF0D1526),
+                  backgroundColor: AppColors.accent,
+                  foregroundColor: AppColors.background,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 child: _guardando
                     ? const SizedBox(
                         width: 18, height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0D1526)),
+                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background),
                       )
                     : const Text('Cambiar contraseña', style: TextStyle(fontWeight: FontWeight.w700)),
               ),
@@ -167,21 +175,21 @@ class _CambiarPasswordScreenState extends State<CambiarPasswordScreen> {
   InputDecoration _decoracion(String label, {Widget? suffix}) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: CuentaColors.textMuted, fontSize: 13),
+      labelStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
       suffixIcon: suffix,
       filled: true,
-      fillColor: CuentaColors.surfaceAlt,
+      fillColor: AppColors.surfaceAlt,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: CuentaColors.border),
+        borderSide: const BorderSide(color: AppColors.borderLight),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: CuentaColors.border),
+        borderSide: const BorderSide(color: AppColors.borderLight),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: CuentaColors.accent),
+        borderSide: const BorderSide(color: AppColors.accent),
       ),
     );
   }

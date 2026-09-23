@@ -3,10 +3,24 @@ import '../../core/network/api_client.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/auth_widgets.dart';
-import 'auth_gate.dart';
 
+/// Modo en el que se abre [BiometricAccessScreen]:
+///  - [manage]: se usa desde Inicio para activar o desactivar la
+///    biometría de la cuenta.
+///  - [confirm]: segunda verificación (alternativa al PIN) para
+///    confirmar una acción sensible sobre una sesión ya autenticada.
+enum BiometricAccessMode { manage, confirm }
+
+/// Ya NO es una pantalla de "login rápido": nunca navega a '/home'.
+/// Siempre resuelve con Navigator.pop(true/false), igual que
+/// PinAccessScreen.
 class BiometricAccessScreen extends StatefulWidget {
-  const BiometricAccessScreen({super.key});
+  const BiometricAccessScreen({
+    super.key,
+    this.mode = BiometricAccessMode.manage,
+  });
+
+  final BiometricAccessMode mode;
 
   @override
   State<BiometricAccessScreen> createState() => _BiometricAccessScreenState();
@@ -15,37 +29,46 @@ class BiometricAccessScreen extends StatefulWidget {
 class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
   bool _isAuthenticating = false;
   bool _isConfiguring = false;
+  bool _yaActivada = false;
   String _authStatus = 'Cargando...';
+
+  bool get _esGestion => widget.mode == BiometricAccessMode.manage;
 
   @override
   void initState() {
     super.initState();
-    _startBiometric();
+    _iniciar();
   }
 
-  // Antes de pedir biometría, confirmamos que exista una sesión guardada.
-  // Si no hay sesión, no tiene sentido molestar al usuario con el prompt
-  // de huella/rostro.
-  Future<void> _startBiometric() async {
+  Future<void> _iniciar() async {
     if (!await AuthService.instance.hasSession()) {
       if (!mounted) return;
       setState(() => _authStatus = 'Inicia sesión con tu correo y contraseña');
       return;
     }
 
-    // Si el usuario aún no activó la biometría en esta cuenta, la
-    // configuramos primero en vez de intentar autenticar directamente.
-    if (await AuthService.instance.isBiometricEnabled()) {
-      _authenticate();
-    } else {
-      _configure();
+    final activada = await AuthService.instance.isBiometricEnabled();
+    if (!mounted) return;
+    setState(() {
+      _yaActivada = activada;
+      if (_esGestion) {
+        _authStatus = activada
+            ? 'La biometría ya está activada en esta cuenta'
+            : 'Activa la biometría para esta cuenta';
+      } else {
+        _authStatus = 'Confirma la acción con tu huella';
+      }
+    });
+
+    // En modo confirmación vamos directo al prompt biométrico, ya que
+    // solo se llega aquí cuando la biometría ya está activada.
+    if (!_esGestion) {
+      _autenticar();
     }
   }
 
-  Future<void> _authenticate() async {
+  Future<void> _autenticar() async {
     try {
-      // Doble chequeo: protege contra condiciones de carrera si el
-      // usuario se ausentó y volvió antes de tocar el ícono.
       if (!await AuthService.instance.hasSession()) {
         if (mounted) {
           setState(() => _authStatus = 'Tu sesión ya no está disponible');
@@ -58,38 +81,19 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
         _authStatus = 'Escaneando huella / rostro...';
       });
 
-      final bool authenticated =
-          await AuthService.instance.authenticateBiometric();
+      final autenticado = await AuthService.instance.authenticateBiometric();
 
+      if (!mounted) return;
       setState(() {
         _isAuthenticating = false;
-        _authStatus = authenticated ? 'Acceso concedido' : 'Autenticación fallida';
+        _authStatus = autenticado ? 'Identidad confirmada' : 'Autenticación fallida';
       });
 
-      if (authenticated && mounted) {
-        // El escaneo pudo tardar varios segundos, así que volvemos a
-        // confirmar que la sesión siga viva antes de navegar. Si ya no
-        // es válida, dejamos que AuthGate decida el flujo correcto en
-        // vez de forzar '/home' sin sesión real.
-        final tieneSesion = await AuthService.instance.hasSession();
-
-        if (!mounted) return;
-
-        if (tieneSesion) {
-          Navigator.of(context).pushReplacementNamed('/home');
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Tu sesión expiró, inicia sesión nuevamente'),
-            ),
-          );
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (_) => const AuthGate()),
-            (route) => false,
-          );
-        }
+      if (autenticado) {
+        Navigator.of(context).pop(true);
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isAuthenticating = false;
         _authStatus = 'Error: $e';
@@ -97,7 +101,7 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
     }
   }
 
-  Future<void> _configure() async {
+  Future<void> _activar() async {
     setState(() {
       _isAuthenticating = true;
       _isConfiguring = true;
@@ -110,10 +114,11 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
       setState(() {
         _isAuthenticating = false;
         _isConfiguring = false;
-        _authStatus = 'Biometría configurada';
+        _yaActivada = true;
+        _authStatus = 'Biometría activada';
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Biometría configurada correctamente')),
+        const SnackBar(content: Text('Biometría activada correctamente')),
       );
       Navigator.of(context).pop(true);
     } on ApiException catch (error) {
@@ -131,6 +136,15 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
         _authStatus = 'Error: $e';
       });
     }
+  }
+
+  Future<void> _desactivar() async {
+    await AuthService.instance.disableBiometrics();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Biometría desactivada')),
+    );
+    Navigator.of(context).pop(true);
   }
 
   @override
@@ -162,18 +176,39 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
             ),
           ),
           const SizedBox(height: 30),
-          if (!_isAuthenticating && !_isConfiguring)
+          if (_esGestion && !_isAuthenticating && !_isConfiguring) ...[
+            if (!_yaActivada)
+              ElevatedButton.icon(
+                onPressed: _activar,
+                icon: const Icon(Icons.fingerprint_rounded),
+                label: const Text('Activar biometría'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accent,
+                  foregroundColor: AppColors.background,
+                ),
+              )
+            else
+              TextButton.icon(
+                onPressed: _desactivar,
+                icon: const Icon(Icons.fingerprint_rounded, color: AppColors.error),
+                label: const Text(
+                  'Desactivar biometría',
+                  style: TextStyle(color: AppColors.error),
+                ),
+              ),
+          ],
+          if (!_esGestion && !_isAuthenticating)
             TextButton.icon(
-              onPressed: _authenticate,
+              onPressed: _autenticar,
               icon: const Icon(Icons.refresh_rounded),
               label: const Text('Intentar de nuevo'),
               style: TextButton.styleFrom(foregroundColor: AppColors.accent),
             ),
-          const SizedBox(height: 80),
+          const SizedBox(height: 40),
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(context).pop(false),
             child: const Text(
-              'Ingresar con contraseña',
+              'Cancelar',
               style: TextStyle(
                 color: AppColors.blue,
                 fontWeight: FontWeight.bold,
@@ -190,7 +225,7 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
     return Row(
       children: [
         IconButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => Navigator.of(context).pop(false),
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
           style: IconButton.styleFrom(
             backgroundColor: AppColors.surface,
@@ -205,7 +240,9 @@ class _BiometricAccessScreenState extends State<BiometricAccessScreen> {
 
   Widget _buildBiometricIcon() {
     return GestureDetector(
-      onTap: (_isAuthenticating || _isConfiguring) ? null : _authenticate,
+      onTap: (_isAuthenticating || _isConfiguring)
+          ? null
+          : (_esGestion ? null : _autenticar),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         padding: const EdgeInsets.all(35),

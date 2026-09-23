@@ -8,6 +8,7 @@ import 'ingresos/modulo_ingresos.dart';
 import 'imprevistos/modulo_imprevistos.dart';
 import 'ahorros/modulo_ahorros.dart';
 import 'deudas/modulo_deudas.dart';
+import 'emergencia/emergencia.dart';
 import 'presupuestos/modulo_presupuestos.dart';
 import '../services/quick_actions_service.dart';
 import '../screens/reportes/reportes_screen.dart';
@@ -25,6 +26,7 @@ import 'categorias/categorias_screen.dart';
 ///   2. Agrega su widget en `_pantallasSecundarias`, en la misma posición.
 class _MenuItem {
   const _MenuItem({required this.icon, required this.label});
+
   final IconData icon;
   final String label;
 }
@@ -33,6 +35,7 @@ const List<_MenuItem> _itemsMas = [
   _MenuItem(icon: Icons.emergency_outlined, label: 'Imprevistos'),
   _MenuItem(icon: Icons.savings_outlined, label: 'Ahorros'),
   _MenuItem(icon: Icons.credit_card, label: 'Deudas'),
+  _MenuItem(icon: Icons.shield_outlined, label: 'Emergencia'),
   _MenuItem(icon: Icons.calendar_month_outlined, label: 'Calendario'),
   _MenuItem(icon: Icons.people, label: 'Dependientes'),
   _MenuItem(icon: Icons.category_outlined, label: 'Categorías'),
@@ -57,11 +60,13 @@ class _MainScreenState extends State<MainScreen> {
     ModuloGastos(),
     ModuloPresupuestos(),
   ];
+
   // Pantallas accesibles desde "Más", alineadas 1 a 1 con _itemsMas.
   final List<Widget> _pantallasSecundarias = const [
     ModuloImprevistos(),
     ModuloAhorros(),
     ModuloDeudas(),
+    ModuloEmergencia(),
     CalendarioScreen(),
     PanelDependientesScreen(),
     ModuloCategoriasScreen(),
@@ -80,6 +85,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
+
     _pageController = PageController(initialPage: _tabPrincipal);
 
     // Inicializar accesos directos (RF-27)
@@ -96,6 +102,7 @@ class _MainScreenState extends State<MainScreen> {
 
   void _seleccionarPrincipal(int index) {
     setState(() => _tabPrincipal = index);
+
     _pageController.animateToPage(
       index,
       duration: const Duration(milliseconds: 300),
@@ -107,13 +114,19 @@ class _MainScreenState extends State<MainScreen> {
     final seleccion = await showModalBottomSheet<int>(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => _MenuMasSheet(indiceActivo: _mostrandoSecundaria ? _indiceSecundario : null),
+      isScrollControlled: true,
+      builder: (ctx) => _MenuMasSheet(
+        indiceActivo: _mostrandoSecundaria ? _indiceSecundario : null,
+      ),
     );
+
     if (seleccion == null) return;
+
     setState(() {
       _tabPrincipal = 4;
       _indiceSecundario = seleccion;
     });
+
     _pageController.animateToPage(
       4,
       duration: const Duration(milliseconds: 300),
@@ -156,14 +169,22 @@ class _MainScreenState extends State<MainScreen> {
           child: SafeArea(
             top: false,
             child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildNavItem(Icons.home_outlined, 'Inicio', 0),
-                  _buildNavItem(Icons.arrow_upward, 'Ingresos', 1),
-                  _buildNavItem(Icons.account_balance_wallet, 'Gastos', 2),
-                  _buildNavItem(Icons.pie_chart_outline, 'Presupuestos', 3),
-                  _buildMasNavItem(),
-                ],
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNavItem(Icons.home_outlined, 'Inicio', 0),
+                _buildNavItem(Icons.arrow_upward, 'Ingresos', 1),
+                _buildNavItem(
+                  Icons.account_balance_wallet,
+                  'Gastos',
+                  2,
+                ),
+                _buildNavItem(
+                  Icons.pie_chart_outline,
+                  'Presupuestos',
+                  3,
+                ),
+                _buildMasNavItem(),
+              ],
             ),
           ),
         ),
@@ -171,9 +192,16 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, int index) {
-    final bool isActive = !_mostrandoSecundaria && _tabPrincipal == index;
-    final color = isActive ? AppColors.accent : AppColors.navInactive;
+  Widget _buildNavItem(
+    IconData icon,
+    String label,
+    int index,
+  ) {
+    final bool isActive =
+        !_mostrandoSecundaria && _tabPrincipal == index;
+
+    final color =
+        isActive ? AppColors.accent : AppColors.navInactive;
 
     return Expanded(
       child: InkWell(
@@ -181,7 +209,11 @@ class _MainScreenState extends State<MainScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: color, size: 24),
+            Icon(
+              icon,
+              color: color,
+              size: 24,
+            ),
             const SizedBox(height: 4),
             FittedBox(
               fit: BoxFit.scaleDown,
@@ -190,7 +222,9 @@ class _MainScreenState extends State<MainScreen> {
                 style: TextStyle(
                   color: color,
                   fontSize: 10,
-                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                  fontWeight: isActive
+                      ? FontWeight.w700
+                      : FontWeight.w500,
                 ),
                 maxLines: 1,
               ),
@@ -203,7 +237,9 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _buildMasNavItem() {
     final bool isActive = _mostrandoSecundaria;
-    final color = isActive ? AppColors.accent : AppColors.navInactive;
+
+    final color =
+        isActive ? AppColors.accent : AppColors.navInactive;
 
     return Expanded(
       child: InkWell(
@@ -211,14 +247,22 @@ class _MainScreenState extends State<MainScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.more_horiz, color: color, size: 24),
+            Icon(
+              Icons.more_horiz,
+              color: color,
+              size: 24,
+            ),
             const SizedBox(height: 4),
             Text(
-              isActive ? _itemsMas[_indiceSecundario].label : 'Más',
+              isActive
+                  ? _itemsMas[_indiceSecundario].label
+                  : 'Más',
               style: TextStyle(
                 color: color,
                 fontSize: 10,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                fontWeight: isActive
+                    ? FontWeight.w600
+                    : FontWeight.normal,
               ),
               overflow: TextOverflow.ellipsis,
             ),
@@ -233,18 +277,31 @@ class _MainScreenState extends State<MainScreen> {
 /// (mediante Navigator.pop) el índice elegido, o null si se cerró sin
 /// elegir nada.
 class _MenuMasSheet extends StatelessWidget {
-  const _MenuMasSheet({required this.indiceActivo});
+  const _MenuMasSheet({
+    required this.indiceActivo,
+  });
+
   final int? indiceActivo;
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
+        ),
         decoration: const BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadius.lg),
+          ),
         ),
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+        padding: const EdgeInsets.fromLTRB(
+          20,
+          12,
+          20,
+          12,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -256,10 +313,13 @@ class _MenuMasSheet extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
                   color: AppColors.borderLight,
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  borderRadius: BorderRadius.circular(
+                    AppRadius.pill,
+                  ),
                 ),
               ),
             ),
+
             const Text(
               'Más',
               style: TextStyle(
@@ -268,47 +328,84 @@ class _MenuMasSheet extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
+
             const SizedBox(height: 8),
-            ...List.generate(_itemsMas.length, (i) {
-              final item = _itemsMas[i];
-              final activo = indiceActivo == i;
-              return InkWell(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                onTap: () => Navigator.of(context).pop(i),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Row(
-                    children: [
-                      Icon(
-                        item.icon,
-                        color: activo ? AppColors.accent : AppColors.textPrimary,
-                        size: 22,
+
+            // Lista desplazable para evitar overflow.
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: _itemsMas.length,
+                itemBuilder: (context, i) {
+                  final item = _itemsMas[i];
+                  final activo = indiceActivo == i;
+
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(
+                      AppRadius.sm,
+                    ),
+                    onTap: () =>
+                        Navigator.of(context).pop(i),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 12,
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Text(
-                          item.label,
-                          style: TextStyle(
-                            color: activo ? AppColors.accent : AppColors.textPrimary,
-                            fontSize: 15,
-                            fontWeight: activo ? FontWeight.w700 : FontWeight.w500,
+                      child: Row(
+                        children: [
+                          Icon(
+                            item.icon,
+                            color: activo
+                                ? AppColors.accent
+                                : AppColors.textPrimary,
+                            size: 22,
                           ),
-                        ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Text(
+                              item.label,
+                              style: TextStyle(
+                                color: activo
+                                    ? AppColors.accent
+                                    : AppColors.textPrimary,
+                                fontSize: 15,
+                                fontWeight: activo
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          if (activo)
+                            const Icon(
+                              Icons.check,
+                              color: AppColors.accent,
+                              size: 18,
+                            ),
+                        ],
                       ),
-                      if (activo)
-                        const Icon(Icons.check, color: AppColors.accent, size: 18),
-                    ],
-                  ),
-                ),
-              );
-            }),
-            const Divider(color: AppColors.borderLight, height: 32),
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            const Divider(
+              color: AppColors.borderLight,
+              height: 32,
+            ),
+
             InkWell(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: BorderRadius.circular(
+                AppRadius.sm,
+              ),
               onTap: () async {
                 await AuthService.instance.logout();
+
                 if (context.mounted) {
-                  Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                  Navigator.of(context)
+                      .pushNamedAndRemoveUntil(
+                    '/login',
+                    (route) => false,
+                  );
                 }
               },
               child: const Padding(

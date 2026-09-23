@@ -22,15 +22,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _hidePassword = true;
   bool _isLoading = false;
 
-  // Gate para el acceso rápido por huella: viene de
-  // AuthService.canUseBiometricAccess(), que ya valida sesión guardada
-  // y soporte del dispositivo (si no, mandaría a un callejón sin salida
-  // en BiometricAccessScreen).
-  // Nota: '/pin-access' no vive aquí — es una segunda verificación
-  // para acciones sensibles (cambiar contraseña, editar datos
-  // personales), no un método de login rápido.
-  bool _canUseBiometric = false;
-
   @override
   void initState() {
     super.initState();
@@ -45,17 +36,6 @@ class _LoginScreenState extends State<LoginScreen> {
       if (_rememberSession) {
         _emailController.text = prefs.getString('saved_email') ?? '';
       }
-    });
-
-    // Decisión de equipo: el chequeo de hardware biométrico ahora vive
-    // centralizado en AuthService.canUseBiometricAccess(), para que
-    // cualquier pantalla (incluida BiometricAccessScreen) use la misma
-    // regla sin duplicar lógica.
-    final canUseBiometric = await AuthService.instance.canUseBiometricAccess();
-
-    if (!mounted) return;
-    setState(() {
-      _canUseBiometric = canUseBiometric;
     });
   }
 
@@ -191,20 +171,6 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 20),
             _buildGoogleButton(),
           ],
-          if (_canUseBiometric) ...[
-            const SizedBox(height: 24),
-            _buildQuickAccess(),
-          ],
-          const SizedBox(height: 12),
-          TextButton.icon(
-            onPressed: () => Navigator.of(context).pushNamed('/fast-login'),
-            icon: const Icon(Icons.bolt_rounded, size: 18),
-            label: const Text('Acceso rápido'),
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.textMuted,
-              textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-            ),
-          ),
           const SizedBox(height: 16),
           _RegisterCallout(onTap: _openRegister),
           const SizedBox(height: 12),
@@ -340,69 +306,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildQuickAccess() {
-    return Column(
-      children: [
-        const Row(
-          children: [
-            Expanded(child: Divider(color: AppColors.borderLight)),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 10),
-              child: Text('o continúa con', style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
-            ),
-            Expanded(child: Divider(color: AppColors.borderLight)),
-          ],
-        ),
-        const SizedBox(height: 18),
-        Row(
-          children: [
-            Expanded(
-              child: _AccessTile(
-                icon: Icons.fingerprint_rounded,
-                label: 'Huella',
-                onTap: () => Navigator.of(context).pushNamed('/biometric-access'),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _AccessTile extends StatelessWidget {
-  const _AccessTile({required this.icon, required this.label, required this.onTap});
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(13),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(13),
-        child: Container(
-          height: 55,
-          decoration: BoxDecoration(
-            border: Border.all(color: AppColors.borderLight),
-            borderRadius: BorderRadius.circular(13),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: AppColors.accent, size: 24),
-              const SizedBox(height: 3),
-              Text(label, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class _RegisterCallout extends StatelessWidget {

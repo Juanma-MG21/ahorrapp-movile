@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/design_tokens.dart';
 
 import '../../core/network/api_client.dart';
 import '../../services/auth_service.dart';
 import '../../services/cuenta_service.dart';
+import '../auth/pin_access_screen.dart';
 import 'widgets/seccion_card.dart';
 
 final RegExp _nombreRegex = RegExp(r"^[A-Za-zÀ-ÖØ-öø-ÿ\s'-]+$");
@@ -69,6 +71,11 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
       return;
     }
 
+    // Confirmación con PIN (o huella, si el usuario ya la activó) antes
+    // de aplicar el cambio de datos personales.
+    final confirmado = await confirmarConPin(context);
+    if (!mounted || !confirmado) return;
+
     setState(() => _guardando = true);
     try {
       final mensaje = await CuentaService.instance.actualizarMiPerfil(
@@ -94,7 +101,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
       if (!mounted) return;
       Navigator.of(context).pop(true);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(mensaje), backgroundColor: CuentaColors.success),
+        SnackBar(content: Text(mensaje), backgroundColor: AppColors.success),
       );
     } on ApiException catch (e) {
       setState(() => _error = e.message);
@@ -108,20 +115,20 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
   InputDecoration _decoracion(String label) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: CuentaColors.textMuted, fontSize: 13),
+      labelStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
       filled: true,
-      fillColor: CuentaColors.surfaceAlt,
+      fillColor: AppColors.surfaceAlt,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: CuentaColors.border),
+        borderSide: const BorderSide(color: AppColors.borderLight),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: CuentaColors.border),
+        borderSide: const BorderSide(color: AppColors.borderLight),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: CuentaColors.accent),
+        borderSide: const BorderSide(color: AppColors.accent),
       ),
     );
   }
@@ -129,13 +136,13 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: CuentaColors.background,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: CuentaColors.background,
+        backgroundColor: AppColors.background,
         elevation: 0,
         title: const Text('Editar mis datos',
-            style: TextStyle(color: CuentaColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
-        iconTheme: const IconThemeData(color: CuentaColors.textPrimary),
+            style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
+        iconTheme: const IconThemeData(color: AppColors.textPrimary),
       ),
       body: SafeArea(
         child: ListView(
@@ -146,17 +153,17 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: CuentaColors.danger.withValues(alpha: 0.12),
+                  color: AppColors.error.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: CuentaColors.danger.withValues(alpha: 0.35)),
+                  border: Border.all(color: AppColors.error.withValues(alpha: 0.35)),
                 ),
-                child: Text(_error!, style: const TextStyle(color: CuentaColors.danger, fontSize: 13)),
+                child: Text(_error!, style: const TextStyle(color: AppColors.error, fontSize: 13)),
               ),
               const SizedBox(height: 14),
             ],
             TextField(
               controller: _nombreCtrl,
-              style: const TextStyle(color: CuentaColors.textPrimary),
+              style: const TextStyle(color: AppColors.textPrimary),
               decoration: _decoracion('Nombre'),
               onChanged: (v) {
                 final limpio = _limpiarTextoNombre(v);
@@ -171,7 +178,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
             const SizedBox(height: 14),
             TextField(
               controller: _apellidoCtrl,
-              style: const TextStyle(color: CuentaColors.textPrimary),
+              style: const TextStyle(color: AppColors.textPrimary),
               decoration: _decoracion('Apellido'),
               onChanged: (v) {
                 final limpio = _limpiarTextoNombre(v);
@@ -187,7 +194,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
             TextField(
               controller: _emailCtrl,
               keyboardType: TextInputType.emailAddress,
-              style: const TextStyle(color: CuentaColors.textPrimary),
+              style: const TextStyle(color: AppColors.textPrimary),
               decoration: _decoracion('Correo electrónico'),
             ),
             const SizedBox(height: 22),
@@ -196,15 +203,15 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
               child: ElevatedButton(
                 onPressed: _guardando ? null : _guardar,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: CuentaColors.accent,
-                  foregroundColor: const Color(0xFF0D1526),
+                  backgroundColor: AppColors.accent,
+                  foregroundColor: AppColors.background,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 child: _guardando
                     ? const SizedBox(
                         width: 18, height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0D1526)),
+                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background),
                       )
                     : const Text('Guardar cambios', style: TextStyle(fontWeight: FontWeight.w700)),
               ),

@@ -6,6 +6,8 @@ import '../../services/gastos_service.dart';
 import '../../services/ingresos_service.dart';
 import '../../services/imprevistos_service.dart';
 import '../../services/ahorros_service.dart';
+import '../../services/deudas_service.dart';
+import '../../services/emergencia_service.dart';
 
 // ---------------------------------------------------------------------------
 // Colores por tipo de movimiento financiero, ahora centralizados en
@@ -17,6 +19,19 @@ const Map<String, Color> colorPorTipo = {
   'gasto': AppMovimientoColors.gasto,
   'imprevisto': AppMovimientoColors.imprevisto,
   'ahorro': AppMovimientoColors.ahorro,
+  'deuda': AppMovimientoColors.deuda,
+  'emergencia': AppMovimientoColors.emergencia,
+};
+
+// Texto explicativo que acompaña cada color en la leyenda del calendario,
+// para que el usuario entienda de un vistazo qué representa cada punto.
+const Map<String, String> etiquetaPorTipo = {
+  'ingreso': 'Ingreso registrado',
+  'gasto': 'Gasto registrado',
+  'imprevisto': 'Imprevisto registrado',
+  'ahorro': 'Abono a una meta de ahorro',
+  'deuda': 'Inicio de una deuda',
+  'emergencia': 'Aporte o retiro del fondo de emergencia',
 };
 
 class CalendarioScreen extends StatefulWidget {
@@ -57,11 +72,15 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
     final futureGastos = GastosService.obtenerGastos();
     final futureImprevistos = ImprevistosService.obtenerImprevistos();
     final futureAhorros = AhorrosService.obtenerAhorros();
+    final futureDeudas = DeudasService.obtenerDeudas();
+    final futureMovimientosEmergencia = EmergenciaService.obtenerMovimientos();
 
     final ingresos = await futureIngresos;
     final gastos = await futureGastos;
     final imprevistos = await futureImprevistos;
     final ahorros = await futureAhorros;
+    final deudas = await futureDeudas;
+    final movimientosEmergencia = await futureMovimientosEmergencia;
 
     final Map<DateTime, List<String>> mapa = {};
 
@@ -83,6 +102,12 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
     for (final a in ahorros) {
       agregar(a.fechaRegistro, 'ahorro');
     }
+    for (final d in deudas) {
+      agregar(d.fechaInicio, 'deuda');
+    }
+    for (final m in movimientosEmergencia) {
+      agregar(m.fechaRegistro, 'emergencia');
+    }
 
     if (!mounted) return;
     setState(() {
@@ -102,7 +127,14 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
   /// Cuenta ingresos/gastos/ahorros/imprevistos que caen dentro del mes
   /// actualmente enfocado en el calendario, para la tarjeta de resumen.
   Map<String, int> _resumenDelMes() {
-    final conteo = {'ingreso': 0, 'gasto': 0, 'ahorro': 0, 'imprevisto': 0};
+    final conteo = {
+      'ingreso': 0,
+      'gasto': 0,
+      'ahorro': 0,
+      'imprevisto': 0,
+      'deuda': 0,
+      'emergencia': 0,
+    };
     _movimientosPorDia.forEach((fecha, tipos) {
       if (fecha.year == _diaFocalizado.year && fecha.month == _diaFocalizado.month) {
         for (final tipo in tipos) {
@@ -128,12 +160,57 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
-          : Column(
-              children: [
-                _buildTarjetaTitulo(),
-                _buildCalendario(),
-              ],
+          : SingleChildScrollView(
+              child: Column(
+                children: [
+                  _buildTarjetaTitulo(),
+                  _buildCalendario(),
+                  _buildLeyenda(),
+                ],
+              ),
             ),
+    );
+  }
+
+  Widget _buildLeyenda() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '¿Qué significa cada color?',
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 10),
+          ...colorPorTipo.entries.map((entry) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(color: entry.value, shape: BoxShape.circle),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      etiquetaPorTipo[entry.key] ?? entry.key,
+                      style: const TextStyle(color: AppColors.textPrimary, fontSize: 12.5),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
     );
   }
 

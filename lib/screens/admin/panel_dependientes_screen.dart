@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/design_tokens.dart';
 
 import '../../core/network/api_client.dart';
 import '../../models/dependiente_admin.dart';
@@ -58,21 +59,21 @@ class _PanelDependientesAdminScreenState extends State<PanelDependientesAdminScr
     final confirmado = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: CuentaColors.surface,
+        backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Eliminar dependiente', style: TextStyle(color: CuentaColors.textPrimary)),
+        title: const Text('Eliminar dependiente', style: TextStyle(color: AppColors.textPrimary)),
         content: Text(
           '¿Seguro deseas eliminar a ${dependiente.nombre}?',
-          style: const TextStyle(color: CuentaColors.textSecondary, fontSize: 13.5),
+          style: const TextStyle(color: AppColors.textSecondary, fontSize: 13.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancelar', style: TextStyle(color: CuentaColors.textMuted)),
+            child: const Text('Cancelar', style: TextStyle(color: AppColors.textMuted)),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Eliminar', style: TextStyle(color: CuentaColors.danger, fontWeight: FontWeight.w700)),
+            child: const Text('Eliminar', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -87,7 +88,7 @@ class _PanelDependientesAdminScreenState extends State<PanelDependientesAdminScr
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error al eliminar el dependiente'), backgroundColor: CuentaColors.danger),
+        const SnackBar(content: Text('Error al eliminar el dependiente'), backgroundColor: AppColors.error),
       );
     }
   }
@@ -100,26 +101,26 @@ class _PanelDependientesAdminScreenState extends State<PanelDependientesAdminScr
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: CuentaColors.background,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: CuentaColors.background,
+        backgroundColor: AppColors.background,
         elevation: 0,
         title: const Text('Lista de dependientes',
-            style: TextStyle(color: CuentaColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
-        iconTheme: const IconThemeData(color: CuentaColors.textPrimary),
+            style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
+        iconTheme: const IconThemeData(color: AppColors.textPrimary),
       ),
       body: SafeArea(
         child: _cargando
-            ? const Center(child: CircularProgressIndicator(color: CuentaColors.accent))
+            ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
             : RefreshIndicator(
-                color: CuentaColors.accent,
+                color: AppColors.accent,
                 onRefresh: _cargar,
                 child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                   children: [
                     Text('${_dependientes.length} registrados',
-                        style: const TextStyle(color: CuentaColors.textMuted, fontSize: 12.5)),
+                        style: const TextStyle(color: AppColors.textMuted, fontSize: 12.5)),
                     const SizedBox(height: 12),
                     if (_error != null)
                       Container(
@@ -127,17 +128,17 @@ class _PanelDependientesAdminScreenState extends State<PanelDependientesAdminScr
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         decoration: BoxDecoration(
-                          color: CuentaColors.danger.withValues(alpha: 0.12),
+                          color: AppColors.error.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: CuentaColors.danger.withValues(alpha: 0.35)),
+                          border: Border.all(color: AppColors.error.withValues(alpha: 0.35)),
                         ),
-                        child: Text(_error!, style: const TextStyle(color: CuentaColors.danger, fontSize: 13)),
+                        child: Text(_error!, style: const TextStyle(color: AppColors.error, fontSize: 13)),
                       ),
                     if (_dependientes.isEmpty && _error == null)
                       const Padding(
                         padding: EdgeInsets.only(top: 40),
                         child: Center(
-                          child: Text('No hay dependientes registrados.', style: TextStyle(color: CuentaColors.textMuted)),
+                          child: Text('No hay dependientes registrados.', style: TextStyle(color: AppColors.textMuted)),
                         ),
                       ),
                     for (final dependiente in _dependientes) ...[
@@ -172,9 +173,9 @@ class _DependienteCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: CuentaColors.surface,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: CuentaColors.border),
+        border: Border.all(color: AppColors.borderLight),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -185,12 +186,12 @@ class _DependienteCard extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: CuentaColors.accent.withValues(alpha: 0.12),
+                  color: AppColors.accent.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
                   child: Text(dependiente.inicial,
-                      style: const TextStyle(color: CuentaColors.accent, fontWeight: FontWeight.w700, fontSize: 14)),
+                      style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.w700, fontSize: 14)),
                 ),
               ),
               const SizedBox(width: 10),
@@ -199,8 +200,8 @@ class _DependienteCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(dependiente.nombre,
-                        style: const TextStyle(color: CuentaColors.textPrimary, fontSize: 13.5, fontWeight: FontWeight.w700)),
-                    Text('ID ${dependiente.id}', style: const TextStyle(color: CuentaColors.textMuted, fontSize: 11.5)),
+                        style: const TextStyle(color: AppColors.textPrimary, fontSize: 13.5, fontWeight: FontWeight.w700)),
+                    Text('ID ${dependiente.id}', style: const TextStyle(color: AppColors.textMuted, fontSize: 11.5)),
                   ],
                 ),
               ),
@@ -208,15 +209,15 @@ class _DependienteCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: CuentaColors.info.withValues(alpha: 0.12),
+                    color: AppColors.blue.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(7),
                   ),
                   child: Text(dependiente.relacion!,
-                      style: const TextStyle(color: CuentaColors.info, fontSize: 11, fontWeight: FontWeight.w600)),
+                      style: const TextStyle(color: AppColors.blue, fontSize: 11, fontWeight: FontWeight.w600)),
                 ),
             ],
           ),
-          const Divider(height: 20, color: CuentaColors.border),
+          const Divider(height: 20, color: AppColors.borderLight),
           _fila(Icons.person_outline, 'Dependiente de ${dependiente.usuarioNombre} (ID ${dependiente.idUsuario})'),
           const SizedBox(height: 8),
           _fila(Icons.work_outline, dependiente.ocupacion?.isNotEmpty == true ? dependiente.ocupacion! : 'Sin ocupación registrada'),
@@ -227,10 +228,10 @@ class _DependienteCard extends StatelessWidget {
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: onEliminar,
-              icon: const Icon(Icons.delete_outline, size: 15, color: CuentaColors.danger),
-              label: const Text('Borrar', style: TextStyle(color: CuentaColors.danger, fontSize: 12.5)),
+              icon: const Icon(Icons.delete_outline, size: 15, color: AppColors.error),
+              label: const Text('Borrar', style: TextStyle(color: AppColors.error, fontSize: 12.5)),
               style: OutlinedButton.styleFrom(
-                side: BorderSide(color: CuentaColors.danger.withValues(alpha: 0.4)),
+                side: BorderSide(color: AppColors.error.withValues(alpha: 0.4)),
                 padding: const EdgeInsets.symmetric(vertical: 9),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
@@ -245,10 +246,10 @@ class _DependienteCard extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 15, color: CuentaColors.textMuted),
+        Icon(icon, size: 15, color: AppColors.textMuted),
         const SizedBox(width: 6),
         Expanded(
-          child: Text(texto, style: const TextStyle(color: CuentaColors.textSecondary, fontSize: 12.5)),
+          child: Text(texto, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
         ),
       ],
     );

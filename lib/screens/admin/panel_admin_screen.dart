@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/design_tokens.dart';
 
 import '../../models/historial_item.dart';
 import '../../services/admin_service.dart';
@@ -56,25 +57,25 @@ class _PanelAdminScreenState extends State<PanelAdminScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: CuentaColors.background,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: CuentaColors.background,
+        backgroundColor: AppColors.background,
         elevation: 0,
         title: const Text('Panel de administración',
-            style: TextStyle(color: CuentaColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
-        iconTheme: const IconThemeData(color: CuentaColors.textPrimary),
+            style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
+        iconTheme: const IconThemeData(color: AppColors.textPrimary),
       ),
       body: SafeArea(
         child: FutureBuilder<_ResumenAdmin>(
           future: _future,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator(color: CuentaColors.accent));
+              return const Center(child: CircularProgressIndicator(color: AppColors.accent));
             }
 
             if (snapshot.hasError) {
               return RefreshIndicator(
-                color: CuentaColors.accent,
+                color: AppColors.accent,
                 onRefresh: _recargar,
                 child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
@@ -84,7 +85,7 @@ class _PanelAdminScreenState extends State<PanelAdminScreen> {
                     Center(
                       child: Text(
                         'No se pudo cargar la información del panel',
-                        style: TextStyle(color: CuentaColors.textMuted),
+                        style: TextStyle(color: AppColors.textMuted),
                       ),
                     ),
                   ],
@@ -95,7 +96,7 @@ class _PanelAdminScreenState extends State<PanelAdminScreen> {
             final resumen = snapshot.data!;
 
             return RefreshIndicator(
-              color: CuentaColors.accent,
+              color: AppColors.accent,
               onRefresh: _recargar,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -103,7 +104,7 @@ class _PanelAdminScreenState extends State<PanelAdminScreen> {
                 children: [
                   const Text(
                     'Resumen general del sistema',
-                    style: TextStyle(color: CuentaColors.textMuted, fontSize: 12.5),
+                    style: TextStyle(color: AppColors.textMuted, fontSize: 12.5),
                   ),
                   const SizedBox(height: 14),
                   Row(
@@ -155,7 +156,7 @@ class _PanelAdminScreenState extends State<PanelAdminScreen> {
                     child: Text(
                       'ACTIVIDAD RECIENTE',
                       style: TextStyle(
-                        color: CuentaColors.textMuted,
+                        color: AppColors.textMuted,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.6,
@@ -164,16 +165,16 @@ class _PanelAdminScreenState extends State<PanelAdminScreen> {
                   ),
                   Container(
                     decoration: BoxDecoration(
-                      color: CuentaColors.surface,
+                      color: AppColors.surface,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: CuentaColors.border),
+                      border: Border.all(color: AppColors.borderLight),
                     ),
                     child: resumen.actividad.isEmpty
                         ? const Padding(
                             padding: EdgeInsets.symmetric(vertical: 20, horizontal: 14),
                             child: Text(
                               'No hay actividad registrada todavía.',
-                              style: TextStyle(color: CuentaColors.textMuted, fontSize: 13),
+                              style: TextStyle(color: AppColors.textMuted, fontSize: 13),
                             ),
                           )
                         : Column(
@@ -195,14 +196,14 @@ class _PanelAdminScreenState extends State<PanelAdminScreen> {
                                                     text: '${resumen.actividad[i].usuarioNombre} '
                                                         '${resumen.actividad[i].usuarioApellido ?? ''}'.trim(),
                                                     style: const TextStyle(
-                                                        color: CuentaColors.textPrimary,
+                                                        color: AppColors.textPrimary,
                                                         fontWeight: FontWeight.w700,
                                                         fontSize: 13),
                                                   ),
                                                   TextSpan(
                                                     text: ' — ${resumen.actividad[i].accion}',
                                                     style: const TextStyle(
-                                                        color: CuentaColors.textSecondary, fontSize: 13),
+                                                        color: AppColors.textSecondary, fontSize: 13),
                                                   ),
                                                 ],
                                               ),
@@ -211,7 +212,7 @@ class _PanelAdminScreenState extends State<PanelAdminScreen> {
                                               const SizedBox(height: 2),
                                               Text(
                                                 resumen.actividad[i].detalles!,
-                                                style: const TextStyle(color: CuentaColors.textMuted, fontSize: 11.5),
+                                                style: const TextStyle(color: AppColors.textMuted, fontSize: 11.5),
                                               ),
                                             ],
                                           ],
@@ -220,13 +221,13 @@ class _PanelAdminScreenState extends State<PanelAdminScreen> {
                                       const SizedBox(width: 8),
                                       Text(
                                         _formatearFechaHora(resumen.actividad[i].fecha),
-                                        style: const TextStyle(color: CuentaColors.textMuted, fontSize: 10.5),
+                                        style: const TextStyle(color: AppColors.textMuted, fontSize: 10.5),
                                       ),
                                     ],
                                   ),
                                 ),
                                 if (i != resumen.actividad.length - 1)
-                                  const Divider(height: 1, color: CuentaColors.border),
+                                  const Divider(height: 1, color: AppColors.borderLight),
                               ],
                             ],
                           ),
@@ -271,9 +272,9 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: CuentaColors.surface,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: CuentaColors.border),
+        border: Border.all(color: AppColors.borderLight),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -281,22 +282,22 @@ class _StatCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label, style: const TextStyle(color: CuentaColors.textSecondary, fontSize: 12.5)),
+              Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
               Container(
                 width: 26,
                 height: 26,
                 decoration: BoxDecoration(
-                  color: CuentaColors.accent.withValues(alpha: 0.12),
+                  color: AppColors.accent.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(7),
                 ),
-                child: Icon(icon, color: CuentaColors.accent, size: 14),
+                child: Icon(icon, color: AppColors.accent, size: 14),
               ),
             ],
           ),
           const SizedBox(height: 10),
-          Text('$valor', style: const TextStyle(color: CuentaColors.textPrimary, fontSize: 26, fontWeight: FontWeight.w800)),
+          Text('$valor', style: const TextStyle(color: AppColors.textPrimary, fontSize: 26, fontWeight: FontWeight.w800)),
           const SizedBox(height: 2),
-          Text(sublabel, style: const TextStyle(color: CuentaColors.textMuted, fontSize: 11)),
+          Text(sublabel, style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
         ],
       ),
     );

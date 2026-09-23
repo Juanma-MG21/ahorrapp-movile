@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../../../models/movimiento.dart';
 import 'seccion_card.dart';
 
@@ -44,7 +45,7 @@ class MovimientoTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final info = movimiento.info;
     final signo = info.esEntrada ? '+' : '-';
-    final colorMonto = info.esEntrada ? CuentaColors.success : CuentaColors.textPrimary;
+    final colorMonto = info.esEntrada ? AppColors.success : AppColors.textPrimary;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -69,7 +70,7 @@ class MovimientoTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: CuentaColors.textPrimary,
+                    color: AppColors.textPrimary,
                     fontSize: 13.5,
                     fontWeight: FontWeight.w600,
                   ),
@@ -78,7 +79,7 @@ class MovimientoTile extends StatelessWidget {
                 Text(
                   '${info.label} · ${_formatearFecha(movimiento.fecha)}',
                   style: const TextStyle(
-                    color: CuentaColors.textMuted,
+                    color: AppColors.textMuted,
                     fontSize: 11.5,
                   ),
                 ),

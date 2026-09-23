@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/design_tokens.dart';
 
 import '../../core/network/api_client.dart';
 import '../../models/usuario_admin.dart';
@@ -82,21 +83,21 @@ class _PanelUsuariosScreenState extends State<PanelUsuariosScreen> {
     final confirmado = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: CuentaColors.surface,
+        backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Eliminar usuario', style: TextStyle(color: CuentaColors.textPrimary)),
+        title: const Text('Eliminar usuario', style: TextStyle(color: AppColors.textPrimary)),
         content: Text(
           '¿Seguro deseas eliminar a ${usuario.nombre} ${usuario.apellido}?',
-          style: const TextStyle(color: CuentaColors.textSecondary, fontSize: 13.5),
+          style: const TextStyle(color: AppColors.textSecondary, fontSize: 13.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancelar', style: TextStyle(color: CuentaColors.textMuted)),
+            child: const Text('Cancelar', style: TextStyle(color: AppColors.textMuted)),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Eliminar', style: TextStyle(color: CuentaColors.danger, fontWeight: FontWeight.w700)),
+            child: const Text('Eliminar', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -110,11 +111,11 @@ class _PanelUsuariosScreenState extends State<PanelUsuariosScreen> {
       setState(() => _usuarios = _usuarios.where((u) => u.id != usuario.id).toList());
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message), backgroundColor: CuentaColors.danger));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message), backgroundColor: AppColors.error));
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error al eliminar al usuario'), backgroundColor: CuentaColors.danger),
+        const SnackBar(content: Text('Error al eliminar al usuario'), backgroundColor: AppColors.error),
       );
     }
   }
@@ -122,26 +123,26 @@ class _PanelUsuariosScreenState extends State<PanelUsuariosScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: CuentaColors.background,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: CuentaColors.background,
+        backgroundColor: AppColors.background,
         elevation: 0,
         title: const Text('Usuarios registrados',
-            style: TextStyle(color: CuentaColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
-        iconTheme: const IconThemeData(color: CuentaColors.textPrimary),
+            style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
+        iconTheme: const IconThemeData(color: AppColors.textPrimary),
       ),
       body: SafeArea(
         child: _cargando
-            ? const Center(child: CircularProgressIndicator(color: CuentaColors.accent))
+            ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
             : RefreshIndicator(
-                color: CuentaColors.accent,
+                color: AppColors.accent,
                 onRefresh: _cargar,
                 child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                   children: [
                     Text('${_usuarios.length} cuentas activas',
-                        style: const TextStyle(color: CuentaColors.textMuted, fontSize: 12.5)),
+                        style: const TextStyle(color: AppColors.textMuted, fontSize: 12.5)),
                     const SizedBox(height: 12),
                     if (_error != null)
                       Container(
@@ -149,17 +150,17 @@ class _PanelUsuariosScreenState extends State<PanelUsuariosScreen> {
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         decoration: BoxDecoration(
-                          color: CuentaColors.danger.withValues(alpha: 0.12),
+                          color: AppColors.error.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: CuentaColors.danger.withValues(alpha: 0.35)),
+                          border: Border.all(color: AppColors.error.withValues(alpha: 0.35)),
                         ),
-                        child: Text(_error!, style: const TextStyle(color: CuentaColors.danger, fontSize: 13)),
+                        child: Text(_error!, style: const TextStyle(color: AppColors.error, fontSize: 13)),
                       ),
                     if (_usuarios.isEmpty && _error == null)
                       const Padding(
                         padding: EdgeInsets.only(top: 40),
                         child: Center(
-                          child: Text('No hay usuarios registrados.', style: TextStyle(color: CuentaColors.textMuted)),
+                          child: Text('No hay usuarios registrados.', style: TextStyle(color: AppColors.textMuted)),
                         ),
                       ),
                     for (final usuario in _usuarios) ...[
@@ -190,9 +191,9 @@ class _UsuarioCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: CuentaColors.surface,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: CuentaColors.border),
+        border: Border.all(color: AppColors.borderLight),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,12 +204,12 @@ class _UsuarioCard extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: CuentaColors.info.withValues(alpha: 0.12),
+                  color: AppColors.blue.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
                   child: Text(usuario.iniciales,
-                      style: const TextStyle(color: CuentaColors.info, fontWeight: FontWeight.w700, fontSize: 13)),
+                      style: const TextStyle(color: AppColors.blue, fontWeight: FontWeight.w700, fontSize: 13)),
                 ),
               ),
               const SizedBox(width: 10),
@@ -217,23 +218,23 @@ class _UsuarioCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('${usuario.nombre} ${usuario.apellido}',
-                        style: const TextStyle(color: CuentaColors.textPrimary, fontSize: 13.5, fontWeight: FontWeight.w700)),
+                        style: const TextStyle(color: AppColors.textPrimary, fontSize: 13.5, fontWeight: FontWeight.w700)),
                     Text('ID ${usuario.id} · ${usuario.cargo ?? 'sin rol'}',
-                        style: const TextStyle(color: CuentaColors.textMuted, fontSize: 11.5)),
+                        style: const TextStyle(color: AppColors.textMuted, fontSize: 11.5)),
                   ],
                 ),
               ),
             ],
           ),
-          const Divider(height: 20, color: CuentaColors.border),
+          const Divider(height: 20, color: AppColors.borderLight),
           Row(
             children: [
-              const Icon(Icons.mail_outline, size: 15, color: CuentaColors.textMuted),
+              const Icon(Icons.mail_outline, size: 15, color: AppColors.textMuted),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(usuario.email,
                     maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: CuentaColors.textSecondary, fontSize: 12.5)),
+                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
               ),
             ],
           ),
@@ -243,10 +244,10 @@ class _UsuarioCard extends StatelessWidget {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: onEditar,
-                  icon: const Icon(Icons.edit_outlined, size: 15, color: CuentaColors.textSecondary),
-                  label: const Text('Editar', style: TextStyle(color: CuentaColors.textSecondary, fontSize: 12.5)),
+                  icon: const Icon(Icons.edit_outlined, size: 15, color: AppColors.textSecondary),
+                  label: const Text('Editar', style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: CuentaColors.border),
+                    side: const BorderSide(color: AppColors.borderLight),
                     padding: const EdgeInsets.symmetric(vertical: 9),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
@@ -256,10 +257,10 @@ class _UsuarioCard extends StatelessWidget {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: onEliminar,
-                  icon: const Icon(Icons.delete_outline, size: 15, color: CuentaColors.danger),
-                  label: const Text('Borrar', style: TextStyle(color: CuentaColors.danger, fontSize: 12.5)),
+                  icon: const Icon(Icons.delete_outline, size: 15, color: AppColors.error),
+                  label: const Text('Borrar', style: TextStyle(color: AppColors.error, fontSize: 12.5)),
                   style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: CuentaColors.danger.withValues(alpha: 0.4)),
+                    side: BorderSide(color: AppColors.error.withValues(alpha: 0.4)),
                     padding: const EdgeInsets.symmetric(vertical: 9),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
@@ -361,12 +362,12 @@ class _EditarUsuarioSheetState extends State<_EditarUsuarioSheet> {
   InputDecoration _decoracion(String label) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: CuentaColors.textMuted, fontSize: 13),
+      labelStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
       filled: true,
-      fillColor: CuentaColors.background,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: CuentaColors.border)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: CuentaColors.border)),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: CuentaColors.accent)),
+      fillColor: AppColors.background,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.borderLight)),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.borderLight)),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.accent)),
     );
   }
 
@@ -376,7 +377,7 @@ class _EditarUsuarioSheetState extends State<_EditarUsuarioSheet> {
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         decoration: const BoxDecoration(
-          color: CuentaColors.surface,
+          color: AppColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
@@ -389,36 +390,36 @@ class _EditarUsuarioSheetState extends State<_EditarUsuarioSheet> {
                 child: Container(
                   width: 40,
                   height: 4,
-                  decoration: BoxDecoration(color: CuentaColors.border, borderRadius: BorderRadius.circular(2)),
+                  decoration: BoxDecoration(color: AppColors.borderLight, borderRadius: BorderRadius.circular(2)),
                 ),
               ),
               const SizedBox(height: 16),
               const Text('Editar usuario',
-                  style: TextStyle(color: CuentaColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w800)),
+                  style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w800)),
               const SizedBox(height: 16),
               if (_error != null) ...[
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
-                    color: CuentaColors.danger.withValues(alpha: 0.12),
+                    color: AppColors.error.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Text(_error!, style: const TextStyle(color: CuentaColors.danger, fontSize: 13)),
+                  child: Text(_error!, style: const TextStyle(color: AppColors.error, fontSize: 13)),
                 ),
                 const SizedBox(height: 14),
               ],
-              TextField(controller: _nombreCtrl, style: const TextStyle(color: CuentaColors.textPrimary), decoration: _decoracion('Nombre')),
+              TextField(controller: _nombreCtrl, style: const TextStyle(color: AppColors.textPrimary), decoration: _decoracion('Nombre')),
               const SizedBox(height: 12),
-              TextField(controller: _apellidoCtrl, style: const TextStyle(color: CuentaColors.textPrimary), decoration: _decoracion('Apellido')),
+              TextField(controller: _apellidoCtrl, style: const TextStyle(color: AppColors.textPrimary), decoration: _decoracion('Apellido')),
               const SizedBox(height: 12),
-              TextField(controller: _emailCtrl, style: const TextStyle(color: CuentaColors.textPrimary), decoration: _decoracion('Correo electrónico')),
+              TextField(controller: _emailCtrl, style: const TextStyle(color: AppColors.textPrimary), decoration: _decoracion('Correo electrónico')),
               if (widget.esSuperusuario) ...[
                 const SizedBox(height: 12),
                 DropdownButtonFormField<int>(
                   initialValue: _rolId,
-                  dropdownColor: CuentaColors.surface,
-                  style: const TextStyle(color: CuentaColors.textPrimary, fontSize: 14),
+                  dropdownColor: AppColors.surface,
+                  style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
                   decoration: _decoracion('Rol'),
                   items: kRolesDisponibles.map((r) => DropdownMenuItem(value: r.id, child: Text(r.nombre))).toList(),
                   onChanged: (v) => setState(() => _rolId = v),
@@ -431,11 +432,11 @@ class _EditarUsuarioSheetState extends State<_EditarUsuarioSheet> {
                     child: OutlinedButton(
                       onPressed: () => Navigator.of(context).pop(),
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: CuentaColors.border),
+                        side: const BorderSide(color: AppColors.borderLight),
                         padding: const EdgeInsets.symmetric(vertical: 13),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: const Text('Cancelar', style: TextStyle(color: CuentaColors.textSecondary)),
+                      child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary)),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -443,13 +444,13 @@ class _EditarUsuarioSheetState extends State<_EditarUsuarioSheet> {
                     child: ElevatedButton(
                       onPressed: _guardando ? null : _guardar,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: CuentaColors.accent,
-                        foregroundColor: const Color(0xFF0D1526),
+                        backgroundColor: AppColors.accent,
+                        foregroundColor: AppColors.background,
                         padding: const EdgeInsets.symmetric(vertical: 13),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       child: _guardando
-                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0D1526)))
+                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background))
                           : const Text('Guardar', style: TextStyle(fontWeight: FontWeight.w700)),
                     ),
                   ),

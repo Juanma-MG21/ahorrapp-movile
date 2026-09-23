@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/design_tokens.dart';
 
 import '../../core/network/api_client.dart';
 import '../../services/auth_service.dart';
@@ -111,23 +112,23 @@ class _MiCuentaScreenState extends State<MiCuentaScreen> {
     final confirmado = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: CuentaColors.surface,
+        backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Desactivar mi cuenta', style: TextStyle(color: CuentaColors.textPrimary)),
+        title: const Text('Desactivar mi cuenta', style: TextStyle(color: AppColors.textPrimary)),
         content: const Text(
           'Tu cuenta quedará desactivada de inmediato y se eliminará de forma '
           'PERMANENTE en 30 días si no la reactivas antes (contactando soporte: '
           'proyectofinanzassena@gmail.com).\n\n¿Deseas continuar?',
-          style: TextStyle(color: CuentaColors.textSecondary, fontSize: 13.5, height: 1.4),
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 13.5, height: 1.4),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancelar', style: TextStyle(color: CuentaColors.textMuted)),
+            child: const Text('Cancelar', style: TextStyle(color: AppColors.textMuted)),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Sí, desactivar', style: TextStyle(color: CuentaColors.danger, fontWeight: FontWeight.w700)),
+            child: const Text('Sí, desactivar', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -151,14 +152,14 @@ class _MiCuentaScreenState extends State<MiCuentaScreen> {
         context: context,
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
-          backgroundColor: CuentaColors.surface,
+          backgroundColor: AppColors.surface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Cuenta desactivada', style: TextStyle(color: CuentaColors.textPrimary)),
-          content: Text(mensaje, style: const TextStyle(color: CuentaColors.textSecondary, fontSize: 13.5, height: 1.4)),
+          title: const Text('Cuenta desactivada', style: TextStyle(color: AppColors.textPrimary)),
+          content: Text(mensaje, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13.5, height: 1.4)),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Entendido', style: TextStyle(color: CuentaColors.accent, fontWeight: FontWeight.w700)),
+              child: const Text('Entendido', style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w700)),
             ),
           ],
         ),
@@ -170,12 +171,12 @@ class _MiCuentaScreenState extends State<MiCuentaScreen> {
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message), backgroundColor: CuentaColors.danger),
+        SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
       );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error al desactivar la cuenta'), backgroundColor: CuentaColors.danger),
+        const SnackBar(content: Text('Error al desactivar la cuenta'), backgroundColor: AppColors.error),
       );
     } finally {
       if (mounted) setState(() => _desactivando = false);
@@ -185,10 +186,10 @@ class _MiCuentaScreenState extends State<MiCuentaScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: CuentaColors.background,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: RefreshIndicator(
-          color: CuentaColors.accent,
+          color: AppColors.accent,
           onRefresh: () async {
             await _cargarUsuario();
             setState(() {
@@ -202,7 +203,7 @@ class _MiCuentaScreenState extends State<MiCuentaScreen> {
             children: [
               const Text(
                 'Mi cuenta',
-                style: TextStyle(color: CuentaColors.textPrimary, fontSize: 22, fontWeight: FontWeight.w800),
+                style: TextStyle(color: AppColors.textPrimary, fontSize: 22, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 18),
               _buildPerfilHeader(),
@@ -241,7 +242,7 @@ class _MiCuentaScreenState extends State<MiCuentaScreen> {
                     trailing: _desactivando
                         ? const SizedBox(
                             width: 16, height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: CuentaColors.danger),
+                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.error),
                           )
                         : null,
                     onTap: _desactivando ? null : _confirmarDesactivar,
@@ -252,7 +253,7 @@ class _MiCuentaScreenState extends State<MiCuentaScreen> {
               const Center(
                 child: Text(
                   '© 2026 Ahorrapp',
-                  style: TextStyle(color: CuentaColors.textMuted, fontSize: 11),
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 11),
                 ),
               ),
             ],
@@ -266,7 +267,7 @@ class _MiCuentaScreenState extends State<MiCuentaScreen> {
     if (_cargandoUsuario) {
       return const SizedBox(
         height: 76,
-        child: Center(child: CircularProgressIndicator(color: CuentaColors.accent, strokeWidth: 2)),
+        child: Center(child: CircularProgressIndicator(color: AppColors.accent, strokeWidth: 2)),
       );
     }
 
@@ -280,9 +281,9 @@ class _MiCuentaScreenState extends State<MiCuentaScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: CuentaColors.surface,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: CuentaColors.border),
+        border: Border.all(color: AppColors.borderLight),
       ),
       child: Row(
         children: [
@@ -290,14 +291,14 @@ class _MiCuentaScreenState extends State<MiCuentaScreen> {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: CuentaColors.accent.withValues(alpha: 0.14),
+              color: AppColors.accent.withValues(alpha: 0.14),
               shape: BoxShape.circle,
-              border: Border.all(color: CuentaColors.accent.withValues(alpha: 0.4)),
+              border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
             ),
             child: Center(
               child: Text(
                 _iniciales.isEmpty ? '?' : _iniciales,
-                style: const TextStyle(color: CuentaColors.accent, fontSize: 20, fontWeight: FontWeight.w800),
+                style: const TextStyle(color: AppColors.accent, fontSize: 20, fontWeight: FontWeight.w800),
               ),
             ),
           ),
@@ -308,14 +309,14 @@ class _MiCuentaScreenState extends State<MiCuentaScreen> {
               children: [
                 Text(
                   nombreCompleto.isEmpty ? 'Usuario' : nombreCompleto,
-                  style: const TextStyle(color: CuentaColors.textPrimary, fontSize: 15.5, fontWeight: FontWeight.w700),
+                  style: const TextStyle(color: AppColors.textPrimary, fontSize: 15.5, fontWeight: FontWeight.w700),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
                   _usuario?.email ?? '',
-                  style: const TextStyle(color: CuentaColors.textMuted, fontSize: 12.5),
+                  style: const TextStyle(color: AppColors.textMuted, fontSize: 12.5),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -324,12 +325,12 @@ class _MiCuentaScreenState extends State<MiCuentaScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: CuentaColors.accent.withValues(alpha: 0.14),
+                      color: AppColors.accent.withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
                       rolPrincipal,
-                      style: const TextStyle(color: CuentaColors.accent, fontSize: 10.5, fontWeight: FontWeight.w700),
+                      style: const TextStyle(color: AppColors.accent, fontSize: 10.5, fontWeight: FontWeight.w700),
                     ),
                   ),
                 ],
@@ -348,9 +349,9 @@ class _MiCuentaScreenState extends State<MiCuentaScreen> {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: CuentaColors.accent.withValues(alpha: 0.10),
+          color: AppColors.accent.withValues(alpha: 0.10),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: CuentaColors.accent.withValues(alpha: 0.35)),
+          border: Border.all(color: AppColors.accent.withValues(alpha: 0.35)),
         ),
         child: Row(
           children: [
@@ -358,10 +359,10 @@ class _MiCuentaScreenState extends State<MiCuentaScreen> {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: CuentaColors.accent.withValues(alpha: 0.18),
+                color: AppColors.accent.withValues(alpha: 0.18),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.admin_panel_settings_outlined, color: CuentaColors.accent, size: 20),
+              child: const Icon(Icons.admin_panel_settings_outlined, color: AppColors.accent, size: 20),
             ),
             const SizedBox(width: 12),
             const Expanded(
@@ -369,14 +370,14 @@ class _MiCuentaScreenState extends State<MiCuentaScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Panel de administración',
-                      style: TextStyle(color: CuentaColors.accent, fontSize: 14, fontWeight: FontWeight.w800)),
+                      style: TextStyle(color: AppColors.accent, fontSize: 14, fontWeight: FontWeight.w800)),
                   SizedBox(height: 2),
                   Text('Usuarios y dependientes del sistema',
-                      style: TextStyle(color: CuentaColors.textSecondary, fontSize: 11.5)),
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 11.5)),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: CuentaColors.accent),
+            const Icon(Icons.chevron_right_rounded, color: AppColors.accent),
           ],
         ),
       ),
@@ -394,14 +395,14 @@ class _MiCuentaScreenState extends State<MiCuentaScreen> {
               const Expanded(
                 child: Text(
                   'MIS MOVIMIENTOS',
-                  style: TextStyle(color: CuentaColors.textMuted, fontSize: 11.5, fontWeight: FontWeight.w700, letterSpacing: 0.6),
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 11.5, fontWeight: FontWeight.w700, letterSpacing: 0.6),
                 ),
               ),
               GestureDetector(
                 onTap: _abrirTodosMovimientos,
                 child: const Text(
                   'Ver todos',
-                  style: TextStyle(color: CuentaColors.accent, fontSize: 12, fontWeight: FontWeight.w700),
+                  style: TextStyle(color: AppColors.accent, fontSize: 12, fontWeight: FontWeight.w700),
                 ),
               ),
             ],
@@ -409,9 +410,9 @@ class _MiCuentaScreenState extends State<MiCuentaScreen> {
         ),
         Container(
           decoration: BoxDecoration(
-            color: CuentaColors.surface,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: CuentaColors.border),
+            border: Border.all(color: AppColors.borderLight),
           ),
           child: FutureBuilder<List<Movimiento>>(
             future: _futureMovimientos,
@@ -419,7 +420,7 @@ class _MiCuentaScreenState extends State<MiCuentaScreen> {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Padding(
                   padding: EdgeInsets.symmetric(vertical: 24),
-                  child: Center(child: CircularProgressIndicator(color: CuentaColors.accent, strokeWidth: 2)),
+                  child: Center(child: CircularProgressIndicator(color: AppColors.accent, strokeWidth: 2)),
                 );
               }
 
@@ -429,7 +430,7 @@ class _MiCuentaScreenState extends State<MiCuentaScreen> {
                   padding: EdgeInsets.symmetric(vertical: 20, horizontal: 14),
                   child: Text(
                     'Todavía no tienes movimientos registrados.',
-                    style: TextStyle(color: CuentaColors.textMuted, fontSize: 13),
+                    style: TextStyle(color: AppColors.textMuted, fontSize: 13),
                   ),
                 );
               }
@@ -440,7 +441,7 @@ class _MiCuentaScreenState extends State<MiCuentaScreen> {
                   for (int i = 0; i < visibles.length; i++) ...[
                     MovimientoTile(movimiento: visibles[i]),
                     if (i != visibles.length - 1)
-                      const Divider(height: 1, color: CuentaColors.border),
+                      const Divider(height: 1, color: AppColors.borderLight),
                   ],
                 ],
               );
