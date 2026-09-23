@@ -44,12 +44,13 @@ class DependienteModel {
   // mayúscula inicial — asimetría típica si el controller no
   // normaliza el nombrado).
   Map<String, dynamic> toJson() {
-    return {
-      'nombre': nombre,
-      'relacion': relacion,
-      'ocupacion': ocupacion,
-      'fecha_nacimiento': fechaNacimiento?.toIso8601String(),
-      'peso_economico': pesoEconomico,
-    };
-  }
+  return {
+    'Nombre': nombre,
+    if (relacion != null) 'Relacion': relacion,
+    if (ocupacion != null) 'Ocupacion': ocupacion,
+    if (fechaNacimiento != null)
+      'Fecha_nacimiento': fechaNacimiento!.toIso8601String(),
+    if (pesoEconomico != null) 'Peso_economico': pesoEconomico,
+  };
+}
 }

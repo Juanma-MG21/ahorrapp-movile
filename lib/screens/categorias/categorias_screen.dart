@@ -284,18 +284,6 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
               padding: EdgeInsets.symmetric(vertical: 8),
               child: Divider(color: _amber400, thickness: 1, height: 1),
             ),
-            const Text(
-              'Bienvenido de vuelta',
-              style: TextStyle(fontSize: 13, color: _zinc400),
-            ),
-            Text(
-              '${_nombreUsuario ?? 'Usuario'} 👋',
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-              ),
-            ),
             const SizedBox(height: 16),
             _tarjetaResumen(),
             const SizedBox(height: 20),
