@@ -1,6 +1,6 @@
 # RF-16 — Cerrar sesión en móvil
 
-Fecha: 2026-10-07. Rama de publicación: `codex/rf16-cerrar-sesion`.
+Fecha: 2026-10-07. Rama de publicación: `David-M`.
 
 ## Requisito
 
