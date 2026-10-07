@@ -6,6 +6,7 @@ import 'app.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   await initializeDateFormatting('es_CO', null);
   await initializeDateFormatting('es_ES', null);
   runApp(const AhorrApp());

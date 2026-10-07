@@ -78,9 +78,12 @@ class _LoginScreenState extends State<LoginScreen> {
     } on ApiException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message), backgroundColor: AppColors.error),
+        SnackBar(
+            content: Text(error.message), backgroundColor: AppColors.error),
       );
-    } catch (error) {
+    } catch (error, stack) {
+      debugPrint('Error login: $error');
+      debugPrint('$stack');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -111,7 +114,8 @@ class _LoginScreenState extends State<LoginScreen> {
     } on ApiException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message), backgroundColor: AppColors.error),
+        SnackBar(
+            content: Text(error.message), backgroundColor: AppColors.error),
       );
     } catch (error) {
       if (!mounted) return;
@@ -136,7 +140,8 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('¿Necesitas ayuda?', style: TextStyle(color: Colors.white)),
+        title: const Text('¿Necesitas ayuda?',
+            style: TextStyle(color: Colors.white)),
         content: const Text(
           'Si tienes problemas para entrar, contacta a soporte o usa la opción de recuperar contraseña.',
           style: TextStyle(color: AppColors.textSecondary),
@@ -185,21 +190,31 @@ class _LoginScreenState extends State<LoginScreen> {
       children: [
         Text(
           'AhorrApp',
-          style: TextStyle(color: AppColors.accent, fontSize: 34, fontWeight: FontWeight.w900),
+          style: TextStyle(
+              color: AppColors.accent,
+              fontSize: 34,
+              fontWeight: FontWeight.w900),
         ),
         SizedBox(height: 5),
         Text(
           'Gestión financiera personal',
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w500),
+          style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.w500),
         ),
         SizedBox(height: 24),
         Text(
           'Bienvenido de vuelta',
           textAlign: TextAlign.center,
-          style: TextStyle(color: AppColors.textPrimary, fontSize: 22, fontWeight: FontWeight.w900),
+          style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 22,
+              fontWeight: FontWeight.w900),
         ),
         SizedBox(height: 6),
-        Text('Inicia sesión para continuar', style: TextStyle(color: AppColors.muted, fontSize: 12)),
+        Text('Inicia sesión para continuar',
+            style: TextStyle(color: AppColors.muted, fontSize: 12)),
       ],
     );
   }
@@ -222,7 +237,8 @@ class _LoginScreenState extends State<LoginScreen> {
             validator: (value) {
               final email = value?.trim() ?? '';
               if (email.isEmpty) return 'Ingresa tu correo';
-              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
+              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                  .hasMatch(email)) {
                 return 'Ingresa un correo válido';
               }
               return null;
@@ -241,13 +257,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 tooltip: _hidePassword ? 'Mostrar' : 'Ocultar',
                 onPressed: () => setState(() => _hidePassword = !_hidePassword),
                 icon: Icon(
-                  _hidePassword ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                  _hidePassword
+                      ? Icons.visibility_off_rounded
+                      : Icons.visibility_rounded,
                   color: AppColors.textMuted,
                   size: 20,
                 ),
               ),
             ),
-            validator: (value) => (value ?? '').isEmpty ? 'Ingresa tu contraseña' : null,
+            validator: (value) =>
+                (value ?? '').isEmpty ? 'Ingresa tu contraseña' : null,
           ),
           const SizedBox(height: 8),
           Row(
@@ -259,7 +278,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 checkColor: AppColors.background,
                 visualDensity: VisualDensity.compact,
               ),
-              const Text('Recordar sesión', style: TextStyle(color: AppColors.muted, fontSize: 12)),
+              const Text('Recordar sesión',
+                  style: TextStyle(color: AppColors.muted, fontSize: 12)),
               const Spacer(),
               TextButton(
                 onPressed: _openForgotPassword,
@@ -277,7 +297,10 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
           ),
           const SizedBox(height: 14),
-          PrimaryAuthButton(label: 'Iniciar sesión', isLoading: _isLoading, onPressed: _submit),
+          PrimaryAuthButton(
+              label: 'Iniciar sesión',
+              isLoading: _isLoading,
+              onPressed: _submit),
         ],
       ),
     );
@@ -305,7 +328,6 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-
 }
 
 class _RegisterCallout extends StatelessWidget {
@@ -318,7 +340,8 @@ class _RegisterCallout extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text('¿No tienes cuenta? ', style: TextStyle(color: AppColors.muted, fontSize: 12)),
+        const Text('¿No tienes cuenta? ',
+            style: TextStyle(color: AppColors.muted, fontSize: 12)),
         TextButton(
           onPressed: onTap,
           style: TextButton.styleFrom(
@@ -327,7 +350,8 @@ class _RegisterCallout extends StatelessWidget {
             minimumSize: const Size(0, 34),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
-          child: const Text('Regístrate', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
+          child: const Text('Regístrate',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
         ),
       ],
     );
@@ -351,9 +375,14 @@ class _BottomAccessNav extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          const _BottomNavItem(icon: Icons.key_rounded, label: 'Acceso', selected: true),
-          _BottomNavButton(icon: Icons.receipt_long_rounded, label: 'Registro', onTap: onRegister),
-          _BottomNavButton(icon: Icons.help_rounded, label: 'Ayuda', onTap: onHelp),
+          const _BottomNavItem(
+              icon: Icons.key_rounded, label: 'Acceso', selected: true),
+          _BottomNavButton(
+              icon: Icons.receipt_long_rounded,
+              label: 'Registro',
+              onTap: onRegister),
+          _BottomNavButton(
+              icon: Icons.help_rounded, label: 'Ayuda', onTap: onHelp),
         ],
       ),
     );
@@ -361,7 +390,8 @@ class _BottomAccessNav extends StatelessWidget {
 }
 
 class _BottomNavButton extends StatelessWidget {
-  const _BottomNavButton({required this.icon, required this.label, required this.onTap});
+  const _BottomNavButton(
+      {required this.icon, required this.label, required this.onTap});
 
   final IconData icon;
   final String label;
@@ -381,7 +411,8 @@ class _BottomNavButton extends StatelessWidget {
 }
 
 class _BottomNavItem extends StatelessWidget {
-  const _BottomNavItem({required this.icon, required this.label, this.selected = false});
+  const _BottomNavItem(
+      {required this.icon, required this.label, this.selected = false});
 
   final IconData icon;
   final String label;
@@ -398,7 +429,10 @@ class _BottomNavItem extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           label,
-          style: TextStyle(color: color, fontSize: 10, fontWeight: selected ? FontWeight.w800 : FontWeight.w500),
+          style: TextStyle(
+              color: color,
+              fontSize: 10,
+              fontWeight: selected ? FontWeight.w800 : FontWeight.w500),
         ),
       ],
     );

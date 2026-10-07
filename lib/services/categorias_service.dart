@@ -6,7 +6,7 @@ import '../models/categoria_model.dart';
 import 'auth_service.dart';
 
 class CategoriasService {
-  static const String _baseUrl = 'https://ahorrapp-react-pkj9.onrender.com/api';
+  static const String _baseUrl = 'https://ahorrapp-react-gia9.onrender.com/api';
 
   CategoriasService();
 
