@@ -152,7 +152,22 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
     );
   }
 
-  void _showCalendarSheet() => _showNeumorphicSheet(_buildCalendarSheet());
+  Future<void> _showCalendarSheet() async {
+    final today = DateTime.now();
+    final first = DateTime(1900);
+    final last = DateTime(today.year, today.month, today.day);
+    final initial = _fecha.isBefore(first)
+        ? first
+        : (_fecha.isAfter(last) ? last : _fecha);
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: first,
+      lastDate: last,
+      helpText: 'Corregir fecha del gasto',
+    );
+    if (selected != null && mounted) setState(() => _fecha = selected);
+  }
   void _showCategorySheet() => _showNeumorphicSheet(_buildCategorySheet());
   void _showDependentSheet() => _showNeumorphicSheet(_buildDependentSheet());
 
@@ -279,6 +294,13 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (widget.gastoParaEditar != null && widget.gastoParaEditar!.id == null) ...[
+            const Text(
+              'Revisa el monto, la fecha y la descripción antes de guardar. Si no se pudo reconocer una fecha válida, se propone la fecha de hoy.',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+          ],
           _buildLabel('Monto', required: true),
           const SizedBox(height: 8),
           _buildTextField(controller: _montoController, hint: '\$0', keyboardType: const TextInputType.numberWithOptions(decimal: true)),
@@ -403,61 +425,6 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
               const Icon(Icons.expand_more, color: AppColors.textSecondary, size: 20),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCalendarSheet() {
-    final year = _fecha.year;
-    final month = _fecha.month;
-    final daysInMonth = DateTime(year, month + 1, 0).day;
-    final offset = DateTime(year, month, 1).weekday - 1;
-
-    const List<String> meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-
-    return Container(
-      decoration: const BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.navInactive, borderRadius: BorderRadius.circular(2)))),
-            const SizedBox(height: 16),
-            Text('${meses[month - 1]} $year', style: const TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 18),
-            Row(children: ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'].map((d) => Expanded(child: Center(child: Text(d, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11))))).toList()),
-            const SizedBox(height: 10),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 7, childAspectRatio: 1),
-              itemCount: offset + daysInMonth,
-              itemBuilder: (context, index) {
-                if (index < offset) return const SizedBox.shrink();
-                final day = index - offset + 1;
-                final dayDate = DateTime(year, month, day);
-                final isSelected = day == _fecha.day;
-                final isFuture = dayDate.isAfter(DateTime.now());
-                return GestureDetector(
-                  onTap: isFuture ? null : () { setState(() => _fecha = dayDate); Navigator.pop(context); },
-                  child: Opacity(
-                    opacity: isFuture ? 0.25 : 1.0,
-                    child: Container(
-                      margin: const EdgeInsets.all(3),
-                      decoration: isSelected
-                          ? const BoxDecoration(shape: BoxShape.circle, gradient: RadialGradient(colors: [Color(0xFFFFD700), AppColors.accent]))
-                          : const BoxDecoration(color: AppColors.background, shape: BoxShape.circle),
-                      child: Center(child: Text('$day', style: TextStyle(color: isSelected ? Colors.black : AppColors.textPrimary, fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500))),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
         ),
       ),
     );
