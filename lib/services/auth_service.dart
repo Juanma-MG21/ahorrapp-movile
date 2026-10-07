@@ -43,10 +43,12 @@ class Usuario {
 }
 
 class AuthService {
-  AuthService._internal();
+  AuthService._internal() : _googleSignOut = null;
 
   @visibleForTesting
-  AuthService.test(this._api, this._storage);
+  AuthService.test(this._api, this._storage,
+      {Future<void> Function()? googleSignOut})
+      : _googleSignOut = googleSignOut;
 
   static AuthService instance = AuthService._internal();
 
@@ -58,6 +60,9 @@ class AuthService {
   final LocalAuthentication _localAuth = LocalAuthentication();
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
   Future<void>? _googleInitialization;
+  final Future<void> Function()? _googleSignOut;
+  Future<void>? _logoutInProgress;
+  int _sessionVersion = 0;
 
   static const _tokenKey = 'auth_token';
   static const _userKey = 'auth_user';
@@ -69,18 +74,18 @@ class AuthService {
   String? _memoryPin;
 
   Future<bool> hasSession() async {
-    if (_memoryToken != null) return true;
-    final stored = await _storage.read(key: _tokenKey);
-    if (stored != null) {
-      _memoryToken = stored;
-      return true;
-    }
-    return false;
+    final token = await getToken();
+    return token != null && token.isNotEmpty;
   }
 
   Future<String?> getToken() async {
+    await _logoutInProgress;
     if (_memoryToken != null) return _memoryToken;
-    _memoryToken = await _storage.read(key: _tokenKey);
+    final version = _sessionVersion;
+    final stored = await _storage.read(key: _tokenKey);
+    // Una lectura iniciada antes de cerrar sesión no puede restaurar el token.
+    if (version != _sessionVersion) return null;
+    _memoryToken = stored;
     return _memoryToken;
   }
 
@@ -89,10 +94,12 @@ class AuthService {
   /// de secure storage sin llamadas a la API. Devuelve null si no hay
   /// usuario cacheado (p. ej. la sesión se guardó sin "recordar sesión").
   Future<Usuario?> getCurrentUser() async {
+    await _logoutInProgress;
     if (_memoryUser != null) return _memoryUser;
 
+    final version = _sessionVersion;
     final stored = await _storage.read(key: _userKey);
-    if (stored == null) return null;
+    if (stored == null || version != _sessionVersion) return null;
 
     try {
       final json = jsonDecode(stored) as Map<String, dynamic>;
@@ -403,20 +410,33 @@ class AuthService {
     }
   }
 
-  Future<void> logout() async {
+  Future<void> logout() {
+    if (_logoutInProgress != null) return _logoutInProgress!;
+    final operation = _clearSession();
+    _logoutInProgress = operation;
+    return operation.whenComplete(() => _logoutInProgress = null);
+  }
+
+  Future<void> _clearSession() async {
+    _sessionVersion++;
     _memoryToken = null;
     _memoryUser = null;
     _memoryPin = null;
 
+    // Limpia primero las credenciales locales; Google no retrasa su eliminación.
     try {
-      await _googleSignIn.signOut();
-    } catch (_) {
-      // El estado de sesión de Google no es crítico para cerrar la app.
+      await Future.wait([
+        _storage.delete(key: _tokenKey),
+        _storage.delete(key: _userKey),
+        _storage.delete(key: _pinKey),
+        _storage.delete(key: _biometricKey),
+      ]);
+    } finally {
+      try {
+        await (_googleSignOut?.call() ?? _googleSignIn.signOut());
+      } catch (_) {
+        // Un fallo del proveedor no restaura la sesión local de AhorrApp.
+      }
     }
-
-    await _storage.delete(key: _tokenKey);
-    await _storage.delete(key: _userKey);
-    await _storage.delete(key: _pinKey);
-    await _storage.delete(key: _biometricKey);
   }
 }

@@ -7,7 +7,9 @@ import 'login_screen.dart';
 /// Al abrir la app: si hay una sesión guardada (token en disco), entra
 /// directo a MainScreen. Si no, muestra LoginScreen.
 class AuthGate extends StatefulWidget {
-  const AuthGate({super.key});
+  const AuthGate({super.key, this.child});
+
+  final Widget? child;
 
   @override
   State<AuthGate> createState() => _AuthGateState();
@@ -37,7 +39,9 @@ class _AuthGateState extends State<AuthGate> {
         }
 
         final loggedIn = snapshot.data ?? false;
-        return loggedIn ? const MainScreen() : const LoginScreen();
+        return loggedIn
+            ? (widget.child ?? const MainScreen())
+            : const LoginScreen();
       },
     );
   }

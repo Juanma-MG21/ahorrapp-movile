@@ -21,7 +21,7 @@ class ApiClient {
   const ApiClient({String? baseUrl}) : baseUrl = baseUrl ?? _defaultBaseUrl;
 
   static const String _defaultBaseUrl =
-      'https://ahorrapp-react-pkj9.onrender.com/api';
+      'https://david-ekcn.onrender.com/api';
 
   final String baseUrl;
 
