@@ -270,7 +270,7 @@ class AuthService {
         ).isNotEmpty;
   }
 
-  Future<Usuario> loginWithGoogle() async {
+  Future<void> initializeGoogleSignIn() async {
     if (!isGoogleAuthConfigured) {
       throw ApiException(
         'Google Sign-In no está configurado para este proyecto. Añade un client ID válido antes de habilitarlo.',
@@ -289,11 +289,26 @@ class AuthService {
     _googleInitialization ??= _googleSignIn.initialize(
       clientId: googleClientId.isNotEmpty ? googleClientId : null,
       serverClientId:
-          googleServerClientId.isNotEmpty ? googleServerClientId : null,
+          !kIsWeb && googleServerClientId.isNotEmpty
+          ? googleServerClientId
+          : null,
     );
     await _googleInitialization;
+  }
+
+  Future<Usuario> loginWithGoogle() async {
+    await initializeGoogleSignIn();
+    if (kIsWeb) {
+      throw ApiException(
+        'En Web debes iniciar sesión con el botón oficial de Google.',
+      );
+    }
 
     final account = await _googleSignIn.authenticate();
+    return loginWithGoogleAccount(account);
+  }
+
+  Future<Usuario> loginWithGoogleAccount(GoogleSignInAccount account) async {
     final idToken = account.authentication.idToken;
 
     if (idToken == null || idToken.isEmpty) {

@@ -20,8 +20,10 @@ class ApiException implements Exception {
 class ApiClient {
   const ApiClient({String? baseUrl}) : baseUrl = baseUrl ?? _defaultBaseUrl;
 
-  static const String _defaultBaseUrl =
-      'https://ahorrapp-react-pkj9.onrender.com/api';
+  static const String _defaultBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'https://ahorrapp-react-pkj9.onrender.com/api',
+  );
 
   final String baseUrl;
 

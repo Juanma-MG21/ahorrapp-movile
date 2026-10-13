@@ -1,4 +1,11 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:google_sign_in_web/web_only.dart'
+  if (dart.library.io) '../../widgets/google_sign_in_web_stub.dart'
+  as google_sign_in_web;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/network/api_client.dart';
@@ -21,11 +28,33 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _rememberSession = false;
   bool _hidePassword = true;
   bool _isLoading = false;
+  bool _googleReady = !kIsWeb;
+  StreamSubscription<GoogleSignInAuthenticationEvent>? _googleAuthSubscription;
 
   @override
   void initState() {
     super.initState();
     _loadSavedCredentials();
+    if (kIsWeb && AuthService.instance.isGoogleAuthConfigured) {
+      _googleAuthSubscription = GoogleSignIn.instance.authenticationEvents.listen(
+        (event) {
+          if (event is GoogleSignInAuthenticationEventSignIn) {
+            _handleGoogleAccount(event.user);
+          }
+        },
+        onError: _showGoogleError,
+      );
+      _initializeWebGoogleSignIn();
+    }
+  }
+
+  Future<void> _initializeWebGoogleSignIn() async {
+    try {
+      await AuthService.instance.initializeGoogleSignIn();
+      if (mounted) setState(() => _googleReady = true);
+    } catch (error) {
+      _showGoogleError(error);
+    }
   }
 
   Future<void> _loadSavedCredentials() async {
@@ -52,6 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
+    unawaited(_googleAuthSubscription?.cancel());
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -116,14 +146,42 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No fue posible iniciar sesión con Google'),
+        SnackBar(
+          content: Text('Error de Google Sign-In: $error'),
           backgroundColor: AppColors.error,
         ),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  Future<void> _handleGoogleAccount(GoogleSignInAccount account) async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+
+    try {
+      await AuthService.instance.loginWithGoogleAccount(account);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('¡Bienvenido con Google!')),
+      );
+      Navigator.of(context).pushReplacementNamed('/home');
+    } catch (error) {
+      _showGoogleError(error);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showGoogleError(Object error) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Error de Google Sign-In: $error'),
+        backgroundColor: AppColors.error,
+      ),
+    );
   }
 
   void _openRegister() => Navigator.of(context).pushNamed('/register');
@@ -285,6 +343,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // --- Aportado por Manuel, adaptado a la paleta/espaciado de V1. ---
   Widget _buildGoogleButton() {
+    if (kIsWeb) {
+      return SizedBox(
+        height: 54,
+        child: _googleReady
+            ? google_sign_in_web.renderButton()
+            : const Center(
+                child: CircularProgressIndicator(color: AppColors.accent),
+              ),
+      );
+    }
+
     return SizedBox(
       height: 54,
       child: OutlinedButton.icon(
