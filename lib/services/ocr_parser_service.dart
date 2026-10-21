@@ -3,5 +3,5 @@ import 'receipt_parser_service.dart';
 
 class OcrParserService {
   static GastoModel? parse(String textoOcr) =>
-      ReceiptParserService.parse(textoOcr);
+      ReceiptParserService.parse(textoOcr, onlyTotal: true);
 }

@@ -15,10 +15,14 @@ class AhorrAppSmallWidgetProvider : HomeWidgetProvider() {
         appWidgetIds: IntArray,
         widgetData: SharedPreferences
     ) {
+        val summary = FinancialWidgetSnapshot.read(widgetData)
         for (appWidgetId in appWidgetIds) {
             val views = RemoteViews(context.packageName, R.layout.small_widget).apply {
-                val balance = widgetData.getString("balance", "$0.00")
-                setTextViewText(R.id.widget_balance, balance)
+                setTextViewText(R.id.widget_balance, summary.balance)
+                setTextViewText(R.id.widget_ingresos, "Ingresos ${summary.ingresos}")
+                setTextViewText(R.id.widget_gastos, "Gastos ${summary.gastos}")
+                setTextViewText(R.id.widget_porcentaje, summary.porcentaje)
+                setTextViewText(R.id.widget_date, summary.fecha)
 
                 val pendingIntentGasto = HomeWidgetLaunchIntent.getActivity(
                     context,

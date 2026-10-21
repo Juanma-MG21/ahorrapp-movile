@@ -6,6 +6,7 @@ import '../../models/ahorro_model.dart';
 import '../../models/categoria_model.dart';
 import '../../services/ahorros_service.dart';
 import '../../services/categorias_service.dart';
+import '../../widgets/offline_query_banner.dart';
 
 class AgregarAhorroScreen extends StatefulWidget {
   final AhorroModel? ahorroParaEditar;
@@ -43,6 +44,7 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
   void _loadCategorias() async {
     try {
       final cats = await CategoriasService.obtenerCategorias();
+      if (!mounted) return;
       setState(() {
         _categorias = cats;
         // _isLoadingCategorias = false;
@@ -78,6 +80,7 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
   }
 
   void _guardar() async {
+    if (_isSaving) return;
     final nombre = _nombreController.text.trim();
     final monto = double.tryParse(_montoController.text) ?? 0;
 
@@ -99,6 +102,7 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
       descripcion: _descripcionController.text.trim().isEmpty ? null : _descripcionController.text.trim(),
       idCategoria: _selectedCategoriaId,
       estado: widget.ahorroParaEditar?.estado ?? 'Activo',
+      fechaRegistro: widget.ahorroParaEditar?.fechaRegistro,
     );
 
     try {
@@ -110,6 +114,7 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
 
       if (!mounted) return;
 
+      if (ahorro.id == null) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Guardado en el teléfono. Pendiente de sincronizar.')));
       Navigator.pop(context, true);
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -134,6 +139,7 @@ class _AgregarAhorroScreenState extends State<AgregarAhorroScreen> {
               const SizedBox(height: 20),
               _buildHeader(),
               const SizedBox(height: 26),
+              OfflineQueryBanner(resource: '/categorias', onRetry: _loadCategorias),
               _buildFormCard(),
               const SizedBox(height: 28),
               _buildGuardarButton(),

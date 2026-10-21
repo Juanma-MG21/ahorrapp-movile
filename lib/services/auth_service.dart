@@ -64,6 +64,9 @@ class AuthService {
   Future<void>? _logoutInProgress;
   int _sessionVersion = 0;
 
+  int get sessionVersion => _sessionVersion;
+  static final sessionChanges = ValueNotifier<int>(0);
+
   static const _tokenKey = 'auth_token';
   static const _userKey = 'auth_user';
   static const _pinKey = 'auth_pin';
@@ -239,6 +242,8 @@ class AuthService {
 
     _memoryToken = token;
     _memoryUser = usuario;
+    _sessionVersion++;
+    sessionChanges.value++;
 
     if (rememberSession) {
       await _storage.write(key: _tokenKey, value: token);
@@ -340,6 +345,8 @@ class AuthService {
     // funcione igual sin importar el método de login usado.
     _memoryToken = token;
     _memoryUser = usuario;
+    _sessionVersion++;
+    sessionChanges.value++;
     await _storage.write(key: _tokenKey, value: token);
     await _storage.write(key: _userKey, value: jsonEncode(usuario.toJson()));
 
@@ -421,6 +428,7 @@ class AuthService {
     _sessionVersion++;
     _memoryToken = null;
     _memoryUser = null;
+    sessionChanges.value++;
     _memoryPin = null;
 
     // Limpia primero las credenciales locales; Google no retrasa su eliminación.

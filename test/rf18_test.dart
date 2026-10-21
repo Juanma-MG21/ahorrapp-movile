@@ -4,6 +4,24 @@ import 'package:ahorrapp_movil/services/qr_parser_service.dart';
 import 'package:ahorrapp_movil/services/receipt_parser_service.dart';
 
 void main() {
+  test('OCR solo acepta un monto asociado a la palabra TOTAL', () {
+    for (final text in [
+      'Producto \$12.000',
+      'Subtotal 12.000\nIVA \$2.280',
+      'Monto 12.000\nValor pagado 15.000\nPago \$20.000',
+      'TOTAL\nIVA \$2.280',
+      'TOTAL 0\nPago \$20.000',
+    ]) {
+      expect(OcrParserService.parse(text), isNull, reason: text);
+    }
+    expect(
+      OcrParserService.parse(
+              'Producto \$12.000\nSubtotal 12.000\nTOTAL A PAGAR:\nCOP \$14.280\nPago 20.000')!
+          .monto,
+      14280,
+    );
+    expect(QrParserService.parse('Monto 12000')!.monto, 12000);
+  });
   for (final parser
       in {'OCR': OcrParserService.parse, 'QR': QrParserService.parse}.entries) {
     group(parser.key, () {

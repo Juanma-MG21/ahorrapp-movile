@@ -5,10 +5,11 @@ import 'package:http/http.dart' as http;
 /// Excepción lanzada cuando el backend responde { ok: false, mensaje }
 /// o cuando hay un problema de red/formato de respuesta.
 class ApiException implements Exception {
-  ApiException(this.message, {this.statusCode});
+  ApiException(this.message, {this.statusCode, this.isNetworkError = false});
 
   final String message;
   final int? statusCode;
+  final bool isNetworkError;
 
   @override
   String toString() => message;
@@ -20,8 +21,8 @@ class ApiException implements Exception {
 class ApiClient {
   const ApiClient({String? baseUrl}) : baseUrl = baseUrl ?? _defaultBaseUrl;
 
-  static const String _defaultBaseUrl =
-      'https://david-ekcn.onrender.com/api';
+  static const String _defaultBaseUrl = String.fromEnvironment(
+      'AHORRAPP_API_URL', defaultValue: 'https://david-ekcn.onrender.com/api');
 
   final String baseUrl;
 
@@ -68,7 +69,8 @@ class ApiClient {
 
   /// GET genérico. Para endpoints que responden { ok, ... }.
   Future<Map<String, dynamic>> get(String path, {String? token}) {
-    return _send(() => http.get(_uri(path), headers: _headers(token: token)));
+    return _send(() => http.get(_uri(path), headers: _headers(token: token)),
+        timeout: const Duration(seconds: 12));
   }
 
   /// PUT genérico.
@@ -118,10 +120,12 @@ class ApiClient {
     late final http.Response response;
 
     try {
-      response = await http.get(_uri(path), headers: _headers(token: token));
+      response = await http.get(_uri(path), headers: _headers(token: token))
+          .timeout(const Duration(seconds: 12));
     } catch (_) {
       throw ApiException(
         'No se pudo conectar con el servidor. Revisa tu conexión.',
+        isNetworkError: true,
       );
     }
 
@@ -187,10 +191,12 @@ class ApiClient {
     } on TimeoutException {
       throw ApiException(
         'El servidor está tardando demasiado en responder. Puede estar iniciándose; inténtalo de nuevo en unos segundos.',
+        isNetworkError: true,
       );
     } catch (e) {
       throw ApiException(
         'No se pudo conectar con el servidor ($e). Revisa tu conexión.',
+        isNetworkError: true,
       );
     }
 
@@ -220,18 +226,20 @@ class ApiClient {
 
   Future<Map<String, dynamic>> _send(
     Future<http.Response> Function() request,
-  ) async {
+      {Duration timeout = const Duration(seconds: 45)}) async {
     late final http.Response response;
 
     try {
-      response = await request().timeout(const Duration(seconds: 45));
+      response = await request().timeout(timeout);
     } on TimeoutException {
       throw ApiException(
         'El servidor está tardando demasiado en responder. Puede estar iniciándose; inténtalo de nuevo en unos segundos.',
+        isNetworkError: true,
       );
     } catch (e) {
       throw ApiException(
         'No se pudo conectar con el servidor ($e). Revisa tu conexión.',
+        isNetworkError: true,
       );
     }
 

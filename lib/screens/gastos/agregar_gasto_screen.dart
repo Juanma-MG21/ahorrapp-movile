@@ -1,3 +1,4 @@
+import '../../widgets/offline_query_banner.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../core/theme/design_tokens.dart';
@@ -38,18 +39,24 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
   }
 
   void _loadInitialData() async {
-    final cats = await GastosService.obtenerCategorias();
-    final deps = await GastosService.obtenerDependientes();
+    List<CategoriaModel> cats = [];
+    try {
+      cats = await GastosService.obtenerCategorias();
+    } catch (_) {/* El aviso muestra el fallo del catálogo. */}
+    List<DependienteModel> deps = [];
+    try {
+      deps = await GastosService.obtenerDependientes();
+    } catch (_) {/* El aviso muestra el fallo del catálogo. */}
 
     if (mounted) {
       setState(() {
-        _listaCategorias = cats;
+        _listaCategorias = cats.where((c) => c.activa).toList();
         _listaDependientes = deps;
         _isLoadingData = false;
 
         if (widget.gastoParaEditar != null) {
           final g = widget.gastoParaEditar!;
-          _montoController.text = g.monto % 1 == 0
+          _montoController.text = g.monto <= 0 ? '' : g.monto % 1 == 0
               ? g.monto.toStringAsFixed(0)
               : g.monto.toStringAsFixed(2).replaceAll('.', ',');
           _descriptionController.text = g.descripcion ?? '';
@@ -172,6 +179,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
   void _showDependentSheet() => _showNeumorphicSheet(_buildDependentSheet());
 
   void _crearGasto() async {
+    if (_isSaving) return;
     String montoStr = _montoController.text.replaceAll('\$', '');
     if (montoStr.contains(',')) {
       montoStr = montoStr.replaceAll('.', '').replaceAll(',', '.');
@@ -208,11 +216,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
       if (!mounted) return;
       setState(() => _isSaving = false);
 
-      // Devolvemos "true" para avisarle a ModuloGastos que tiene que
-      // recargar la lista completa desde el backend: crearMovimiento/
-      // updateGastos no devuelven el nombre de categoría ni de
-      // dependiente (eso solo viene del JOIN de getGastos), así que
-      // no podemos armar el card completo acá sin inventar datos.
+      if (gasto.id == null) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Guardado en el teléfono. Pendiente de sincronizar.')));
       Navigator.pop(context, true);
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -237,6 +241,10 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              OfflineQueryBanner(
+                  resource: '/categorias', onRetry: _loadInitialData),
+              OfflineQueryBanner(
+                  resource: '/dependientes', onRetry: _loadInitialData),
               const SizedBox(height: 20),
               _buildHeader(),
               const SizedBox(height: 26),
@@ -273,12 +281,12 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              widget.gastoParaEditar != null ? 'Editar gasto' : 'Agregar gasto',
+              widget.gastoParaEditar?.id != null ? 'Editar gasto' : 'Agregar gasto',
               style: const TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 2),
             Text(
-              widget.gastoParaEditar != null ? 'Modificar registro' : 'Registro manual',
+              widget.gastoParaEditar?.id != null ? 'Modificar registro' : 'Registro manual',
               style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
             ),
           ],
@@ -592,7 +600,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
         child: Center(
           child: _isSaving
               ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
-              : Text(widget.gastoParaEditar != null ? 'Guardar cambios' : 'Crear gasto', style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
+              : Text(widget.gastoParaEditar?.id != null ? 'Guardar cambios' : 'Crear gasto', style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
         ),
       ),
     );

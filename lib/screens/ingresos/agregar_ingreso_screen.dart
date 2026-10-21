@@ -1,3 +1,4 @@
+import '../../widgets/offline_query_banner.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../core/theme/design_tokens.dart';
@@ -44,16 +45,19 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
   }
 
   void _loadInitialData() async {
-    final cats = await IngresosService.obtenerCategorias();
+    List<CategoriaModel> cats = [];
+    try {
+      cats = await IngresosService.obtenerCategorias();
+    } catch (_) {/* El aviso muestra el fallo del catálogo. */}
 
     if (mounted) {
       setState(() {
-        _listaCategorias = cats;
+        _listaCategorias = cats.where((c) => c.activa).toList();
         _isLoadingData = false;
 
         if (widget.ingresoParaEditar != null) {
           final i = widget.ingresoParaEditar!;
-          _montoController.text = i.monto % 1 == 0
+          _montoController.text = i.monto <= 0 ? '' : i.monto % 1 == 0
               ? i.monto.toStringAsFixed(0)
               : i.monto.toStringAsFixed(2).replaceAll('.', ',');
           _descripcionController.text = i.descripcion ?? '';
@@ -144,6 +148,7 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
   void _showCategorySheet() => _showNeumorphicSheet(_buildCategorySheet());
 
   void _guardarIngreso() async {
+    if (_isSaving) return;
     String montoStr = _montoController.text.replaceAll('\$', '');
     if (montoStr.contains(',')) {
       montoStr = montoStr.replaceAll('.', '').replaceAll(',', '.');
@@ -175,6 +180,7 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
         final nuevoId = await IngresosService.crearIngreso(ingreso);
         resultado = IngresoModel(
           id: nuevoId,
+          syncState: 'pending',
           idCategoria: ingreso.idCategoria,
           descripcion: ingreso.descripcion,
           fuente: ingreso.fuente,
@@ -202,6 +208,7 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
     if (mounted) {
       setState(() => _isSaving = false);
       if (resultado != null) {
+        if (ingreso.id == null) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Guardado en el teléfono. Pendiente de sincronizar.')));
         Navigator.pop(context, resultado);
       }
     }
@@ -223,6 +230,8 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              OfflineQueryBanner(
+                  resource: '/categorias', onRetry: _loadInitialData),
               const SizedBox(height: 20),
               _buildHeader(),
               const SizedBox(height: 26),
@@ -260,12 +269,12 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              widget.ingresoParaEditar != null ? 'Editar ingreso' : 'Agregar ingreso',
+              widget.ingresoParaEditar?.id != null ? 'Editar ingreso' : 'Agregar ingreso',
               style: const TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 2),
             Text(
-              widget.ingresoParaEditar != null ? 'Modificar registro' : 'Nuevo ingreso',
+              widget.ingresoParaEditar?.id != null ? 'Modificar registro' : 'Nuevo ingreso',
               style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
             ),
           ],
@@ -580,7 +589,7 @@ class _AgregarIngresoScreenState extends State<AgregarIngresoScreen> {
         child: Center(
           child: _isSaving
               ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
-              : Text(widget.ingresoParaEditar != null ? 'Guardar cambios' : 'Guardar ingreso', style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
+              : Text(widget.ingresoParaEditar?.id != null ? 'Guardar cambios' : 'Guardar ingreso', style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
         ),
       ),
     );

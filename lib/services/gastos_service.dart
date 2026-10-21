@@ -1,67 +1,55 @@
+import 'offline_sync_service.dart';
 import 'package:flutter/foundation.dart';
 import '../core/network/api_client.dart';
 import '../models/gasto_model.dart';
 import '../models/categoria_model.dart';
 import '../models/dependiente_model.dart';
-import 'auth_service.dart';
+import 'offline_query_service.dart';
 
 class GastosService {
   @visibleForTesting
   static ApiClient client = ApiClient();
 
   static Future<int> crearGasto(GastoModel gasto) async {
-    final token = await AuthService.instance.getToken();
-    final respuesta = await client.post('/movimientos', token: token, body: {
-      'tipo_flujo': 'Salida',
-      'subtipo_modulo': 'Gasto',
+    return OfflineSyncService.instance.create('/movimientos/gastos', {
+      'tipo_flujo': 'Salida', 'subtipo_modulo': 'Gasto',
       'datos': gasto.toRequestBody(),
     });
-    return respuesta['ID_detalle'] as int;
   }
 
   static Future<void> actualizarGasto(int id, GastoModel gasto) async {
-    final token = await AuthService.instance.getToken();
-    await client.put('/movimientos/gastos/$id', token: token, body: gasto.toRequestBody());
+    if (id <= 0) {
+      await OfflineSyncService.instance.correctRejected(id, '/movimientos/gastos', {
+        'tipo_flujo': 'Salida', 'subtipo_modulo': 'Gasto', 'datos': gasto.toRequestBody(),
+      });
+      return;
+    }
+    await OfflineQueryService.instance.onlineMutation(
+        '/movimientos/gastos',
+        (token) => client.put('/movimientos/gastos/$id',
+            token: token, body: gasto.toRequestBody()));
   }
 
   static Future<List<GastoModel>> obtenerGastos() async {
-    try {
-      final token = await AuthService.instance.getToken();
-      final data = await client.getList('/movimientos/gastos', token: token);
-      return data.map((json) => GastoModel.fromJson(json as Map<String, dynamic>)).toList();
-    } catch (_) {
-      return [];
-    }
+    return OfflineQueryService.instance
+        .query('/movimientos/gastos', client, GastoModel.fromJson);
   }
 
   static Future<bool> eliminarGasto(int id) async {
-    try {
-      final token = await AuthService.instance.getToken();
-      await client.delete('/movimientos/gastos/$id', token: token);
-      return true;
-    } catch (_) {
-      return false;
-    }
+    if (id <= 0) throw ApiException('No se puede eliminar un registro pendiente de sincronizar.');
+    await OfflineQueryService.instance.onlineMutation('/movimientos/gastos',
+        (token) => client.delete('/movimientos/gastos/$id', token: token));
+    return true;
   }
 
   static Future<List<CategoriaModel>> obtenerCategorias() async {
-    try {
-      final token = await AuthService.instance.getToken();
-      final respuesta = await client.get('/categorias', token: token);
-      final List categorias = respuesta['categorias'] ?? [];
-      return categorias.map((json) => CategoriaModel.fromJson(json as Map<String, dynamic>)).toList();
-    } catch (_) {
-      return [];
-    }
+    return OfflineQueryService.instance.query(
+        '/categorias', client, CategoriaModel.fromJson,
+        listKey: 'categorias');
   }
 
   static Future<List<DependienteModel>> obtenerDependientes() async {
-    try {
-      final token = await AuthService.instance.getToken();
-      final data = await client.getList('/dependientes', token: token);
-      return data.map((json) => DependienteModel.fromJson(json as Map<String, dynamic>)).toList();
-    } catch (_) {
-      return [];
-    }
+    return OfflineQueryService.instance
+        .query('/dependientes', client, DependienteModel.fromJson);
   }
 }

@@ -12,17 +12,19 @@ class ReceiptParserService {
       .replaceAll('ú', 'u')
       .replaceAll('ü', 'u');
 
-  static double? amount(String text) {
+  static double? amount(String text, {bool onlyTotal = false}) {
     final normalized = normalize(text);
     final number = r'(\d+(?:[.,]\d+)*)';
     // Total tiene prioridad sobre valor/importe. Los límites excluyen subtotal.
     for (final label in [
       r'total(?:\s+a\s+pagar)?',
-      r'monto',
-      r'valor(?:\s+pagado)?',
-      r'importe',
-      r'a\s+pagar',
-      r'pago'
+      if (!onlyTotal) ...[
+        r'monto',
+        r'valor(?:\s+pagado)?',
+        r'importe',
+        r'a\s+pagar',
+        r'pago'
+      ]
     ]) {
       final prefix = r'\s*[:=]?\s*(?:cop\s*\$?|\$\s*(?:cop)?)?\s*';
       final matches = RegExp('\\b$label\\b$prefix$number', caseSensitive: false)
@@ -32,6 +34,8 @@ class ReceiptParserService {
         if (value != null && value > 0) return value;
       }
     }
+    // En fotos no inferimos el total a partir de productos, impuestos o pagos.
+    if (onlyTotal) return null;
     // Sin etiqueta solo admitimos cantidades con indicador monetario explícito.
     final match = RegExp(r'(?:\$|\bcop\b)\s*' + number, caseSensitive: false)
         .firstMatch(normalized);
@@ -73,14 +77,14 @@ class ReceiptParserService {
     return null;
   }
 
-  static GastoModel? parse(String text) {
+  static GastoModel? parse(String text, {bool onlyTotal = false}) {
     text = text.trim();
     // Un enlace de verificación no contiene los datos de un gasto.
     if (text.isEmpty ||
         RegExp(r'^(?:https?://|www\.)', caseSensitive: false).hasMatch(text)) {
       return null;
     }
-    final value = amount(text);
+    final value = amount(text, onlyTotal: onlyTotal);
     if (value == null) return null;
     final normalized = normalize(text);
     String? category;

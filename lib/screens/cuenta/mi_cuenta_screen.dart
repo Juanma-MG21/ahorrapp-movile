@@ -1,3 +1,4 @@
+import '../../services/offline_sync_service.dart';
 import 'package:flutter/material.dart';
 import '../../core/theme/design_tokens.dart';
 
@@ -109,17 +110,27 @@ class _MiCuentaScreenState extends State<MiCuentaScreen> {
   }
 
   Future<void> _confirmarDesactivar() async {
+    int? pending;
+    try {
+      final owner = await AuthService.instance.getCurrentUser();
+      pending = owner == null ? 0 : (await OfflineSyncService.instance.database.operations(owner.id, all: true)).length;
+    } catch (_) { /* La advertencia no afirma que la cola esté vacía. */ }
+    if (!mounted) return;
+    final localWarning = pending == 0 ? '' : pending == null
+        ? '\n\nNo pudimos comprobar tus pendientes. Los datos del teléfono se conservan para tu cuenta.'
+        : '\n\nTienes $pending registros guardados únicamente en este teléfono. Se conservarán para tu cuenta, pero no podrás sincronizarlos mientras esté desactivada.';
+
     final confirmado = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Desactivar mi cuenta', style: TextStyle(color: AppColors.textPrimary)),
-        content: const Text(
+        content: Text(
           'Tu cuenta quedará desactivada de inmediato y se eliminará de forma '
           'PERMANENTE en 30 días si no la reactivas antes (contactando soporte: '
-          'proyectofinanzassena@gmail.com).\n\n¿Deseas continuar?',
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 13.5, height: 1.4),
+          'proyectofinanzassena@gmail.com).$localWarning\n\n¿Deseas continuar?',
+          style: const TextStyle(color: AppColors.textSecondary, fontSize: 13.5, height: 1.4),
         ),
         actions: [
           TextButton(

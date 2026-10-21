@@ -1,7 +1,12 @@
+import '../../services/auth_service.dart';
+import '../../widgets/voice_entry_dialog.dart';
+import '../../services/offline_sync_service.dart';
+import '../../widgets/sync_state_badge.dart';
+import '../../widgets/offline_query_banner.dart';
+import '../../services/offline_query_service.dart';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../core/theme/design_tokens.dart';
@@ -26,18 +31,15 @@ class ModuloGastos extends StatefulWidget {
 }
 
 class _ModuloGastosState extends State<ModuloGastos>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   bool _isMenuOpen = false;
   int? _expandedIndex;
   List<GastoModel> _gastos = [];
   bool _isLoading = true;
+  int _loadVersion = 0;
   DateTime _selectedDate = DateTime.now();
   String _searchQuery = '';
   late stt.SpeechToText _speech;
-  bool _isListening = false;
-  bool _isProcessing = false;
-  bool _isModalShowing = false;
-  String _lastWords = '';
 
   static const List<String> _mesesNom = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -80,6 +82,8 @@ class _ModuloGastosState extends State<ModuloGastos>
   @override
   void initState() {
     super.initState();
+    OfflineSyncService.instance.changes.addListener(_reloadLocal);
+    WidgetsBinding.instance.addObserver(this);
     _speech = widget.speechInstance ?? stt.SpeechToText();
     _menuController = AnimationController(
       vsync: this,
@@ -95,49 +99,52 @@ class _ModuloGastosState extends State<ModuloGastos>
 
     _loadGastos();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _updateWidget();
-    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _loadGastos();
   }
 
   void _loadGastos() async {
+    if (!mounted) return;
+    final loadVersion = ++_loadVersion;
     setState(() => _isLoading = true);
-    final list = await GastosService.obtenerGastos();
-    setState(() {
-      _gastos = list;
-      _isLoading = false;
-    });
-    _updateWidget();
+    try {
+      final list = await GastosService.obtenerGastos();
+      if (!mounted || loadVersion != _loadVersion) return;
+      setState(() => _gastos = list);
+      _updateWidget();
+    } catch (error) {
+      if (!mounted || loadVersion != _loadVersion) return;
+      List<GastoModel> local = [];
+      try { local = await OfflineQueryService.instance.localList('/movimientos/gastos', GastoModel.fromJson); } catch (_) { /* El aviso de consulta conserva el fallo. */ }
+      if (!mounted || loadVersion != _loadVersion) return;
+      setState(() => _gastos = local);
+    } finally {
+      if (mounted && loadVersion == _loadVersion) setState(() => _isLoading = false);
+    }
   }
 
   void _updateWidget() {
-    double totalGastos = 0;
-    final now = DateTime.now();
-    final gastosMes = _gastos
-        .where((g) => g.fecha.month == now.month && g.fecha.year == now.year)
-        .toList();
+    WidgetService.refresh();
+  }
 
-    for (var g in gastosMes) {
-      totalGastos += g.monto;
-    }
-
-    const double presupuesto = 0;
-    final double balance = presupuesto - totalGastos;
-    final double porcentaje =
-    presupuesto > 0 ? (totalGastos / presupuesto * 100).clamp(0, 100) : 0;
-
-    WidgetService.updateWidgetData(
-      balance: _formatCurrency(balance),
-      gastos: _formatCurrency(totalGastos),
-      ingresos: _formatCurrency(0),
-      porcentaje: porcentaje.toInt(),
-      fecha: '${_mesesNom[now.month - 1]} ${now.year}',
-    );
+  Future<void> _reloadLocal() async {
+    final version = ++_loadVersion;
+    try {
+      final rows = await OfflineQueryService.instance.localList('/movimientos/gastos', GastoModel.fromJson);
+      if (!mounted || version != _loadVersion) return;
+      setState(() { _gastos = rows; _isLoading = false; });
+      _updateWidget();
+    } catch (_) { /* La consulta principal presenta el error de almacenamiento. */ }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _menuController.dispose();
+    OfflineSyncService.instance.changes.removeListener(_reloadLocal);
     super.dispose();
   }
 
@@ -189,70 +196,22 @@ class _ModuloGastosState extends State<ModuloGastos>
     }
   }
 
-  void _startListening() async {
-    var status = await Permission.microphone.request();
-    if (!status.isGranted) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Necesitamos el micrófono para usar la voz')),
-        );
-      }
-      return;
-    }
-
-    bool available = await _speech.initialize(
-      onStatus: (val) => debugPrint('Speech Status: $val'),
-      onError: (val) => debugPrint('Speech Error: $val'),
-    );
-
-    if (available) {
-      setState(() {
-        _isListening = true;
-        _isProcessing = false;
-        _lastWords = '';
-      });
-      _showVoiceModal();
-    }
-  }
-
-  void _closeVoiceModal() {
-    if (mounted && _isModalShowing) {
-      _isModalShowing = false;
-      Navigator.of(context).pop();
-    }
-  }
-
-  void _stopListeningAndProcess([StateSetter? setModalState]) async {
-    if (mounted) {
-      if (setModalState != null) {
-        setModalState(() {
-          _isListening = false;
-          _isProcessing = true;
-        });
-      }
-      setState(() {
-        _isListening = false;
-        _isProcessing = true;
-      });
-    }
-
-    await _speech.stop();
-    await Future.delayed(const Duration(milliseconds: 600));
-
-    if (_lastWords.isNotEmpty) {
-      final GastoModel parsedGasto = LocalParserService.parseGasto(_lastWords);
-      if (mounted) {
-        _closeVoiceModal();
-        setState(() => _isProcessing = false);
-        final resultado = await Navigator.push<bool>(
-          context,
-          MaterialPageRoute(builder: (context) => AgregarGastoScreen(gastoParaEditar: parsedGasto)),
-        );
-        if (resultado == true) _loadGastos();
-      }
-    } else {
-      _closeVoiceModal();
-      if (mounted) setState(() => _isProcessing = false);
+  bool _voiceOpen = false;
+  Future<void> _startListening() async {
+    if (_voiceOpen) return;
+    _voiceOpen = true;
+    final auth = AuthService.instance;
+    final version = auth.sessionVersion;
+    try {
+      final text = await showDialog<String>(context: context,
+        builder: (_) => VoiceEntryDialog(speech: _speech, income: false));
+      if (!mounted || text == null || !identical(auth, AuthService.instance) || version != auth.sessionVersion) return;
+      final parsed = LocalParserService.parseGasto(text);
+      final resultado = await Navigator.push<bool>(context, MaterialPageRoute(
+        builder: (_) => AgregarGastoScreen(gastoParaEditar: parsed)));
+      if (mounted && resultado == true) _loadGastos();
+    } finally {
+      _voiceOpen = false;
     }
   }
 
@@ -283,10 +242,9 @@ void _processOcrResult(String textoOcr) async {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('No se pudo leer el recibo. Intenta con mejor luz o agrégalo manualmente.'),
+        content: Text('No se encontró un monto junto a TOTAL. Ingresa el monto manualmente.'),
       ),
     );
-    return;
   }
 
   final resultado = await Navigator.push<bool>(
@@ -295,157 +253,6 @@ void _processOcrResult(String textoOcr) async {
   );
   if (resultado == true) _loadGastos();
 }
-  void _showVoiceModal() {
-    _isModalShowing = true;
-    showGeneralDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: 'Cerrar',
-      barrierColor: Colors.transparent,
-      transitionDuration: const Duration(milliseconds: 250),
-      pageBuilder: (context, animation, secondaryAnimation) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-                    if (_isListening && !_speech.isListening) {
-                      _speech.listen(
-                        onResult: (val) {
-                          if (mounted) {
-                            setModalState(() => _lastWords = val.recognizedWords);
-                            setState(() => _lastWords = val.recognizedWords);
-                          }
-                        },
-                        listenOptions: stt.SpeechListenOptions(
-                          localeId: 'es_CO',
-                          cancelOnError: true,
-                          listenMode: stt.ListenMode.dictation,
-                          listenFor: const Duration(minutes: 20),
-                          pauseFor: const Duration(minutes: 5),
-                        ),
-                      );
-                    }
-
-            return AnimatedBuilder(
-              animation: animation,
-              builder: (context, _) {
-                final t = Curves.easeOut.transform(animation.value);
-                return Stack(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        _speech.stop();
-                        _closeVoiceModal();
-                      },
-                      child: Container(color: Colors.black.withValues(alpha: 0.45 * t)),
-                    ),
-                    Positioned.fill(
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 10 * t, sigmaY: 10 * t),
-                        child: const SizedBox.expand(),
-                      ),
-                    ),
-                    Center(
-                      child: Opacity(
-                        opacity: t,
-                        child: Transform.scale(
-                          scale: 0.9 + 0.1 * t,
-                          child: Material(
-                            type: MaterialType.transparency,
-                            child: _buildVoiceCard(setModalState),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            );
-          }
-        );
-      },
-    );
-  }
-
-  Widget _buildVoiceCard(StateSetter setModalState) {
-    String mainText = _isListening ? 'Escuchando...' : 'Procesando...';
-
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 40),
-      padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _VoicePulseButton(
-            isListening: _isListening,
-            isProcessing: _isProcessing,
-            onTap: () => _stopListeningAndProcess(setModalState),
-            onLongPressEnd: () => _stopListeningAndProcess(setModalState),
-          ),
-          const SizedBox(height: 22),
-          Text(
-            mainText,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 17,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          if (_isListening)
-            const Padding(
-              padding: EdgeInsets.only(top: 4),
-              child: Text(
-                'Toca el botón para detener',
-                style: TextStyle(color: AppColors.accent, fontSize: 12, fontWeight: FontWeight.w500),
-              ),
-            ),
-          const SizedBox(height: 12),
-          if (_lastWords.isNotEmpty)
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.background.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                _lastWords,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontStyle: FontStyle.italic),
-              ),
-            )
-          else if (_isListening)
-            const Text(
-              'Di algo como: "Diez mil en un taxi"',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-            ),
-          const SizedBox(height: 20),
-          if (!_isProcessing)
-            GestureDetector(
-              onTap: () {
-                _speech.stop();
-                _closeVoiceModal();
-              },
-              child: const Text(
-                'Cancelar',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w600),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -460,6 +267,8 @@ void _processOcrResult(String textoOcr) async {
                 children: [
                   const SizedBox(height: 20),
                   _buildHeader(),
+                  OfflineQueryBanner(
+                      resource: '/movimientos/gastos', onRetry: _loadGastos),
                   const SizedBox(height: 30),
                   _buildSummaryCard(),
                   const SizedBox(height: 20),
@@ -674,6 +483,9 @@ void _processOcrResult(String textoOcr) async {
   }
 
   Widget _buildSummaryCard() {
+    if (OfflineQueryService.instance.statuses.value['/movimientos/gastos']?.source == QuerySource.unavailable && _gastos.isEmpty) {
+      return const SizedBox.shrink();
+    }
     final provider = context.watch<PresupuestoProvider>();
     final periodo = provider.periodoActivo;
     final double presupuesto = periodo?.montoGastos ?? 0;
@@ -765,6 +577,9 @@ void _processOcrResult(String textoOcr) async {
   }
 
   Widget _buildExpensesListHeader() {
+    if (OfflineQueryService.instance.statuses.value['/movimientos/gastos']?.source == QuerySource.unavailable && _gastos.isEmpty) {
+      return const SizedBox.shrink();
+    }
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -775,10 +590,13 @@ void _processOcrResult(String textoOcr) async {
   }
 
   Widget _buildExpensesList() {
+    if (OfflineQueryService.instance.statuses.value['/movimientos/gastos']?.source == QuerySource.unavailable && _gastos.isEmpty) {
+      return const SizedBox.shrink();
+    }
     if (_isLoading) return const Center(child: Padding(padding: EdgeInsets.only(top: 40), child: CircularProgressIndicator(color: AppColors.accent)));
     final filtered = _filteredGastos.reversed.toList();
     if (filtered.isEmpty) return Center(child: Padding(padding: const EdgeInsets.only(top: 40), child: Column(children: [Icon(Icons.receipt_long, color: AppColors.textSecondary.withValues(alpha: 0.3), size: 64), const SizedBox(height: 16), const Text('No hay gastos registrados', style: TextStyle(color: AppColors.textSecondary, fontSize: 14))])));
-    return Column(children: List.generate(filtered.length, (index) => Padding(padding: const EdgeInsets.only(bottom: 14), child: _buildExpenseCard(filtered[index], index))));
+    return Column(children: List.generate(filtered.length, (index) => Padding(padding: const EdgeInsets.only(bottom: 14), child: Column(children: [SyncStateBadge(state: filtered[index].syncState, error: filtered[index].syncError), _buildExpenseCard(filtered[index], index)]))));
   }
 
   Widget _buildExpenseCard(GastoModel expense, int index) {
@@ -815,12 +633,15 @@ void _processOcrResult(String textoOcr) async {
                     const SizedBox(height: 24),
                     Row(
                       children: [
-                        Expanded(child: _buildActionButton(label: 'Editar', icon: Icons.edit_outlined, color: const Color(0xFF4ADE80), onTap: () async {
+                        Expanded(child: _buildActionButton(label: expense.canCorrect ? 'Corregir' : 'Editar', icon: Icons.edit_outlined, color: const Color(0xFF4ADE80), onTap: () async {
+                          if (!expense.isSynced && !expense.canCorrect) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sincroniza este registro antes de editarlo.'))); return;
+                          }
                           final resultado = await Navigator.push<bool>(context, MaterialPageRoute(builder: (context) => AgregarGastoScreen(gastoParaEditar: expense)));
                           if (resultado == true) { setState(() => _expandedIndex = null); _loadGastos(); }
                         })),
                         const SizedBox(width: 16),
-                        Expanded(child: _buildActionButton(label: 'Eliminar', icon: Icons.delete_outline, color: AppColors.error, onTap: () => _mostrarDialogoConfirmacion(context, expense))),
+                        Expanded(child: _buildActionButton(label: 'Eliminar', icon: Icons.delete_outline, color: AppColors.error, onTap: () { if (expense.isSynced) { _mostrarDialogoConfirmacion(context, expense); } else { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sincroniza antes de eliminar.'))); } })),
                       ],
                     ),
                   ],
@@ -848,7 +669,13 @@ void _processOcrResult(String textoOcr) async {
             ElevatedButton(
               onPressed: () async {
                 if (expense.id != null) {
-                  final success = await GastosService.eliminarGasto(expense.id!);
+                  bool success = false;
+                  try {
+                    success = await GastosService.eliminarGasto(expense.id!);
+                  } catch (error) {
+                    if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(content: Text('$error')));
+                  }
+                  if (!mounted) return;
                   if (success) { setState(() => _expandedIndex = null); _loadGastos(); }
                 }
                 if (context.mounted) Navigator.pop(context);
@@ -873,75 +700,6 @@ void _processOcrResult(String textoOcr) async {
         height: 48,
         decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(14), border: Border.all(color: color.withValues(alpha: 0.4), width: 1)),
         child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(icon, color: color, size: 18), const SizedBox(width: 8), Text(label, style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.bold))]),
-      ),
-    );
-  }
-}
-
-class _VoicePulseButton extends StatefulWidget {
-  final bool isListening;
-  final bool isProcessing;
-  final VoidCallback? onTap;
-  final VoidCallback? onLongPressEnd;
-
-  const _VoicePulseButton({
-    required this.isListening,
-    required this.isProcessing,
-    this.onTap,
-    this.onLongPressEnd,
-  });
-
-  @override
-  State<_VoicePulseButton> createState() => _VoicePulseButtonState();
-}
-
-class _VoicePulseButtonState extends State<_VoicePulseButton>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _pulseController;
-  @override
-  void initState() {
-    super.initState();
-    _pulseController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))..repeat();
-  }
-  @override
-  void dispose() { _pulseController.dispose(); super.dispose(); }
-  @override
-  Widget build(BuildContext context) {
-    if (widget.isProcessing) {
-      return SizedBox(width: 150, height: 150, child: Stack(alignment: Alignment.center, children: [const CircularProgressIndicator(color: AppColors.accent), Container(width: 60, height: 60, decoration: const BoxDecoration(color: AppColors.surface, shape: BoxShape.circle), child: const Icon(Icons.auto_awesome, color: AppColors.accent, size: 28))]));
-    }
-    return GestureDetector(
-      onTap: widget.onTap,
-      onLongPressEnd: (_) => widget.onLongPressEnd?.call(),
-      child: AnimatedScale(
-        scale: widget.isListening ? 0.9 : 1.0,
-        duration: const Duration(milliseconds: 150),
-        child: SizedBox(
-          width: 150, height: 150,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              if (widget.isListening)
-                ...List.generate(3, (i) {
-                  return AnimatedBuilder(
-                    animation: _pulseController,
-                    builder: (context, child) {
-                      final t = (_pulseController.value + i * 0.33) % 1.0;
-                      final scale = 1.0 + 0.8 * t;
-                      final opacity = (1 - t) * 0.5;
-                      return Transform.scale(scale: scale, child: Container(width: 96, height: 96, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.error.withValues(alpha: opacity), width: 2))));
-                    },
-                  );
-                }),
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: 96, height: 96,
-                decoration: BoxDecoration(shape: BoxShape.circle, gradient: RadialGradient(colors: widget.isListening ? [const Color(0xFFFF8A8A), AppColors.error] : [const Color(0xFFFFD700), AppColors.accent])),
-                child: Icon(widget.isListening ? Icons.stop : Icons.mic, color: widget.isListening ? Colors.white : Colors.black, size: 40),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

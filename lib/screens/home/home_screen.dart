@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/auth_service.dart';
+import '../../services/session_logout.dart';
 import '../auth/pin_access_screen.dart';
 import '../auth/biometric_access_screen.dart';
 
@@ -53,7 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _cerrarSesion() async {
-    await AuthService.instance.logout();
+    if (!await SessionLogout.confirmAndLogout(context)) return;
     if (!mounted) return;
     Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
   }

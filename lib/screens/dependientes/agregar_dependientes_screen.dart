@@ -19,13 +19,12 @@ class AgregarDependienteScreen extends StatefulWidget {
       _AgregarDependienteScreenState();
 }
 
-class _AgregarDependienteScreenState
-    extends State<AgregarDependienteScreen> {
+class _AgregarDependienteScreenState extends State<AgregarDependienteScreen> {
   final TextEditingController _nombreController = TextEditingController();
   final TextEditingController _relacionController = TextEditingController();
   final TextEditingController _ocupacionController = TextEditingController();
   final TextEditingController _pesoEconomicoController =
-      TextEditingController();
+      TextEditingController(text: '3');
 
   DateTime? _fechaNacimiento;
 
@@ -45,7 +44,7 @@ class _AgregarDependienteScreenState
       _fechaNacimiento = dependiente.fechaNacimiento;
 
       _pesoEconomicoController.text =
-          dependiente.pesoEconomico?.toString() ?? '';
+          dependiente.pesoEconomico?.toString() ?? '3';
     }
   }
 
@@ -110,7 +109,6 @@ class _AgregarDependienteScreenState
                     color: Colors.black.withOpacity(0.4 * t),
                   ),
                 ),
-
                 Positioned.fill(
                   child: BackdropFilter(
                     filter: ImageFilter.blur(
@@ -120,7 +118,6 @@ class _AgregarDependienteScreenState
                     child: const SizedBox.expand(),
                   ),
                 ),
-
                 Positioned(
                   left: 0,
                   right: 0,
@@ -150,29 +147,17 @@ class _AgregarDependienteScreenState
     final relacion = _relacionController.text.trim();
     final ocupacion = _ocupacionController.text.trim();
 
-    if (nombre.isEmpty) {
+    final pesoEconomico = int.tryParse(_pesoEconomicoController.text.trim());
+
+    if (pesoEconomico == null || pesoEconomico < 1 || pesoEconomico > 5) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Ingresa el nombre del dependiente'),
+          content:
+              Text('El peso económico debe ser un número entero entre 1 y 5'),
         ),
       );
       return;
     }
-
-    final pesoEconomico =
-        int.tryParse(_pesoEconomicoController.text.trim());
-
-    if (_pesoEconomicoController.text.trim().isNotEmpty &&
-        pesoEconomico == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('El peso económico debe ser un número entero'),
-        ),
-      );
-      return;
-    }
-
-    setState(() => _isSaving = true);
 
     final dependiente = DependienteModel(
       id: widget.dependienteParaEditar?.id,
@@ -183,12 +168,20 @@ class _AgregarDependienteScreenState
       pesoEconomico: pesoEconomico,
     );
 
+    final errorValidacion = dependiente.validationError;
+    if (errorValidacion != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(errorValidacion)),
+      );
+      return;
+    }
+    setState(() => _isSaving = true);
+
     try {
       DependienteModel? resultado;
 
       if (dependiente.id == null) {
-        final nuevoId =
-            await DependientesService.crearDependiente(dependiente);
+        final nuevoId = await DependientesService.crearDependiente(dependiente);
 
         resultado = DependienteModel(
           id: nuevoId,
@@ -252,21 +245,13 @@ class _AgregarDependienteScreenState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
-
               _buildHeader(),
-
               const SizedBox(height: 26),
-
               _buildFormCard(),
-
               const SizedBox(height: 28),
-
               _buildGuardarButton(),
-
               const SizedBox(height: 12),
-
               _buildCancelarButton(),
-
               const SizedBox(height: 30),
             ],
           ),
@@ -287,9 +272,7 @@ class _AgregarDependienteScreenState
           size: 20,
           onTap: () => Navigator.pop(context),
         ),
-
         const SizedBox(width: 16),
-
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -303,9 +286,7 @@ class _AgregarDependienteScreenState
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             const SizedBox(height: 2),
-
             Text(
               widget.dependienteParaEditar != null
                   ? 'Modificar información'
@@ -336,53 +317,35 @@ class _AgregarDependienteScreenState
             'Nombre completo',
             required: true,
           ),
-
           const SizedBox(height: 8),
-
           _buildTextField(
             controller: _nombreController,
             hint: 'Ej: Juan Pérez',
           ),
-
           const SizedBox(height: 18),
-
           _buildLabel('Relación'),
-
           const SizedBox(height: 8),
-
           _buildTextField(
             controller: _relacionController,
             hint: 'Ej: Hijo, madre, padre...',
           ),
-
           const SizedBox(height: 18),
-
           _buildLabel('Ocupación'),
-
           const SizedBox(height: 8),
-
           _buildTextField(
             controller: _ocupacionController,
             hint: 'Ej: Estudiante, empleado...',
           ),
-
           const SizedBox(height: 18),
-
           _buildLabel('Fecha de nacimiento'),
-
           const SizedBox(height: 8),
-
           _buildFechaField(),
-
           const SizedBox(height: 18),
-
           _buildLabel('Peso económico'),
-
           const SizedBox(height: 8),
-
           _buildTextField(
             controller: _pesoEconomicoController,
-            hint: 'Ej: 50',
+            hint: 'Entre 1 y 5',
             keyboardType: TextInputType.number,
           ),
         ],
@@ -405,7 +368,6 @@ class _AgregarDependienteScreenState
               fontWeight: FontWeight.w600,
             ),
           ),
-
           if (required)
             const TextSpan(
               text: ' *',
@@ -493,9 +455,7 @@ class _AgregarDependienteScreenState
                 color: Color(0xFF60A5FA),
                 size: 20,
               ),
-
               const SizedBox(width: 10),
-
               Text(
                 texto,
                 style: TextStyle(
@@ -505,9 +465,7 @@ class _AgregarDependienteScreenState
                   fontSize: 14,
                 ),
               ),
-
               const Spacer(),
-
               const Icon(
                 Icons.expand_more,
                 color: AppColors.textSecondary,

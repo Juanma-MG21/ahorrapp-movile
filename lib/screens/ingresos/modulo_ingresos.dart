@@ -1,11 +1,15 @@
+import '../../services/auth_service.dart';
+import '../../widgets/voice_entry_dialog.dart';
+import '../../services/offline_sync_service.dart';
+import '../../widgets/sync_state_badge.dart';
+import '../../widgets/offline_query_banner.dart';
+import '../../services/offline_query_service.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../core/theme/design_tokens.dart';
 import '../../models/ingreso_model.dart';
 import '../../services/ingresos_service.dart';
-import '../../services/gastos_service.dart';
 import '../../services/widget_service.dart';
 import '../../services/local_parser_service.dart';
 import 'agregar_ingreso_screen.dart';
@@ -19,19 +23,16 @@ class ModuloIngresos extends StatefulWidget {
 }
 
 class _ModuloIngresosState extends State<ModuloIngresos>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   bool _isMenuOpen = false;
   int? _expandedIndex;
   List<IngresoModel> _ingresos = [];
   bool _isLoading = true;
+  int _loadVersion = 0;
   DateTime _selectedDate = DateTime.now();
   String _searchQuery = '';
 
   late stt.SpeechToText _speech;
-  bool _isListening = false;
-  bool _isProcessing = false;
-  bool _isModalShowing = false;
-  String _lastWords = '';
 
   static const List<String> _mesesNom = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -74,6 +75,8 @@ class _ModuloIngresosState extends State<ModuloIngresos>
   @override
   void initState() {
     super.initState();
+    OfflineSyncService.instance.changes.addListener(_reloadLocal);
+    WidgetsBinding.instance.addObserver(this);
     _speech = widget.speechInstance ?? stt.SpeechToText();
     _menuController = AnimationController(
       vsync: this,
@@ -90,43 +93,51 @@ class _ModuloIngresosState extends State<ModuloIngresos>
     _loadIngresos();
   }
 
-  void _loadIngresos() async {
-    setState(() => _isLoading = true);
-    final list = await IngresosService.obtenerIngresos();
-    setState(() {
-      _ingresos = list;
-      _isLoading = false;
-    });
-    _updateWidget();
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _loadIngresos();
   }
 
-  void _updateWidget() async {
-    final now = DateTime.now();
-    final gastos = await GastosService.obtenerGastos();
-    double totalGastos = 0;
-    for (var g in gastos.where((g) => g.fecha.month == now.month && g.fecha.year == now.year)) {
-      totalGastos += g.monto;
+  void _loadIngresos() async {
+    if (!mounted) return;
+    final loadVersion = ++_loadVersion;
+    setState(() => _isLoading = true);
+    try {
+      final list = await IngresosService.obtenerIngresos();
+      if (!mounted || loadVersion != _loadVersion) return;
+      setState(() => _ingresos = list);
+      _updateWidget();
+    } catch (error) {
+      if (!mounted || loadVersion != _loadVersion) return;
+      List<IngresoModel> local = [];
+      try { local = await OfflineQueryService.instance.localList('/movimientos/ingresos', IngresoModel.fromJson); } catch (_) { /* El aviso de consulta conserva el fallo. */ }
+      if (!mounted || loadVersion != _loadVersion) return;
+      setState(() => _ingresos = local);
+    } finally {
+      if (mounted && loadVersion == _loadVersion) setState(() => _isLoading = false);
     }
+  }
 
-    double totalIngresos = 0;
-    for (var i in _ingresos.where((i) => i.fechaRegistro.month == now.month && i.fechaRegistro.year == now.year)) {
-      totalIngresos += i.monto;
-    }
+  void _updateWidget() {
+    WidgetService.refresh();
+  }
 
-    final double balance = totalIngresos - totalGastos;
 
-    WidgetService.updateWidgetData(
-      balance: _formatCurrency(balance),
-      gastos: _formatCurrency(totalGastos),
-      ingresos: _formatCurrency(totalIngresos),
-      porcentaje: 0,
-      fecha: '${_mesesNom[now.month - 1]} ${now.year}',
-    );
+  Future<void> _reloadLocal() async {
+    final version = ++_loadVersion;
+    try {
+      final rows = await OfflineQueryService.instance.localList('/movimientos/ingresos', IngresoModel.fromJson);
+      if (!mounted || version != _loadVersion) return;
+      setState(() { _ingresos = rows; _isLoading = false; });
+      _updateWidget();
+    } catch (_) { /* La consulta principal presenta el error de almacenamiento. */ }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _menuController.dispose();
+    OfflineSyncService.instance.changes.removeListener(_reloadLocal);
     super.dispose();
   }
 
@@ -155,215 +166,23 @@ class _ModuloIngresosState extends State<ModuloIngresos>
     }
   }
 
-  void _startListening() async {
-    var status = await Permission.microphone.request();
-    if (!status.isGranted) return;
-
-    bool available = await _speech.initialize(
-      onStatus: (val) => debugPrint('Speech Status: $val'),
-      onError: (val) => debugPrint('Speech Error: $val'),
-    );
-
-    if (available) {
-      setState(() {
-        _isListening = true;
-        _isProcessing = false;
-        _lastWords = '';
-      });
-      _showVoiceModal();
+  bool _voiceOpen = false;
+  Future<void> _startListening() async {
+    if (_voiceOpen) return;
+    _voiceOpen = true;
+    final auth = AuthService.instance;
+    final version = auth.sessionVersion;
+    try {
+      final text = await showDialog<String>(context: context,
+        builder: (_) => VoiceEntryDialog(speech: _speech, income: true));
+      if (!mounted || text == null || !identical(auth, AuthService.instance) || version != auth.sessionVersion) return;
+      final parsed = LocalParserService.parseIngreso(text);
+      final resultado = await Navigator.push<IngresoModel>(context, MaterialPageRoute(
+        builder: (_) => AgregarIngresoScreen(ingresoParaEditar: parsed)));
+      if (mounted && resultado != null) _loadIngresos();
+    } finally {
+      _voiceOpen = false;
     }
-  }
-
-  void _closeVoiceModal() {
-    if (mounted && _isModalShowing) {
-      _isModalShowing = false;
-      Navigator.of(context).pop();
-    }
-  }
-
-  void _stopListeningAndProcess([StateSetter? setModalState]) async {
-    if (mounted) {
-      if (setModalState != null) {
-        setModalState(() {
-          _isListening = false;
-          _isProcessing = true;
-        });
-      }
-      setState(() {
-        _isListening = false;
-        _isProcessing = true;
-      });
-    }
-
-    await _speech.stop();
-    await Future.delayed(const Duration(milliseconds: 600));
-
-    if (_lastWords.isNotEmpty) {
-      final IngresoModel parsedIngreso = LocalParserService.parseIngreso(_lastWords);
-      if (mounted) {
-        _closeVoiceModal();
-        setState(() => _isProcessing = false);
-        final resultado = await Navigator.push<IngresoModel>(
-          context,
-          MaterialPageRoute(builder: (context) => AgregarIngresoScreen(ingresoParaEditar: parsedIngreso)),
-        );
-        if (resultado != null) _loadIngresos();
-      }
-    } else {
-      _closeVoiceModal();
-      if (mounted) setState(() => _isProcessing = false);
-    }
-  }
-
-  void _showVoiceModal() {
-    _isModalShowing = true;
-    showGeneralDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: 'Cerrar',
-      barrierColor: Colors.transparent,
-      transitionDuration: const Duration(milliseconds: 250),
-      pageBuilder: (context, animation, secondaryAnimation) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            if (_isListening && !_speech.isListening) {
-              _speech.listen(
-                onResult: (val) {
-                  if (mounted) {
-                    setModalState(() => _lastWords = val.recognizedWords);
-                    setState(() => _lastWords = val.recognizedWords);
-                  }
-                },
-                listenOptions: stt.SpeechListenOptions(
-                  localeId: 'es_CO',
-                  cancelOnError: true,
-                  listenMode: stt.ListenMode.dictation,
-                  listenFor: const Duration(minutes: 20),
-                  pauseFor: const Duration(minutes: 5),
-                ),
-              );
-            }
-
-            return AnimatedBuilder(
-              animation: animation,
-              builder: (context, _) {
-                final t = Curves.easeOut.transform(animation.value);
-                return Stack(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        _speech.stop();
-                        _closeVoiceModal();
-                      },
-                      child: Container(color: Colors.black.withValues(alpha: 0.45 * t)),
-                    ),
-                    Positioned.fill(
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 10 * t, sigmaY: 10 * t),
-                        child: const SizedBox.expand(),
-                      ),
-                    ),
-                    Center(
-                      child: Opacity(
-                        opacity: t,
-                        child: Transform.scale(
-                          scale: 0.9 + 0.1 * t,
-                          child: Material(
-                            type: MaterialType.transparency,
-                            child: _buildVoiceCard(setModalState),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            );
-          }
-        );
-      },
-    );
-  }
-
-  Widget _buildVoiceCard(StateSetter setModalState) {
-    String mainText = _isListening ? 'Escuchando...' : 'Procesando...';
-
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 40),
-      padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _VoicePulseButton(
-            isListening: _isListening,
-            isProcessing: _isProcessing,
-            onTap: () => _stopListeningAndProcess(setModalState),
-            onLongPressEnd: () => _stopListeningAndProcess(setModalState),
-          ),
-          const SizedBox(height: 22),
-          Text(
-            mainText,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 17,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          if (_isListening)
-            const Padding(
-              padding: EdgeInsets.only(top: 4),
-              child: Text(
-                'Toca el botón para detener',
-                style: TextStyle(color: Color(0xFF4ADE80), fontSize: 12, fontWeight: FontWeight.w500),
-              ),
-            ),
-          const SizedBox(height: 12),
-          if (_lastWords.isNotEmpty)
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.background.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                _lastWords,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontStyle: FontStyle.italic),
-              ),
-            )
-          else if (_isListening)
-            const Text(
-              'Di algo como: "Recibí un millón de pesos"',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-            ),
-          const SizedBox(height: 20),
-          if (!_isProcessing)
-            GestureDetector(
-              onTap: () {
-                _speech.stop();
-                _closeVoiceModal();
-              },
-              child: const Text(
-                'Cancelar',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w600),
-              ),
-            ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -380,6 +199,9 @@ class _ModuloIngresosState extends State<ModuloIngresos>
                 children: [
                   const SizedBox(height: 20),
                   _buildHeader(),
+                  OfflineQueryBanner(
+                      resource: '/movimientos/ingresos',
+                      onRetry: _loadIngresos),
                   const SizedBox(height: 30),
                   _buildSummaryCard(),
                   const SizedBox(height: 20),
@@ -575,6 +397,9 @@ class _ModuloIngresosState extends State<ModuloIngresos>
   }
 
   Widget _buildSummaryCard() {
+    if (OfflineQueryService.instance.statuses.value['/movimientos/ingresos']?.source == QuerySource.unavailable && _ingresos.isEmpty) {
+      return const SizedBox.shrink();
+    }
     double totalIngresos = 0;
     for (var i in _filteredIngresos) {
       totalIngresos += i.monto;
@@ -599,6 +424,9 @@ class _ModuloIngresosState extends State<ModuloIngresos>
   }
 
   Widget _buildIngresosListHeader() {
+    if (OfflineQueryService.instance.statuses.value['/movimientos/ingresos']?.source == QuerySource.unavailable && _ingresos.isEmpty) {
+      return const SizedBox.shrink();
+    }
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -609,10 +437,13 @@ class _ModuloIngresosState extends State<ModuloIngresos>
   }
 
   Widget _buildIngresosList() {
+    if (OfflineQueryService.instance.statuses.value['/movimientos/ingresos']?.source == QuerySource.unavailable && _ingresos.isEmpty) {
+      return const SizedBox.shrink();
+    }
     if (_isLoading) return const Center(child: Padding(padding: EdgeInsets.only(top: 40), child: CircularProgressIndicator(color: Color(0xFF4ADE80))));
     final filtered = _filteredIngresos.reversed.toList();
     if (filtered.isEmpty) return Center(child: Padding(padding: const EdgeInsets.only(top: 40), child: Column(children: [Icon(Icons.receipt_long, color: AppColors.textSecondary.withValues(alpha: 0.3), size: 64), const SizedBox(height: 16), const Text('No hay ingresos registrados', style: TextStyle(color: AppColors.textSecondary, fontSize: 14))])));
-    return Column(children: List.generate(filtered.length, (index) => Padding(padding: const EdgeInsets.only(bottom: 14), child: _buildIngresoCard(filtered[index], index))));
+    return Column(children: List.generate(filtered.length, (index) => Padding(padding: const EdgeInsets.only(bottom: 14), child: Column(children: [SyncStateBadge(state: filtered[index].syncState, error: filtered[index].syncError), _buildIngresoCard(filtered[index], index)]))));
   }
 
   Widget _buildIngresoCard(IngresoModel ingreso, int index) {
@@ -649,12 +480,15 @@ class _ModuloIngresosState extends State<ModuloIngresos>
                     const SizedBox(height: 24),
                     Row(
                       children: [
-                        Expanded(child: _buildActionButton(label: 'Editar', icon: Icons.edit_outlined, color: const Color(0xFF4ADE80), onTap: () async {
+                        Expanded(child: _buildActionButton(label: ingreso.canCorrect ? 'Corregir' : 'Editar', icon: Icons.edit_outlined, color: const Color(0xFF4ADE80), onTap: () async {
+                          if (!ingreso.isSynced && !ingreso.canCorrect) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sincroniza este registro antes de editarlo.'))); return;
+                          }
                           final resultado = await Navigator.push<IngresoModel>(context, MaterialPageRoute(builder: (context) => AgregarIngresoScreen(ingresoParaEditar: ingreso)));
                           if (resultado != null) _loadIngresos();
                         })),
                         const SizedBox(width: 16),
-                        Expanded(child: _buildActionButton(label: 'Eliminar', icon: Icons.delete_outline, color: AppColors.error, onTap: () => _mostrarConfirmacion(ingreso))),
+                        Expanded(child: _buildActionButton(label: 'Eliminar', icon: Icons.delete_outline, color: AppColors.error, onTap: () { if (ingreso.isSynced) { _mostrarConfirmacion(ingreso); } else { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sincroniza antes de eliminar.'))); } })),
                       ],
                     ),
                   ],
@@ -682,7 +516,13 @@ class _ModuloIngresosState extends State<ModuloIngresos>
             ElevatedButton(
               onPressed: () async {
                 if (ingreso.id != null) {
-                  final success = await IngresosService.eliminarIngreso(ingreso.id!);
+                  bool success = false;
+                  try {
+                    success = await IngresosService.eliminarIngreso(ingreso.id!);
+                  } catch (error) {
+                    if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(content: Text('$error')));
+                  }
+                  if (!mounted) return;
                   if (success) _loadIngresos();
                 }
                 if (context.mounted) Navigator.pop(context);
@@ -702,75 +542,6 @@ class _ModuloIngresosState extends State<ModuloIngresos>
 
   Widget _buildActionButton({required String label, required IconData icon, required Color color, required VoidCallback onTap}) {
     return GestureDetector(onTap: onTap, child: Container(height: 48, decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(14), border: Border.all(color: color.withValues(alpha: 0.4), width: 1)), child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(icon, color: color, size: 18), const SizedBox(width: 8), Text(label, style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.bold))])));
-  }
-}
-
-class _VoicePulseButton extends StatefulWidget {
-  final bool isListening;
-  final bool isProcessing;
-  final VoidCallback? onTap;
-  final VoidCallback? onLongPressEnd;
-
-  const _VoicePulseButton({
-    required this.isListening,
-    required this.isProcessing,
-    this.onTap,
-    this.onLongPressEnd,
-  });
-
-  @override
-  State<_VoicePulseButton> createState() => _VoicePulseButtonState();
-}
-
-class _VoicePulseButtonState extends State<_VoicePulseButton>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _pulseController;
-  @override
-  void initState() {
-    super.initState();
-    _pulseController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))..repeat();
-  }
-  @override
-  void dispose() { _pulseController.dispose(); super.dispose(); }
-  @override
-  Widget build(BuildContext context) {
-    if (widget.isProcessing) {
-      return SizedBox(width: 150, height: 150, child: Stack(alignment: Alignment.center, children: [const CircularProgressIndicator(color: Color(0xFF4ADE80)), Container(width: 60, height: 60, decoration: const BoxDecoration(color: AppColors.surface, shape: BoxShape.circle), child: const Icon(Icons.auto_awesome, color: Color(0xFF4ADE80), size: 28))]));
-    }
-    return GestureDetector(
-      onTap: widget.onTap,
-      onLongPressEnd: (_) => widget.onLongPressEnd?.call(),
-      child: AnimatedScale(
-        scale: widget.isListening ? 0.9 : 1.0,
-        duration: const Duration(milliseconds: 150),
-        child: SizedBox(
-          width: 150, height: 150,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              if (widget.isListening)
-                ...List.generate(3, (i) {
-                  return AnimatedBuilder(
-                    animation: _pulseController,
-                    builder: (context, child) {
-                      final t = (_pulseController.value + i * 0.33) % 1.0;
-                      final scale = 1.0 + 0.8 * t;
-                      final opacity = (1 - t) * 0.5;
-                      return Transform.scale(scale: scale, child: Container(width: 96, height: 96, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.error.withValues(alpha: opacity), width: 2))));
-                    },
-                  );
-                }),
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: 96, height: 96,
-                decoration: BoxDecoration(shape: BoxShape.circle, gradient: RadialGradient(colors: widget.isListening ? [const Color(0xFFFF8A8A), AppColors.error] : [const Color(0xFF4ADE80), const Color(0xFF34D399)])),
-                child: Icon(widget.isListening ? Icons.stop : Icons.mic, color: widget.isListening ? Colors.white : Colors.black, size: 40),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }
 

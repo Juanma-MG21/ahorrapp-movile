@@ -1,52 +1,48 @@
 import '../core/network/api_client.dart';
 import '../models/dependiente_model.dart';
-import 'auth_service.dart';
+import 'offline_query_service.dart';
+import 'package:flutter/foundation.dart';
 
 class DependientesService {
-  static const _api = ApiClient();
+  @visibleForTesting
+  static ApiClient client = const ApiClient();
 
-  // Delega en AuthService, que ya consulta memoria o storage
-  // según corresponda, con la clave correcta ('auth_token').
-  static Future<String?> _token() async {
-    return AuthService.instance.getToken();
+  static Future<List<DependienteModel>> getDependientes() {
+    return OfflineQueryService.instance
+        .query('/dependientes', client, DependienteModel.fromJson);
   }
 
-  // ✅ El endpoint /dependientes devuelve un array plano, no un
-  //    objeto { ok, dependientes: [...] }. Por eso usamos getList()
-  //    en lugar de get().
-  static Future<List<DependienteModel>> getDependientes() async {
-    final data = await _api.getList('/dependientes', token: await _token());
+  static Future<int> crearDependiente(DependienteModel dependiente) {
+    final error = dependiente.validationError;
+    if (error != null) throw ApiException(error);
+    return OfflineQueryService.instance.onlineMutation('/dependientes',
+        (token) async {
+      final data = await client.post('/dependientes',
+          body: dependiente.toJson(), token: token);
 
-    return data
-        .map((item) => DependienteModel.fromJson(item as Map<String, dynamic>))
-        .toList();
+      final id = DependienteModel.parseCreatedId(data);
+      if (id == null) {
+        throw ApiException(
+            'El servidor no devolvió un identificador de dependiente válido');
+      }
+      return id;
+    });
   }
-
-  static Future<int> crearDependiente(DependienteModel dependiente) async {
-  final body = dependiente.toJson();
-  print('📤 POST /dependientes → $body');   // ← añade esto
-
-  final data = await _api.post(
-    '/dependientes',
-    body: body,
-    token: await _token(),
-  );
-
-  return data['dependiente']['id_dependientes'] as int;
-}
 
   static Future<void> actualizarDependiente(
-    int id,
-    DependienteModel dependiente,
-  ) async {
-    await _api.put(
-      '/dependientes/$id',
-      body: dependiente.toJson(),
-      token: await _token(),
-    );
+      int id, DependienteModel dependiente) async {
+    final error = dependiente.validationError;
+    if (error != null) throw ApiException(error);
+    await OfflineQueryService.instance.onlineMutation(
+        '/dependientes',
+        (token) => client.put('/dependientes/$id',
+            body: dependiente.toJson(), token: token));
   }
 
   static Future<void> eliminarDependiente(int idDependientes) async {
-    await _api.delete('/dependientes/$idDependientes', token: await _token());
+    await OfflineQueryService.instance.onlineMutation(
+        '/dependientes',
+        (token) =>
+            client.delete('/dependientes/$idDependientes', token: token));
   }
 }

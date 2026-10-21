@@ -1,3 +1,9 @@
+import '../../models/emergencia_model.dart';
+import '../../models/deuda_model.dart';
+import '../../models/ahorro_model.dart';
+import '../../models/imprevisto_model.dart';
+import '../../models/gasto_model.dart';
+import '../../models/ingreso_model.dart';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 
@@ -62,58 +68,61 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
   Future<void> _cargarMovimientos() async {
     setState(() => _isLoading = true);
 
-    // Se inician las 4 peticiones antes de esperar cualquiera (siguen
-    // corriendo en paralelo), pero se esperan por separado en vez de
-    // meterlas en una sola lista para Future.wait: como cada servicio
-    // devuelve un tipo de lista distinto (List<IngresoModel>,
-    // List<GastoModel>, etc.), Future.wait las reducía a Future<Object> y
-    // se perdían los getters (fechaRegistro/fecha) de cada modelo.
-    final futureIngresos = IngresosService.obtenerIngresos();
-    final futureGastos = GastosService.obtenerGastos();
-    final futureImprevistos = ImprevistosService.obtenerImprevistos();
-    final futureAhorros = AhorrosService.obtenerAhorros();
-    final futureDeudas = DeudasService.obtenerDeudas();
-    final futureMovimientosEmergencia = EmergenciaService.obtenerMovimientos();
+    try {
+      final results = await Future.wait<Object>([
+        IngresosService.obtenerIngresos(),
+        GastosService.obtenerGastos(),
+        ImprevistosService.obtenerImprevistos(),
+        AhorrosService.obtenerAhorros(),
+        DeudasService.obtenerDeudas(),
+        EmergenciaService.obtenerMovimientos(),
+      ]);
+      final ingresos = results[0] as List<IngresoModel>;
+      final gastos = results[1] as List<GastoModel>;
+      final imprevistos = results[2] as List<ImprevistoModel>;
+      final ahorros = results[3] as List<AhorroModel>;
+      final deudas = results[4] as List<DeudaModel>;
+      final movimientosEmergencia =
+          results[5] as List<MovimientoEmergenciaModel>;
 
-    final ingresos = await futureIngresos;
-    final gastos = await futureGastos;
-    final imprevistos = await futureImprevistos;
-    final ahorros = await futureAhorros;
-    final deudas = await futureDeudas;
-    final movimientosEmergencia = await futureMovimientosEmergencia;
+      final Map<DateTime, List<String>> mapa = {};
 
-    final Map<DateTime, List<String>> mapa = {};
+      void agregar(DateTime? fecha, String tipo) {
+        if (fecha == null) return;
+        final clave = _fechaSinHora(fecha);
+        mapa.putIfAbsent(clave, () => []).add(tipo);
+      }
 
-    void agregar(DateTime? fecha, String tipo) {
-      if (fecha == null) return;
-      final clave = _fechaSinHora(fecha);
-      mapa.putIfAbsent(clave, () => []).add(tipo);
-    }
+      for (final i in ingresos.where((row) => row.isSynced)) {
+        agregar(i.fechaRegistro, 'ingreso');
+      }
+      for (final g in gastos.where((row) => row.isSynced)) {
+        agregar(g.fecha, 'gasto');
+      }
+      for (final imp in imprevistos) {
+        agregar(imp.fecha, 'imprevisto');
+      }
+      for (final a in ahorros.where((row) => row.isSynced)) {
+        agregar(a.fechaRegistro, 'ahorro');
+      }
+      for (final d in deudas) {
+        agregar(d.fechaInicio, 'deuda');
+      }
+      for (final m in movimientosEmergencia) {
+        agregar(m.fechaRegistro, 'emergencia');
+      }
 
-    for (final i in ingresos) {
-      agregar(i.fechaRegistro, 'ingreso');
+      if (!mounted) return;
+      setState(() {
+        _movimientosPorDia = mapa;
+        _isLoading = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('No se pudo actualizar el calendario: $error')));
     }
-    for (final g in gastos) {
-      agregar(g.fecha, 'gasto');
-    }
-    for (final imp in imprevistos) {
-      agregar(imp.fecha, 'imprevisto');
-    }
-    for (final a in ahorros) {
-      agregar(a.fechaRegistro, 'ahorro');
-    }
-    for (final d in deudas) {
-      agregar(d.fechaInicio, 'deuda');
-    }
-    for (final m in movimientosEmergencia) {
-      agregar(m.fechaRegistro, 'emergencia');
-    }
-
-    if (!mounted) return;
-    setState(() {
-      _movimientosPorDia = mapa;
-      _isLoading = false;
-    });
   }
 
   static DateTime _fechaSinHora(DateTime fecha) {
@@ -136,7 +145,8 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
       'emergencia': 0,
     };
     _movimientosPorDia.forEach((fecha, tipos) {
-      if (fecha.year == _diaFocalizado.year && fecha.month == _diaFocalizado.month) {
+      if (fecha.year == _diaFocalizado.year &&
+          fecha.month == _diaFocalizado.month) {
         for (final tipo in tipos) {
           if (conteo.containsKey(tipo)) conteo[tipo] = conteo[tipo]! + 1;
         }
@@ -155,11 +165,13 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
         elevation: 0,
         title: const Text(
           'Calendario',
-          style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold),
+          style:
+              TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold),
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.accent))
           : SingleChildScrollView(
               child: Column(
                 children: [
@@ -185,7 +197,10 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
         children: [
           const Text(
             '¿Qué significa cada color?',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w700),
+            style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 10),
           ...colorPorTipo.entries.map((entry) {
@@ -196,13 +211,15 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
                   Container(
                     width: 8,
                     height: 8,
-                    decoration: BoxDecoration(color: entry.value, shape: BoxShape.circle),
+                    decoration: BoxDecoration(
+                        color: entry.value, shape: BoxShape.circle),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       etiquetaPorTipo[entry.key] ?? entry.key,
-                      style: const TextStyle(color: AppColors.textPrimary, fontSize: 12.5),
+                      style: const TextStyle(
+                          color: AppColors.textPrimary, fontSize: 12.5),
                     ),
                   ),
                 ],
@@ -232,7 +249,10 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
         children: [
           const Text(
             'Actividad del mes',
-            style: TextStyle(color: AppColors.accent, fontSize: 20, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: AppColors.accent,
+                fontSize: 20,
+                fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
@@ -291,7 +311,8 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
         headerStyle: const HeaderStyle(
           formatButtonVisible: false,
           titleCentered: true,
-          titleTextStyle: TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold),
+          titleTextStyle:
+              TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold),
           leftChevronIcon: Icon(Icons.chevron_left, color: AppColors.accent),
           rightChevronIcon: Icon(Icons.chevron_right, color: AppColors.accent),
         ),
@@ -307,7 +328,8 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: movimientosDelDia.map((tipo) {
-                  final colorDelPunto = colorPorTipo[tipo] ?? AppColors.textMuted;
+                  final colorDelPunto =
+                      colorPorTipo[tipo] ?? AppColors.textMuted;
                   return Container(
                     width: 6,
                     height: 6,

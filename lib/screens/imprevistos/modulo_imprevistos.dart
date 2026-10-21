@@ -5,8 +5,6 @@ import '../../core/theme/design_tokens.dart';
 import '../../models/imprevisto_model.dart';
 import '../../providers/presupuesto_provider.dart';
 import '../../services/imprevistos_service.dart';
-import '../../services/gastos_service.dart';
-import '../../services/ingresos_service.dart';
 import '../../services/widget_service.dart';
 import 'agregar_imprevisto_screen.dart';
 
@@ -91,34 +89,8 @@ class _ModuloImprevistosState extends State<ModuloImprevistos>
     _updateWidget();
   }
 
-  void _updateWidget() async {
-    final now = DateTime.now();
-    final gastos = await GastosService.obtenerGastos();
-    double totalGastos = 0;
-    for (var g in gastos.where((g) => g.fecha.month == now.month && g.fecha.year == now.year)) {
-      totalGastos += g.monto;
-    }
-
-    final ingresos = await IngresosService.obtenerIngresos();
-    double totalIngresos = 0;
-    for (var i in ingresos.where((i) => i.fechaRegistro.month == now.month && i.fechaRegistro.year == now.year)) {
-      totalIngresos += i.monto;
-    }
-
-    double totalImprevistos = 0;
-    for (var imp in _imprevistos.where((imp) => imp.fecha.month == now.month && imp.fecha.year == now.year)) {
-      totalImprevistos += imp.monto;
-    }
-
-    final double balance = totalIngresos - totalGastos - totalImprevistos;
-
-    WidgetService.updateWidgetData(
-      balance: _formatCurrency(balance),
-      gastos: _formatCurrency(totalGastos + totalImprevistos),
-      ingresos: _formatCurrency(totalIngresos),
-      porcentaje: 0,
-      fecha: '${_mesesNom[now.month - 1]} ${now.year}',
-    );
+  void _updateWidget() {
+    WidgetService.refresh();
   }
 
   @override
