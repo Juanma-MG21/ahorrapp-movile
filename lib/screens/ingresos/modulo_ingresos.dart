@@ -1,7 +1,6 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 import '../../services/auth_service.dart';
@@ -14,10 +13,8 @@ import '../../services/offline_query_service.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../models/ingreso_model.dart';
 import '../../services/ingresos_service.dart';
-import '../../services/gastos_service.dart';
 import '../../services/widget_service.dart';
 import '../../services/local_parser_service.dart';
-import '../../components/notificacion_bell.dart';
 import 'agregar_ingreso_screen.dart';
 
 
@@ -34,20 +31,17 @@ class ModuloIngresos extends StatefulWidget {
 }
 
 class _ModuloIngresosState extends State<ModuloIngresos>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   bool _isMenuOpen = false;
   int? _expandedIndex;
   List<IngresoModel> _ingresos = [];
   bool _isLoading = true;
+  // Cada carga suma 1. Si llega una respuesta vieja, se descarta.
+  int _loadVersion = 0;
   DateTime _selectedDate = DateTime.now();
   String _searchQuery = '';
 
   late stt.SpeechToText _speech;
-
-  final bool _isListening = false;
-  final bool _isProcessing = false;
-  final bool _isModalShowing = false;
-  final String _lastWords = '';
 
   static const List<String> _mesesNom = [
     'Enero',
@@ -132,7 +126,7 @@ class _ModuloIngresosState extends State<ModuloIngresos>
       if (!mounted || loadVersion != _loadVersion) return;
       setState(() => _ingresos = list);
       _updateWidget();
-    } catch (error) {
+    } catch (_) {
       if (!mounted || loadVersion != _loadVersion) return;
       List<IngresoModel> local = [];
       try { local = await OfflineQueryService.instance.localList('/movimientos/ingresos', IngresoModel.fromJson); } catch (_) { /* El aviso de consulta conserva el fallo. */ }

@@ -45,15 +45,18 @@ class AhorrApp extends StatelessWidget {
           Locale('es'),
         ],
         routes: {
-          '/home': (context) => const AuthGate(child: MainScreen()),
+          '/home': (context) =>
+              const AuthGate(watchSession: true, child: MainScreen()),
           '/login': (context) => const LoginScreen(),
           '/register': (context) => const RegisterScreen(),
           '/forgot-password': (context) => const ForgotPasswordScreen(),
           '/biometric-access': (context) => const BiometricAccessScreen(),
           '/pin-access': (context) => const PinAccessScreen(),
           '/reset-password': (context) => const ResetPasswordScreen(),
-          '/gastos': (context) => const AuthGate(child: ModuloGastos()),
-          '/reportes': (context) => const AuthGate(child: ReportesScreen()),
+          '/gastos': (context) =>
+              const AuthGate(watchSession: true, child: ModuloGastos()),
+          '/reportes': (context) =>
+              const AuthGate(watchSession: true, child: ReportesScreen()),
         },
       ),
     );

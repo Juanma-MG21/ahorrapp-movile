@@ -147,15 +147,6 @@ class _AgregarDependienteScreenState extends State<AgregarDependienteScreen> {
     final relacion = _relacionController.text.trim();
     final ocupacion = _ocupacionController.text.trim();
 
-    if (nombre.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ingresa el nombre del dependiente'),
-        ),
-      );
-      return;
-    }
-
     final pesoEconomico =
         int.tryParse(_pesoEconomicoController.text.trim());
 
@@ -168,8 +159,6 @@ class _AgregarDependienteScreenState extends State<AgregarDependienteScreen> {
       );
       return;
     }
-
-    setState(() => _isSaving = true);
 
     final dependiente = DependienteModel(
       id: widget.dependienteParaEditar?.id,

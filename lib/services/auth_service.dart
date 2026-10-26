@@ -243,6 +243,10 @@ class AuthService {
 
     _memoryToken = token;
     _memoryUser = usuario;
+    // Avisa que cambió la sesión, igual que el login con Google.
+    // Así el widget y las pantallas protegidas se enteran.
+    _sessionVersion++;
+    sessionChanges.value++;
 
     unawaited(NotificacionesService().inicializar(token));
 
