@@ -13,6 +13,7 @@ import '../../services/local_parser_service.dart';
 import '../../components/notificacion_bell.dart';
 import 'agregar_ingreso_screen.dart';
 
+
 class ModuloIngresos extends StatefulWidget {
   final stt.SpeechToText? speechInstance;
 

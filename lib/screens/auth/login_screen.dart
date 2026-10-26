@@ -1,4 +1,11 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:google_sign_in_web/web_only.dart'
+  if (dart.library.io) '../../widgets/google_sign_in_web_stub.dart'
+  as google_sign_in_web;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/network/api_client.dart';
@@ -21,11 +28,34 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _rememberSession = false;
   bool _hidePassword = true;
   bool _isLoading = false;
+  bool _googleReady = !kIsWeb;
+  StreamSubscription<GoogleSignInAuthenticationEvent>? _googleAuthSubscription;
+
 
   @override
   void initState() {
     super.initState();
     _loadSavedCredentials();
+    if (kIsWeb && AuthService.instance.isGoogleAuthConfigured) {
+      _googleAuthSubscription = GoogleSignIn.instance.authenticationEvents.listen(
+        (event) {
+          if (event is GoogleSignInAuthenticationEventSignIn) {
+            _handleGoogleAccount(event.user);
+          }
+        },
+        onError: _showGoogleError,
+      );
+      _initializeWebGoogleSignIn();
+    }
+  }
+
+  Future<void> _initializeWebGoogleSignIn() async {
+    try {
+      await AuthService.instance.initializeGoogleSignIn();
+      if (mounted) setState(() => _googleReady = true);
+    } catch (error) {
+      _showGoogleError(error);
+    }
   }
 
   Future<void> _loadSavedCredentials() async {
@@ -52,6 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
+    unawaited(_googleAuthSubscription?.cancel());
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -130,6 +161,35 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _handleGoogleAccount(GoogleSignInAccount account) async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+
+    try {
+      await AuthService.instance.loginWithGoogleAccount(account);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('¡Bienvenido con Google!')),
+      );
+      Navigator.of(context).pushReplacementNamed('/home');
+    } catch (error) {
+      _showGoogleError(error);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showGoogleError(Object error) {
+  debugPrint('Error Google Sign-In: $error');
+  if (!mounted) return;
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('No fue posible iniciar sesión con Google'),
+      backgroundColor: AppColors.error,
+    ),
+  );
+}
+
   void _openRegister() => Navigator.of(context).pushNamed('/register');
 
   void _openForgotPassword() =>
@@ -140,8 +200,7 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('¿Necesitas ayuda?',
-            style: TextStyle(color: Colors.white)),
+        title: const Text('¿Necesitas ayuda?', style: TextStyle(color: Colors.white)),
         content: const Text(
           'Si tienes problemas para entrar, contacta a soporte o usa la opción de recuperar contraseña.',
           style: TextStyle(color: AppColors.textSecondary),
@@ -190,31 +249,21 @@ class _LoginScreenState extends State<LoginScreen> {
       children: [
         Text(
           'AhorrApp',
-          style: TextStyle(
-              color: AppColors.accent,
-              fontSize: 34,
-              fontWeight: FontWeight.w900),
+          style: TextStyle(color: AppColors.accent, fontSize: 34, fontWeight: FontWeight.w900),
         ),
         SizedBox(height: 5),
         Text(
           'Gestión financiera personal',
-          style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 12,
-              fontWeight: FontWeight.w500),
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w500),
         ),
         SizedBox(height: 24),
         Text(
           'Bienvenido de vuelta',
           textAlign: TextAlign.center,
-          style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 22,
-              fontWeight: FontWeight.w900),
+          style: TextStyle(color: AppColors.textPrimary, fontSize: 22, fontWeight: FontWeight.w900),
         ),
         SizedBox(height: 6),
-        Text('Inicia sesión para continuar',
-            style: TextStyle(color: AppColors.muted, fontSize: 12)),
+        Text('Inicia sesión para continuar', style: TextStyle(color: AppColors.muted, fontSize: 12)),
       ],
     );
   }
@@ -237,8 +286,7 @@ class _LoginScreenState extends State<LoginScreen> {
             validator: (value) {
               final email = value?.trim() ?? '';
               if (email.isEmpty) return 'Ingresa tu correo';
-              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                  .hasMatch(email)) {
+              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
                 return 'Ingresa un correo válido';
               }
               return null;
@@ -257,16 +305,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 tooltip: _hidePassword ? 'Mostrar' : 'Ocultar',
                 onPressed: () => setState(() => _hidePassword = !_hidePassword),
                 icon: Icon(
-                  _hidePassword
-                      ? Icons.visibility_off_rounded
-                      : Icons.visibility_rounded,
+                  _hidePassword ? Icons.visibility_off_rounded : Icons.visibility_rounded,
                   color: AppColors.textMuted,
                   size: 20,
                 ),
               ),
             ),
-            validator: (value) =>
-                (value ?? '').isEmpty ? 'Ingresa tu contraseña' : null,
+            validator: (value) => (value ?? '').isEmpty ? 'Ingresa tu contraseña' : null,
           ),
           const SizedBox(height: 8),
           Row(
@@ -278,8 +323,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 checkColor: AppColors.background,
                 visualDensity: VisualDensity.compact,
               ),
-              const Text('Recordar sesión',
-                  style: TextStyle(color: AppColors.muted, fontSize: 12)),
+              const Text('Recordar sesión', style: TextStyle(color: AppColors.muted, fontSize: 12)),
               const Spacer(),
               TextButton(
                 onPressed: _openForgotPassword,
@@ -297,10 +341,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
           ),
           const SizedBox(height: 14),
-          PrimaryAuthButton(
-              label: 'Iniciar sesión',
-              isLoading: _isLoading,
-              onPressed: _submit),
+          PrimaryAuthButton(label: 'Iniciar sesión', isLoading: _isLoading, onPressed: _submit),
         ],
       ),
     );
@@ -308,6 +349,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // --- Aportado por Manuel, adaptado a la paleta/espaciado de V1. ---
   Widget _buildGoogleButton() {
+    if (kIsWeb) {
+      return SizedBox(
+        height: 54,
+        child: _googleReady
+            ? google_sign_in_web.renderButton()
+            : const Center(
+                child: CircularProgressIndicator(color: AppColors.accent),
+              ),
+      );
+    }
+
     return SizedBox(
       height: 54,
       child: OutlinedButton.icon(
@@ -340,8 +392,7 @@ class _RegisterCallout extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text('¿No tienes cuenta? ',
-            style: TextStyle(color: AppColors.muted, fontSize: 12)),
+        const Text('¿No tienes cuenta? ', style: TextStyle(color: AppColors.muted, fontSize: 12)),
         TextButton(
           onPressed: onTap,
           style: TextButton.styleFrom(
@@ -350,8 +401,7 @@ class _RegisterCallout extends StatelessWidget {
             minimumSize: const Size(0, 34),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
-          child: const Text('Regístrate',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
+          child: const Text('Regístrate', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
         ),
       ],
     );
@@ -375,14 +425,9 @@ class _BottomAccessNav extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          const _BottomNavItem(
-              icon: Icons.key_rounded, label: 'Acceso', selected: true),
-          _BottomNavButton(
-              icon: Icons.receipt_long_rounded,
-              label: 'Registro',
-              onTap: onRegister),
-          _BottomNavButton(
-              icon: Icons.help_rounded, label: 'Ayuda', onTap: onHelp),
+          const _BottomNavItem(icon: Icons.key_rounded, label: 'Acceso', selected: true),
+          _BottomNavButton(icon: Icons.receipt_long_rounded, label: 'Registro', onTap: onRegister),
+          _BottomNavButton(icon: Icons.help_rounded, label: 'Ayuda', onTap: onHelp),
         ],
       ),
     );
@@ -390,8 +435,7 @@ class _BottomAccessNav extends StatelessWidget {
 }
 
 class _BottomNavButton extends StatelessWidget {
-  const _BottomNavButton(
-      {required this.icon, required this.label, required this.onTap});
+  const _BottomNavButton({required this.icon, required this.label, required this.onTap});
 
   final IconData icon;
   final String label;
@@ -411,8 +455,7 @@ class _BottomNavButton extends StatelessWidget {
 }
 
 class _BottomNavItem extends StatelessWidget {
-  const _BottomNavItem(
-      {required this.icon, required this.label, this.selected = false});
+  const _BottomNavItem({required this.icon, required this.label, this.selected = false});
 
   final IconData icon;
   final String label;
@@ -429,10 +472,7 @@ class _BottomNavItem extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           label,
-          style: TextStyle(
-              color: color,
-              fontSize: 10,
-              fontWeight: selected ? FontWeight.w800 : FontWeight.w500),
+          style: TextStyle(color: color, fontSize: 10, fontWeight: selected ? FontWeight.w800 : FontWeight.w500),
         ),
       ],
     );
