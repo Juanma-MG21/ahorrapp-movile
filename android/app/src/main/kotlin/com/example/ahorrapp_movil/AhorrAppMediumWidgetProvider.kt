@@ -13,20 +13,15 @@ class AhorrAppMediumWidgetProvider : HomeWidgetProvider() {
         appWidgetIds: IntArray,
         widgetData: SharedPreferences
     ) {
+        val summary = FinancialWidgetSnapshot.read(widgetData)
         for (appWidgetId in appWidgetIds) {
             val views = RemoteViews(context.packageName, R.layout.medium_widget).apply {
-                val balance = widgetData.getString("balance", "$0.00")
-                val ingresos = widgetData.getString("ingresos", "$0")
-                val gastos = widgetData.getString("gastos", "$0")
-                val porcentaje = widgetData.getInt("porcentaje", 0)
-                val fecha = widgetData.getString("fecha", "Agosto 2026")
-
-                setTextViewText(R.id.widget_balance, balance)
-                setTextViewText(R.id.widget_ingresos, ingresos)
-                setTextViewText(R.id.widget_gastos, gastos)
-                setTextViewText(R.id.widget_porcentaje, "$porcentaje%")
-                setTextViewText(R.id.widget_date, fecha)
-                setProgressBar(R.id.widget_progress_bar, 100, porcentaje, false)
+                setTextViewText(R.id.widget_balance, summary.balance)
+                setTextViewText(R.id.widget_ingresos, summary.ingresos)
+                setTextViewText(R.id.widget_gastos, summary.gastos)
+                setTextViewText(R.id.widget_porcentaje, summary.porcentaje)
+                setTextViewText(R.id.widget_date, summary.fecha)
+                setProgressBar(R.id.widget_progress_bar, 100, summary.progreso, false)
             }
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }

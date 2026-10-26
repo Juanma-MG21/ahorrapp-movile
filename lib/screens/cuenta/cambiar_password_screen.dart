@@ -4,6 +4,7 @@ import '../../core/theme/design_tokens.dart';
 import '../../core/network/api_client.dart';
 import '../../services/cuenta_service.dart';
 import '../auth/pin_access_screen.dart';
+import 'widgets/seccion_card.dart';
 
 /// Formulario de cambio de contraseña, en su propia pantalla (igual
 /// criterio que EditarPerfilScreen: mantener "Mi cuenta" como un

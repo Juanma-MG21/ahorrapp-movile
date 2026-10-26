@@ -1,6 +1,10 @@
+import '../services/widget_service.dart';
 import 'package:flutter/material.dart';
+import '../services/offline_download_service.dart';
 import '../core/theme/design_tokens.dart';
-import '../services/auth_service.dart';
+import '../services/session_logout.dart';
+import '../services/offline_sync_service.dart';
+import '../widgets/offline_sync_panel.dart';
 import 'calendario/calendario_screen.dart';
 import 'gastos/modulo_gastos.dart';
 import 'home/home_screen.dart';
@@ -50,7 +54,7 @@ class MainScreen extends StatefulWidget {
   State<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   late PageController _pageController;
 
   // Pantallas fijas del bottom nav (índices 0-3).
@@ -85,20 +89,39 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    OfflineDownloadService.refresh();
+    WidgetService.refresh();
+    OfflineSyncService.instance.start();
+    OfflineSyncService.instance.changes.addListener(_refreshWidget);
 
     _pageController = PageController(initialPage: _tabPrincipal);
 
     // Inicializar accesos directos (RF-27)
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      QuickActionsService.init(context);
+      if (mounted) QuickActionsService.attach(context);
     });
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    OfflineSyncService.instance.changes.removeListener(_refreshWidget);
+    QuickActionsService.detach(context);
     _pageController.dispose();
     super.dispose();
   }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      OfflineDownloadService.refresh();
+      WidgetService.refresh();
+      OfflineSyncService.instance.sync(force: true);
+    }
+  }
+
+  void _refreshWidget() => WidgetService.refresh();
 
   void _seleccionarPrincipal(int index) {
     setState(() => _tabPrincipal = index);
@@ -138,16 +161,23 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: (index) {
-          setState(() => _tabPrincipal = index);
-        },
+      body: Column(
         children: [
-          ..._pantallasPrincipales,
-          IndexedStack(
-            index: _indiceSecundario,
-            children: _pantallasSecundarias,
+          const OfflineSyncPanel(),
+          Expanded(
+            child: PageView(
+              controller: _pageController,
+              onPageChanged: (index) {
+                setState(() => _tabPrincipal = index);
+              },
+              children: [
+                ..._pantallasPrincipales,
+                IndexedStack(
+                  index: _indiceSecundario,
+                  children: _pantallasSecundarias,
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -398,7 +428,7 @@ class _MenuMasSheet extends StatelessWidget {
                 AppRadius.sm,
               ),
               onTap: () async {
-                await AuthService.instance.logout();
+                if (!await SessionLogout.confirmAndLogout(context)) return;
 
                 if (context.mounted) {
                   Navigator.of(context)

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/offline_query_banner.dart';
 import '../../core/theme/design_tokens.dart';
 
 import '../../models/dependiente_model.dart';
@@ -218,6 +219,8 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
           child: Column(
             children: [
               _buildHeader(context),
+              OfflineQueryBanner(
+                  resource: '/dependientes', onRetry: _getDependientes),
               Expanded(
                 child: RefreshIndicator(
                   onRefresh: _getDependientes,

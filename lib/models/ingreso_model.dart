@@ -10,7 +10,14 @@ class IngresoModel {
   final DateTime fechaRegistro;
   final String? categoriaNombre; // solo viene poblado al listar (GET), no al crear/editar
 
+  final String syncState;
+  final String? syncError;
+  final String? operationId;
+  bool get isSynced => syncState == 'synced';
+  bool get canCorrect => syncState == 'error';
+
   IngresoModel({
+    this.syncState = 'synced', this.syncError, this.operationId,
     this.id,
     this.idCategoria,
     required this.monto,
@@ -23,6 +30,9 @@ class IngresoModel {
   /// Mapea una fila de GET /api/movimientos/ingresos.
   factory IngresoModel.fromJson(Map<String, dynamic> json) {
     return IngresoModel(
+      syncState: json['_sync_state'] as String? ?? 'synced',
+      syncError: json['_sync_error'] as String?,
+      operationId: (json['_operation_id'] ?? json['operation_id']) as String?,
       id: json['id'],
       idCategoria: json['id_categoria'],
       monto: parseMonto(json['monto']),

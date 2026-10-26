@@ -1,3 +1,5 @@
+import '../core/network/api_client.dart';
+import 'offline_query_service.dart';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -88,8 +90,9 @@ class CategoriasService {
   // ============================================================
 
   Future<List<CategoriaModel>> getCategorias() async {
-    final data = await _getLista('/categorias');
-    return data.map((json) => CategoriaModel.fromJson(json)).toList();
+    return OfflineQueryService.instance.query(
+        '/categorias', const ApiClient(), CategoriaModel.fromJson,
+        listKey: 'categorias');
   }
 
   static Future<List<CategoriaModel>> obtenerCategorias() {
@@ -128,15 +131,17 @@ class CategoriasService {
     required String nombre,
     required String descripcion,
   }) async {
-    final response = await http.post(
-      Uri.parse('$_baseUrl/categorias'),
-      headers: await _headers(),
-      body: jsonEncode({
-        'nombre': nombre,
-        'descripcion': descripcion,
-      }),
-    );
-    return _procesarRespuesta(response);
+    return _write((headers) async {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/categorias'),
+        headers: headers,
+        body: jsonEncode({
+          'nombre': nombre,
+          'descripcion': descripcion,
+        }),
+      );
+      return response;
+    });
   }
 
   // ============================================================
@@ -148,15 +153,17 @@ class CategoriasService {
     required String nombre,
     required String? descripcion,
   }) async {
-    final response = await http.put(
-      Uri.parse('$_baseUrl/categorias/$id'),
-      headers: await _headers(),
-      body: jsonEncode({
-        'nombre': nombre,
-        'descripcion': descripcion,
-      }),
-    );
-    return _procesarRespuesta(response);
+    return _write((headers) async {
+      final response = await http.put(
+        Uri.parse('$_baseUrl/categorias/$id'),
+        headers: headers,
+        body: jsonEncode({
+          'nombre': nombre,
+          'descripcion': descripcion,
+        }),
+      );
+      return response;
+    });
   }
 
   // ============================================================
@@ -164,19 +171,23 @@ class CategoriasService {
   // ============================================================
 
   Future<Map<String, dynamic>> deshabilitarCategoria(int id) async {
-    final response = await http.patch(
-      Uri.parse('$_baseUrl/categorias/$id/deshabilitar'),
-      headers: await _headers(),
-    );
-    return _procesarRespuesta(response);
+    return _write((headers) async {
+      final response = await http.patch(
+        Uri.parse('$_baseUrl/categorias/$id/deshabilitar'),
+        headers: headers,
+      );
+      return response;
+    });
   }
 
   Future<Map<String, dynamic>> habilitarCategoria(int id) async {
-    final response = await http.patch(
-      Uri.parse('$_baseUrl/categorias/$id/habilitar'),
-      headers: await _headers(),
-    );
-    return _procesarRespuesta(response);
+    return _write((headers) async {
+      final response = await http.patch(
+        Uri.parse('$_baseUrl/categorias/$id/habilitar'),
+        headers: headers,
+      );
+      return response;
+    });
   }
 
   // ============================================================
@@ -184,16 +195,36 @@ class CategoriasService {
   // ============================================================
 
   Future<Map<String, dynamic>> eliminarCategoria(int id) async {
-    final response = await http.delete(
-      Uri.parse('$_baseUrl/categorias/$id'),
-      headers: await _headers(),
-    );
-    return _procesarRespuesta(response);
+    return _write((headers) async {
+      final response = await http.delete(
+        Uri.parse('$_baseUrl/categorias/$id'),
+        headers: headers,
+      );
+      return response;
+    });
   }
 
   // ============================================================
   // RESPUESTAS CRUD
   // ============================================================
+
+  Future<Map<String, dynamic>> _write(
+      Future<http.Response> Function(Map<String, String>) send) {
+    return OfflineQueryService.instance.onlineMutation('/categorias',
+        (token) async {
+      final response = await send({
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      });
+      final result = _procesarRespuesta(response);
+      if (result['ok'] == false) {
+        throw ApiException(
+            _obtenerMensajeError(result) ?? 'No se guardó la categoría.');
+      }
+      return result;
+    });
+  }
 
   Map<String, dynamic> _procesarRespuesta(http.Response response) {
     final decoded = jsonDecode(response.body);

@@ -36,21 +36,40 @@ class DependienteModel {
     );
   }
 
-  // NUEVO: no existía. Lo necesita `actualizarDependiente` en el
-  // servicio para convertir el objeto Dart de vuelta a un Map que
-  // `jsonEncode` pueda mandar como body del PUT. Uso las claves en
-  // minúscula/snake_case porque así las espera tu backend Express
-  // al RECIBIR datos (distinto a como las ENVÍA, que es con
-  // mayúscula inicial — asimetría típica si el controller no
-  // normaliza el nombrado).
   Map<String, dynamic> toJson() {
-  return {
-    'Nombre': nombre,
-    if (relacion != null) 'Relacion': relacion,
-    if (ocupacion != null) 'Ocupacion': ocupacion,
-    if (fechaNacimiento != null)
-      'Fecha_nacimiento': fechaNacimiento!.toIso8601String(),
-    if (pesoEconomico != null) 'Peso_economico': pesoEconomico,
-  };
-}
+    return {
+      'Nombre': nombre.trim(),
+      if (relacion != null) 'Relacion': relacion!.trim(),
+      if (ocupacion != null) 'Ocupacion': ocupacion!.trim(),
+      if (fechaNacimiento != null)
+        'Fecha_nacimiento':
+            '${fechaNacimiento!.year.toString().padLeft(4, '0')}-${fechaNacimiento!.month.toString().padLeft(2, '0')}-${fechaNacimiento!.day.toString().padLeft(2, '0')}',
+      if (pesoEconomico != null) 'Peso_economico': pesoEconomico,
+    };
+  }
+
+  String? get validationError {
+    if (nombre.trim().isEmpty) return 'Ingresa el nombre del dependiente';
+    if (relacion == null || relacion!.trim().isEmpty) {
+      return 'Ingresa la relación con el dependiente';
+    }
+    if (nombre.trim().length > 100 || relacion!.trim().length > 100) {
+      return 'El nombre y la relación admiten hasta 100 caracteres';
+    }
+    if (ocupacion != null && ocupacion!.trim().length > 150) {
+      return 'La ocupación admite hasta 150 caracteres';
+    }
+    final peso = pesoEconomico;
+    if (peso == null || peso < 1 || peso > 5) {
+      return 'El peso económico debe ser un número entero entre 1 y 5';
+    }
+    return null;
+  }
+
+  static int? parseCreatedId(Map<String, dynamic> response) {
+    final nested = response['dependiente'];
+    final value = response['id_dependientes'] ??
+        (nested is Map ? nested['id_dependientes'] : null);
+    return value is int && value > 0 ? value : null;
+  }
 }

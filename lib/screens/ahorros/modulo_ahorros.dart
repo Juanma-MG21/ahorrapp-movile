@@ -1,3 +1,7 @@
+import '../../services/offline_sync_service.dart';
+import '../../widgets/sync_state_badge.dart';
+import '../../widgets/offline_query_banner.dart';
+import '../../services/offline_query_service.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -14,28 +18,58 @@ class ModuloAhorros extends StatefulWidget {
   State<ModuloAhorros> createState() => _ModuloAhorrosState();
 }
 
-class _ModuloAhorrosState extends State<ModuloAhorros> {
+class _ModuloAhorrosState extends State<ModuloAhorros> with WidgetsBindingObserver {
   List<AhorroModel> _ahorros = [];
   bool _isLoading = true;
+  int _loadVersion = 0;
 
   @override
   void initState() {
     super.initState();
+    OfflineSyncService.instance.changes.addListener(_reloadLocal);
+    WidgetsBinding.instance.addObserver(this);
     _loadAhorros();
   }
 
+  Future<void> _reloadLocal() async {
+    final version = ++_loadVersion;
+    try {
+      final rows = await OfflineQueryService.instance.localList('/movimientos/ahorros', AhorroModel.fromJson);
+      if (!mounted || version != _loadVersion) return;
+      setState(() { _ahorros = rows; _isLoading = false; });
+    } catch (_) { /* La consulta principal presenta el error de almacenamiento. */ }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    OfflineSyncService.instance.changes.removeListener(_reloadLocal);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _loadAhorros();
+  }
+
   void _loadAhorros() async {
+    final loadVersion = ++_loadVersion;
     setState(() => _isLoading = true);
     try {
       final list = await AhorrosService.obtenerAhorros();
+      if (!mounted || loadVersion != _loadVersion) return;
       setState(() {
         _ahorros = list;
         _isLoading = false;
       });
     } catch (e) {
       debugPrint('Error cargando ahorros: $e');
+      if (!mounted || loadVersion != _loadVersion) return;
+      List<AhorroModel> local = [];
+      try { local = await OfflineQueryService.instance.localList('/movimientos/ahorros', AhorroModel.fromJson); } catch (_) { /* El aviso de consulta conserva el fallo. */ }
+      if (!mounted || loadVersion != _loadVersion) return;
       setState(() {
-        _ahorros = [];
+        _ahorros = local;
         _isLoading = false;
       });
       if (mounted) {
@@ -64,6 +98,8 @@ class _ModuloAhorrosState extends State<ModuloAhorros> {
             children: [
               const SizedBox(height: 20),
               _buildHeader(),
+              OfflineQueryBanner(
+                  resource: '/movimientos/ahorros', onRetry: _loadAhorros),
               const SizedBox(height: 30),
               _buildSummaryCard(),
               const SizedBox(height: 30),
@@ -106,6 +142,9 @@ class _ModuloAhorrosState extends State<ModuloAhorros> {
   }
 
   Widget _buildSummaryCard() {
+    if (OfflineQueryService.instance.statuses.value['/movimientos/ahorros']?.source == QuerySource.unavailable && _ahorros.isEmpty) {
+      return const SizedBox.shrink();
+    }
     final provider = context.watch<PresupuestoProvider>();
     final periodo = provider.periodoActivo;
     final double presupuestoAhorros = periodo?.montoAhorros ?? 0;
@@ -174,12 +213,17 @@ class _ModuloAhorrosState extends State<ModuloAhorros> {
 
   Widget _buildAhorrosList() {
     if (_isLoading) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+    if (OfflineQueryService
+            .instance.statuses.value['/movimientos/ahorros']?.source ==
+        QuerySource.unavailable && _ahorros.isEmpty) {
+      return const SizedBox.shrink();
+    }
     if (_ahorros.isEmpty) return const Center(child: Text('No tienes metas de ahorro aún', style: TextStyle(color: AppColors.textSecondary)));
     
     return Column(
       children: _ahorros.map((a) => Padding(
         padding: const EdgeInsets.only(bottom: 16),
-        child: _buildAhorroCard(a),
+        child: Column(children: [SyncStateBadge(state: a.syncState, error: a.syncError), _buildAhorroCard(a)]),
       )).toList(),
     );
   }
@@ -223,7 +267,7 @@ class _ModuloAhorrosState extends State<ModuloAhorros> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.add_circle_outline, color: AppColors.accent, size: 20),
-                    onPressed: () => _mostrarDialogoAbono(ahorro),
+                    onPressed: ahorro.isSynced ? () => _mostrarDialogoAbono(ahorro) : null,
                     constraints: const BoxConstraints(),
                     padding: EdgeInsets.zero,
                   ),
@@ -231,6 +275,7 @@ class _ModuloAhorrosState extends State<ModuloAhorros> {
                   IconButton(
                     icon: const Icon(Icons.edit_outlined, color: AppColors.textSecondary, size: 20),
                     onPressed: () async {
+                       if (!ahorro.isSynced && !ahorro.canCorrect) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sincroniza antes de editar.'))); return; }
                        final result = await Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => AgregarAhorroScreen(ahorroParaEditar: ahorro)),

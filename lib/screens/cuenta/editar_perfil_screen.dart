@@ -5,6 +5,7 @@ import '../../core/network/api_client.dart';
 import '../../services/auth_service.dart';
 import '../../services/cuenta_service.dart';
 import '../auth/pin_access_screen.dart';
+import 'widgets/seccion_card.dart';
 
 final RegExp _nombreRegex = RegExp(r"^[A-Za-zÀ-ÖØ-öø-ÿ\s'-]+$");
 final RegExp _emailRegex = RegExp(r"^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$");

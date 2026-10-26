@@ -15,7 +15,14 @@ class AhorroModel {
   // leyendo antes, aunque el backend siempre la devuelve.
   final DateTime? fechaRegistro;
 
+  final String syncState;
+  final String? syncError;
+  final String? operationId;
+  bool get isSynced => syncState == 'synced';
+  bool get canCorrect => syncState == 'error';
+
   AhorroModel({
+    this.syncState = 'synced', this.syncError, this.operationId,
     this.id,
     required this.nombre,
     required this.montoObjetivo,
@@ -29,6 +36,9 @@ class AhorroModel {
 
   factory AhorroModel.fromJson(Map<String, dynamic> json) {
     return AhorroModel(
+      syncState: json['_sync_state'] as String? ?? 'synced',
+      syncError: json['_sync_error'] as String?,
+      operationId: (json['_operation_id'] ?? json['operation_id']) as String?,
       id: json['id_ahorros'] ?? json['id'] ?? json['ID_detalle'],
       nombre: json['meta'] ?? json['nombre'] ?? json['categoria'] ?? 'Sin nombre',
       montoObjetivo: parseMonto(json['monto'] ?? json['monto_objetivo'] ?? json['objetivo'] ?? 0),
@@ -54,7 +64,7 @@ class AhorroModel {
       'monto': montoObjetivo,
       'monto_acumulado': montoActual,
       'fecha_meta': fechaLimite?.toIso8601String().split('T')[0],
-      'fecha_registro': DateTime.now().toIso8601String().split('T')[0],
+      'fecha_registro': (fechaRegistro ?? DateTime.now()).toIso8601String().split('T')[0],
       'descripcion': descripcion,
       'id_categoria': idCategoria,
       'estado': estado,

@@ -1,3 +1,4 @@
+import '../../widgets/offline_query_banner.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../core/theme/design_tokens.dart';
@@ -38,18 +39,24 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
   }
 
   void _loadInitialData() async {
-    final cats = await GastosService.obtenerCategorias();
-    final deps = await GastosService.obtenerDependientes();
+    List<CategoriaModel> cats = [];
+    try {
+      cats = await GastosService.obtenerCategorias();
+    } catch (_) {/* El aviso muestra el fallo del catálogo. */}
+    List<DependienteModel> deps = [];
+    try {
+      deps = await GastosService.obtenerDependientes();
+    } catch (_) {/* El aviso muestra el fallo del catálogo. */}
 
     if (mounted) {
       setState(() {
-        _listaCategorias = cats;
+        _listaCategorias = cats.where((c) => c.activa).toList();
         _listaDependientes = deps;
         _isLoadingData = false;
 
         if (widget.gastoParaEditar != null) {
           final g = widget.gastoParaEditar!;
-          _montoController.text = g.monto % 1 == 0
+          _montoController.text = g.monto <= 0 ? '' : g.monto % 1 == 0
               ? g.monto.toStringAsFixed(0)
               : g.monto.toStringAsFixed(2).replaceAll('.', ',');
           _descriptionController.text = g.descripcion ?? '';
@@ -152,11 +159,27 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
     );
   }
 
-  void _showCalendarSheet() => _showNeumorphicSheet(_buildCalendarSheet());
+  Future<void> _showCalendarSheet() async {
+    final today = DateTime.now();
+    final first = DateTime(1900);
+    final last = DateTime(today.year, today.month, today.day);
+    final initial = _fecha.isBefore(first)
+        ? first
+        : (_fecha.isAfter(last) ? last : _fecha);
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: first,
+      lastDate: last,
+      helpText: 'Corregir fecha del gasto',
+    );
+    if (selected != null && mounted) setState(() => _fecha = selected);
+  }
   void _showCategorySheet() => _showNeumorphicSheet(_buildCategorySheet());
   void _showDependentSheet() => _showNeumorphicSheet(_buildDependentSheet());
 
   void _crearGasto() async {
+    if (_isSaving) return;
     String montoStr = _montoController.text.replaceAll('\$', '');
     if (montoStr.contains(',')) {
       montoStr = montoStr.replaceAll('.', '').replaceAll(',', '.');
@@ -193,11 +216,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
       if (!mounted) return;
       setState(() => _isSaving = false);
 
-      // Devolvemos "true" para avisarle a ModuloGastos que tiene que
-      // recargar la lista completa desde el backend: crearMovimiento/
-      // updateGastos no devuelven el nombre de categoría ni de
-      // dependiente (eso solo viene del JOIN de getGastos), así que
-      // no podemos armar el card completo acá sin inventar datos.
+      if (gasto.id == null) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Guardado en el teléfono. Pendiente de sincronizar.')));
       Navigator.pop(context, true);
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -222,6 +241,10 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              OfflineQueryBanner(
+                  resource: '/categorias', onRetry: _loadInitialData),
+              OfflineQueryBanner(
+                  resource: '/dependientes', onRetry: _loadInitialData),
               const SizedBox(height: 20),
               _buildHeader(),
               const SizedBox(height: 26),
@@ -258,12 +281,12 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              widget.gastoParaEditar != null ? 'Editar gasto' : 'Agregar gasto',
+              widget.gastoParaEditar?.id != null ? 'Editar gasto' : 'Agregar gasto',
               style: const TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 2),
             Text(
-              widget.gastoParaEditar != null ? 'Modificar registro' : 'Registro manual',
+              widget.gastoParaEditar?.id != null ? 'Modificar registro' : 'Registro manual',
               style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
             ),
           ],
@@ -279,6 +302,13 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (widget.gastoParaEditar != null && widget.gastoParaEditar!.id == null) ...[
+            const Text(
+              'Revisa el monto, la fecha y la descripción antes de guardar. Si no se pudo reconocer una fecha válida, se propone la fecha de hoy.',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+          ],
           _buildLabel('Monto', required: true),
           const SizedBox(height: 8),
           _buildTextField(controller: _montoController, hint: '\$0', keyboardType: const TextInputType.numberWithOptions(decimal: true)),
@@ -403,61 +433,6 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
               const Icon(Icons.expand_more, color: AppColors.textSecondary, size: 20),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCalendarSheet() {
-    final year = _fecha.year;
-    final month = _fecha.month;
-    final daysInMonth = DateTime(year, month + 1, 0).day;
-    final offset = DateTime(year, month, 1).weekday - 1;
-
-    const List<String> meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-
-    return Container(
-      decoration: const BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.navInactive, borderRadius: BorderRadius.circular(2)))),
-            const SizedBox(height: 16),
-            Text('${meses[month - 1]} $year', style: const TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 18),
-            Row(children: ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'].map((d) => Expanded(child: Center(child: Text(d, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11))))).toList()),
-            const SizedBox(height: 10),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 7, childAspectRatio: 1),
-              itemCount: offset + daysInMonth,
-              itemBuilder: (context, index) {
-                if (index < offset) return const SizedBox.shrink();
-                final day = index - offset + 1;
-                final dayDate = DateTime(year, month, day);
-                final isSelected = day == _fecha.day;
-                final isFuture = dayDate.isAfter(DateTime.now());
-                return GestureDetector(
-                  onTap: isFuture ? null : () { setState(() => _fecha = dayDate); Navigator.pop(context); },
-                  child: Opacity(
-                    opacity: isFuture ? 0.25 : 1.0,
-                    child: Container(
-                      margin: const EdgeInsets.all(3),
-                      decoration: isSelected
-                          ? const BoxDecoration(shape: BoxShape.circle, gradient: RadialGradient(colors: [Color(0xFFFFD700), AppColors.accent]))
-                          : const BoxDecoration(color: AppColors.background, shape: BoxShape.circle),
-                      child: Center(child: Text('$day', style: TextStyle(color: isSelected ? Colors.black : AppColors.textPrimary, fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500))),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
         ),
       ),
     );
@@ -625,7 +600,7 @@ class _AgregarGastoScreenState extends State<AgregarGastoScreen> {
         child: Center(
           child: _isSaving
               ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
-              : Text(widget.gastoParaEditar != null ? 'Guardar cambios' : 'Crear gasto', style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
+              : Text(widget.gastoParaEditar?.id != null ? 'Guardar cambios' : 'Crear gasto', style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
         ),
       ),
     );

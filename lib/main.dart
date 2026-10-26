@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'services/quick_actions_service.dart';
 import 'app.dart';
 
 void main() async {
@@ -8,5 +9,6 @@ void main() async {
   await Firebase.initializeApp();
   await initializeDateFormatting('es_CO', null);
   await initializeDateFormatting('es_ES', null);
+  await QuickActionsService.initialize();
   runApp(const AhorrApp());
 }

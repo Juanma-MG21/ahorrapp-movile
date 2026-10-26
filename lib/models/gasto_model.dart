@@ -14,7 +14,14 @@ class GastoModel {
   final String? categoriaNombre;
   final String? dependienteNombre;
 
+  final String syncState;
+  final String? syncError;
+  final String? operationId;
+  bool get isSynced => syncState == 'synced';
+  bool get canCorrect => syncState == 'error';
+
   GastoModel({
+    this.syncState = 'synced', this.syncError, this.operationId,
     this.id,
     this.idCategoria,
     this.idDependientes,
@@ -27,6 +34,9 @@ class GastoModel {
 
   factory GastoModel.fromJson(Map<String, dynamic> json) {
     return GastoModel(
+      syncState: json['_sync_state'] as String? ?? 'synced',
+      syncError: json['_sync_error'] as String?,
+      operationId: (json['_operation_id'] ?? json['operation_id']) as String?,
       id: json['id'],
       idCategoria: json['id_categoria'],
       idDependientes: json['id_dependientes'],

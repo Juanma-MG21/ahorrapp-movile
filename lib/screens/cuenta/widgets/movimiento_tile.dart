@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../models/movimiento.dart';
+import 'seccion_card.dart';
 
 /// Fila compacta de un movimiento (ahorro/ingreso/gasto/deuda/imprevisto),
 /// inspirada en el historial de "cajitas" de Nu: icono redondo de color

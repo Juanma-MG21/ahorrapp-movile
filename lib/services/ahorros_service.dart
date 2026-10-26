@@ -1,7 +1,8 @@
+import 'offline_sync_service.dart';
 import 'package:flutter/foundation.dart';
 import '../core/network/api_client.dart';
 import '../models/ahorro_model.dart';
-import 'auth_service.dart';
+import 'offline_query_service.dart';
 
 /// Rutas reales confirmadas contra movimientosRoutes.js:
 ///   POST   /movimientos                    -> crearMovimiento (genérico)
@@ -20,41 +21,35 @@ class AhorrosService {
   static ApiClient client = const ApiClient();
 
   static Future<List<AhorroModel>> obtenerAhorros() async {
-    try {
-      final token = await AuthService.instance.getToken();
-      final data = await client.getList('/movimientos/ahorros', token: token);
-      return data
-          .map((json) => AhorroModel.fromJson(json as Map<String, dynamic>))
-          .toList();
-    } catch (_) {
-      // Si falla, la pantalla simplemente muestra la lista vacía.
-      return [];
-    }
+    return OfflineQueryService.instance
+        .query('/movimientos/ahorros', client, AhorroModel.fromJson);
   }
 
   static Future<int> crearAhorro(AhorroModel ahorro) async {
-    final token = await AuthService.instance.getToken();
-    final respuesta = await client.post('/movimientos', token: token, body: {
-      'tipo_flujo': 'Entrada',
-      'subtipo_modulo': 'Ahorro',
+    return OfflineSyncService.instance.create('/movimientos/ahorros', {
+      'tipo_flujo': 'Entrada', 'subtipo_modulo': 'Ahorro',
       'datos': ahorro.toJson(),
     });
-    return respuesta['ID_detalle'] as int;
   }
 
   static Future<void> actualizarAhorro(int id, AhorroModel ahorro) async {
-    final token = await AuthService.instance.getToken();
-    await client.put('/movimientos/ahorros/$id', token: token, body: ahorro.toJson());
+    if (id <= 0) {
+      await OfflineSyncService.instance.correctRejected(id, '/movimientos/ahorros', {
+        'tipo_flujo': 'Entrada', 'subtipo_modulo': 'Ahorro', 'datos': ahorro.toJson(),
+      });
+      return;
+    }
+    await OfflineQueryService.instance.onlineMutation(
+        '/movimientos/ahorros',
+        (token) => client.put('/movimientos/ahorros/$id',
+            token: token, body: ahorro.toJson()));
   }
 
   static Future<bool> eliminarAhorro(int id) async {
-    try {
-      final token = await AuthService.instance.getToken();
-      await client.delete('/movimientos/ahorros/$id', token: token);
-      return true;
-    } catch (_) {
-      return false;
-    }
+    if (id <= 0) throw ApiException('No se puede eliminar un registro pendiente de sincronizar.');
+    await OfflineQueryService.instance.onlineMutation('/movimientos/ahorros',
+        (token) => client.delete('/movimientos/ahorros/$id', token: token));
+    return true;
   }
 
   /// Registra un abono usando el endpoint dedicado del backend
@@ -67,16 +62,14 @@ class AhorrosService {
   /// y sobrescribiendo todo el registro con un PUT (actualizarAhorro), lo
   /// que se saltaba esa validación, el historial de abonos y la
   /// notificación, además de ser vulnerable a condiciones de carrera.
-  static Future<void> registrarAbono(AhorroModel ahorro, double montoAbono) async {
-    if (ahorro.id == null) {
-      throw ApiException('No se puede abonar un ahorro sin id.');
+  static Future<void> registrarAbono(
+      AhorroModel ahorro, double montoAbono) async {
+    if (ahorro.id == null || ahorro.id! <= 0) {
+      throw ApiException('Sincroniza el ahorro antes de registrar abonos con conexión.');
     }
-
-    final token = await AuthService.instance.getToken();
-    await client.patch(
-      '/movimientos/ahorros/${ahorro.id}/abonar',
-      token: token,
-      body: {'monto': montoAbono},
-    );
+    await OfflineQueryService.instance.onlineMutation(
+        '/movimientos/ahorros',
+        (token) => client.patch('/movimientos/ahorros/${ahorro.id}/abonar',
+            token: token, body: {'monto': montoAbono}));
   }
 }

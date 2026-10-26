@@ -57,6 +57,10 @@ dependencies:
   google_mlkit_text_recognition: 0.17.1    
   quick_actions: ^1.0.10        # 👈 CORREGIDO: 0.20.3 no existe
 
+  path: any
+  sqflite: any
+  connectivity_plus: any
+  uuid: any
 dev_dependencies:
   flutter_test:
     sdk: flutter

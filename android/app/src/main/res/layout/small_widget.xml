@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
     android:orientation="vertical"
-    android:padding="12dp">
+    android:padding="8dp">
 
     <!-- Top Header -->
     <LinearLayout
@@ -16,8 +16,8 @@
 
         <ImageView
             android:id="@+id/widget_logo"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
             android:src="@mipmap/ic_launcher" />
 
         <TextView
@@ -27,7 +27,7 @@
             android:layout_marginStart="6dp"
             android:text="AHORRAPP"
             android:textColor="@color/accent"
-            android:textSize="10sp"
+            android:textSize="9sp"
             android:textStyle="bold" />
     </LinearLayout>
 
@@ -46,7 +46,7 @@
             android:layout_height="wrap_content"
             android:text="Balance Actual"
             android:textColor="@color/text_secondary"
-            android:textSize="10sp" />
+            android:textSize="9sp" />
 
         <TextView
             android:id="@+id/widget_balance"
@@ -56,8 +56,57 @@
             android:maxLines="1"
             android:text="$0.00"
             android:textColor="@color/text_primary"
-            android:textSize="18sp"
+            android:textSize="15sp"
             android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/widget_ingresos"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="↑ $0"
+                android:textColor="@color/positive"
+                android:textSize="9sp" />
+
+            <TextView
+                android:id="@+id/widget_gastos"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:gravity="end"
+                android:maxLines="1"
+                android:text="↓ $0"
+                android:textColor="@color/negative"
+                android:textSize="9sp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/widget_porcentaje"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="0% del presupuesto"
+            android:textColor="@color/text_secondary"
+            android:textSize="8sp" />
+
+        <TextView
+            android:id="@+id/widget_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="Sin movimientos"
+            android:textColor="@color/text_secondary"
+            android:textSize="8sp" />
     </LinearLayout>
 
     <!-- Bottom Buttons -->
