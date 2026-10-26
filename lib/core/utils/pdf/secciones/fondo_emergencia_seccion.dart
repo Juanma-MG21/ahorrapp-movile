@@ -23,7 +23,7 @@ pw.Page construirPaginaFondoEmergencia({
             pw.Text(
               'El usuario no tiene un fondo de emergencia creado, o no '
               'hubo movimientos en este período.',
-              style: pw.TextStyle(
+              style: const pw.TextStyle(
                 fontSize: 9,
                 color: ReportePdfColors.textMuted,
               ),
@@ -31,7 +31,7 @@ pw.Page construirPaginaFondoEmergencia({
           if (historial != null) ...[
             pw.Text(
               'Movimientos en el período',
-              style: pw.TextStyle(
+              style: const pw.TextStyle(
                 fontSize: 10,
                 fontWeight: pw.FontWeight.bold,
                 color: ReportePdfColors.textPrimary,
@@ -69,7 +69,7 @@ pw.Page construirPaginaFondoEmergencia({
           if (estado != null) ...[
             pw.Text(
               'Estado actual',
-              style: pw.TextStyle(
+              style: const pw.TextStyle(
                 fontSize: 10,
                 fontWeight: pw.FontWeight.bold,
                 color: ReportePdfColors.textPrimary,

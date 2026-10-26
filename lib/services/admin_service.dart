@@ -19,7 +19,7 @@ class AdminService {
   AdminService._internal();
   static AdminService instance = AdminService._internal();
 
-  final ApiClient _api = ApiClient();
+  final ApiClient _api = const ApiClient();
 
   /// GET genérico para los 2 endpoints de totales, que (a diferencia
   /// del resto de la API) NO devuelven { ok, ... } sino el objeto

@@ -15,7 +15,7 @@ import 'auth_service.dart';
 /// del endpoint correcto quedaba enmascarado por un 404 del endpoint falso.
 class DeudasService {
   @visibleForTesting
-  static ApiClient client = ApiClient();
+  static ApiClient client = const ApiClient();
 
   static Future<List<DeudaModel>> obtenerDeudas() async {
     final token = await AuthService.instance.getToken();

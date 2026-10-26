@@ -19,7 +19,7 @@ pw.Page construirPaginaPresupuesto({
             pw.Text(
               'No se seleccionó un presupuesto, o no se encontró '
               'información para el período elegido.',
-              style: pw.TextStyle(
+              style: const pw.TextStyle(
                 fontSize: 9,
                 color: ReportePdfColors.textMuted,
               ),
@@ -80,7 +80,7 @@ pw.Page construirPaginaPresupuesto({
           pw.SizedBox(height: 12),
           pw.Text(
             'Ejecución por categoría',
-            style: pw.TextStyle(
+            style: const pw.TextStyle(
               fontSize: 10,
               fontWeight: pw.FontWeight.bold,
               color: ReportePdfColors.textPrimary,

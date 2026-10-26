@@ -17,7 +17,7 @@ import 'auth_service.dart';
 /// falso, y el usuario veía un mensaje de error genérico sin sentido.
 class AhorrosService {
   @visibleForTesting
-  static ApiClient client = ApiClient();
+  static ApiClient client = const ApiClient();
 
   static Future<List<AhorroModel>> obtenerAhorros() async {
     try {

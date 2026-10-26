@@ -21,7 +21,7 @@ pw.Page construirPaginaEvolucion({
           if (evolucion == null || evolucion.datos.isEmpty)
             pw.Text(
               'No hay datos de evolución disponibles para este período.',
-              style: pw.TextStyle(
+              style: const pw.TextStyle(
                 fontSize: 9,
                 color: ReportePdfColors.textMuted,
               ),

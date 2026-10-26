@@ -4,7 +4,7 @@ import '../models/presupuesto_model.dart';
 import 'auth_service.dart';
 
 class PresupuestosService {
-  PresupuestosService({ApiClient? apiClient}) : _api = apiClient ?? ApiClient();
+  PresupuestosService({ApiClient? apiClient}) : _api = apiClient ?? const ApiClient();
 
   final ApiClient _api;
 

@@ -107,7 +107,7 @@ class _AgregarDependienteScreenState
                 GestureDetector(
                   onTap: () => Navigator.of(context).pop(),
                   child: Container(
-                    color: Colors.black.withOpacity(0.4 * t),
+                    color: Colors.black.withValues(alpha: 0.4 * t),
                   ),
                 ),
 
@@ -461,7 +461,7 @@ class _AgregarDependienteScreenState
         color: AppColors.inset,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: Colors.black.withOpacity(0.35),
+          color: Colors.black.withValues(alpha: 0.35),
         ),
       ),
       child: child,
@@ -540,7 +540,7 @@ class _AgregarDependienteScreenState
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF60A5FA).withOpacity(0.35),
+              color: const Color(0xFF60A5FA).withValues(alpha: 0.35),
               blurRadius: 20,
             ),
           ],

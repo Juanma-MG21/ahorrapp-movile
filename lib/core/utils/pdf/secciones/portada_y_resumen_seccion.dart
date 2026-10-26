@@ -25,7 +25,7 @@ pw.Page construirPaginaPortadaYResumen({
         children: [
           pw.Text(
             'AhorrApp',
-            style: pw.TextStyle(
+            style: const pw.TextStyle(
               fontSize: 30,
               fontWeight: pw.FontWeight.bold,
               color: ReportePdfColors.accent,
@@ -34,7 +34,7 @@ pw.Page construirPaginaPortadaYResumen({
           pw.SizedBox(height: 6),
           pw.Text(
             'Informe financiero',
-            style: pw.TextStyle(
+            style: const pw.TextStyle(
               fontSize: 21,
               color: ReportePdfColors.textPrimary,
             ),
@@ -46,13 +46,13 @@ pw.Page construirPaginaPortadaYResumen({
             '— '
             '${informe.fechaFin != null ? formatFechaCorta(informe.fechaFin!) : '—'}',
             style:
-                pw.TextStyle(fontSize: 11, color: ReportePdfColors.textMuted),
+                const pw.TextStyle(fontSize: 11, color: ReportePdfColors.textMuted),
           ),
           pw.SizedBox(height: 3),
           pw.Text(
             'Generado: ${formatFechaCorta(DateTime.now())}',
             style:
-                pw.TextStyle(fontSize: 11, color: ReportePdfColors.textMuted),
+                const pw.TextStyle(fontSize: 11, color: ReportePdfColors.textMuted),
           ),
           pw.SizedBox(height: 10),
           pw.Divider(color: ReportePdfColors.accent, thickness: 1),
@@ -63,14 +63,14 @@ pw.Page construirPaginaPortadaYResumen({
             'informativos y representan los registros almacenados en el '
             'sistema.',
             style:
-                pw.TextStyle(fontSize: 10, color: ReportePdfColors.textMuted),
+                const pw.TextStyle(fontSize: 10, color: ReportePdfColors.textMuted),
           ),
           pw.SizedBox(height: 20),
           seccionTitulo('Resumen financiero'),
           if (resumen == null)
             pw.Text(
               'No hay datos de resumen disponibles para este período.',
-              style: pw.TextStyle(
+              style: const pw.TextStyle(
                 fontSize: 9,
                 color: ReportePdfColors.textMuted,
               ),

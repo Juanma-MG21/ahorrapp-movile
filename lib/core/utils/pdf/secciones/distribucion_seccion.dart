@@ -26,7 +26,7 @@ pw.Page construirPaginaDistribucion({
           for (final bloque in bloques) ...[
             pw.Text(
               bloque.$1,
-              style: pw.TextStyle(
+              style: const pw.TextStyle(
                 fontSize: 10,
                 fontWeight: pw.FontWeight.bold,
                 color: ReportePdfColors.textPrimary,
@@ -38,7 +38,7 @@ pw.Page construirPaginaDistribucion({
               child: bloque.$2.isEmpty
                   ? pw.Text(
                       'Sin registros en este período.',
-                      style: pw.TextStyle(
+                      style: const pw.TextStyle(
                         fontSize: 9,
                         color: ReportePdfColors.textMuted,
                       ),

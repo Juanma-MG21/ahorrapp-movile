@@ -22,7 +22,7 @@ pw.Page construirPaginaAhorros({
           if (historial == null && estado == null)
             pw.Text(
               'No hay información de ahorros disponible.',
-              style: pw.TextStyle(
+              style: const pw.TextStyle(
                 fontSize: 9,
                 color: ReportePdfColors.textMuted,
               ),
@@ -60,7 +60,7 @@ pw.Page construirPaginaAhorros({
             pw.Text(
               'Movimientos en el período '
               '(total ahorrado: ${formatMonto(historial.totalAhorrado)})',
-              style: pw.TextStyle(
+              style: const pw.TextStyle(
                 fontSize: 10,
                 fontWeight: pw.FontWeight.bold,
                 color: ReportePdfColors.textPrimary,
@@ -70,7 +70,7 @@ pw.Page construirPaginaAhorros({
             historial.datos.isEmpty
                 ? pw.Text(
                     'Sin movimientos en este período.',
-                    style: pw.TextStyle(
+                    style: const pw.TextStyle(
                       fontSize: 9,
                       color: ReportePdfColors.textMuted,
                     ),
@@ -98,7 +98,7 @@ pw.Page construirPaginaAhorros({
           if (estado != null && estado.datos.isNotEmpty) ...[
             pw.Text(
               'Estado de las metas',
-              style: pw.TextStyle(
+              style: const pw.TextStyle(
                 fontSize: 10,
                 fontWeight: pw.FontWeight.bold,
                 color: ReportePdfColors.textPrimary,

@@ -56,7 +56,7 @@ pw.Page construirPagina({
               alignment: pw.Alignment.centerLeft,
               child: pw.Text(
                 'AhorrApp · Informe financiero · Página $numeroPagina',
-                style: pw.TextStyle(
+                style: const pw.TextStyle(
                   fontSize: 8,
                   color: ReportePdfColors.textMuted,
                 ),
@@ -79,7 +79,7 @@ pw.Widget seccionTitulo(String titulo, [String? subtitulo]) {
       children: [
         pw.Text(
           titulo,
-          style: pw.TextStyle(
+          style: const pw.TextStyle(
             fontSize: 17,
             fontWeight: pw.FontWeight.bold,
             color: ReportePdfColors.accent,
@@ -89,7 +89,7 @@ pw.Widget seccionTitulo(String titulo, [String? subtitulo]) {
           pw.SizedBox(height: 3),
           pw.Text(
             subtitulo,
-            style: pw.TextStyle(
+            style: const pw.TextStyle(
               fontSize: 8.5,
               color: ReportePdfColors.textMuted,
             ),
@@ -120,12 +120,12 @@ pw.Widget tarjetaMetrica({
       children: [
         pw.Text(
           titulo.toUpperCase(),
-          style: pw.TextStyle(fontSize: 7, color: ReportePdfColors.textMuted),
+          style: const pw.TextStyle(fontSize: 7, color: ReportePdfColors.textMuted),
         ),
         pw.SizedBox(height: 4),
         pw.Text(
           valor,
-          style: pw.TextStyle(
+          style: const pw.TextStyle(
             fontSize: 12,
             fontWeight: pw.FontWeight.bold,
             color: ReportePdfColors.textPrimary,
@@ -154,12 +154,12 @@ pw.Widget tablaClay({
       headerDecoration: const pw.BoxDecoration(
         color: ReportePdfColors.surfaceAlt,
       ),
-      headerStyle: pw.TextStyle(
+      headerStyle: const pw.TextStyle(
         fontSize: 7.5,
         fontWeight: pw.FontWeight.bold,
         color: ReportePdfColors.textPrimary,
       ),
-      cellStyle: pw.TextStyle(
+      cellStyle: const pw.TextStyle(
         fontSize: 7,
         color: ReportePdfColors.textSecondary,
         

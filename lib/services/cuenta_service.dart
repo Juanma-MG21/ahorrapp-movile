@@ -17,7 +17,7 @@ class CuentaService {
   CuentaService._internal();
   static CuentaService instance = CuentaService._internal();
 
-  final ApiClient _api = ApiClient();
+  final ApiClient _api = const ApiClient();
 
   /// GET /movimientos
   /// El backend puede responder un arreglo plano o { movimientos: [...] }

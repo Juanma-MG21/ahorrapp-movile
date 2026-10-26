@@ -18,7 +18,7 @@ import 'auth_service.dart';
 /// eso este servicio usa client.get()/post()/put() (no getList).
 class EmergenciaService {
   @visibleForTesting
-  static ApiClient client = ApiClient();
+  static ApiClient client = const ApiClient();
 
   static Future<String?> get _token => AuthService.instance.getToken();
 

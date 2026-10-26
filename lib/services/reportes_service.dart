@@ -15,7 +15,7 @@ import '../services/presupuestos_service.dart';
 import 'auth_service.dart';
 
 class ReportesService { 
-  ReportesService({ApiClient? apiClient}) : _api = apiClient ?? ApiClient();
+  ReportesService({ApiClient? apiClient}) : _api = apiClient ?? const ApiClient();
 
   final ApiClient _api;
 

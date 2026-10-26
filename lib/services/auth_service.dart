@@ -51,7 +51,7 @@ class AuthService {
 
   static AuthService instance = AuthService._internal();
 
-  ApiClient _api = ApiClient();
+  ApiClient _api = const ApiClient();
   FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   // Aportados por Manuel: soporte de biometría (chequeo movido aquí por

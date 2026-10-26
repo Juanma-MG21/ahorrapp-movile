@@ -293,7 +293,7 @@ class _ReportesScreenState extends State<ReportesScreen> {
     final opciones = _presupuestosUnicos;
 
     return DropdownButtonFormField<int?>(
-      value: _idPeriodoSeleccionado,
+      initialValue: _idPeriodoSeleccionado,
       decoration: const InputDecoration(
         labelText: 'Presupuesto',
         border: OutlineInputBorder(),
@@ -333,8 +333,8 @@ class _ReportesScreenState extends State<ReportesScreen> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.error.withOpacity(0.1),
-        border: Border.all(color: AppColors.error.withOpacity(0.3)),
+        color: AppColors.error.withValues(alpha: 0.1),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(mensaje, style: const TextStyle(color: AppColors.error)),
@@ -368,7 +368,7 @@ class _ReportesScreenState extends State<ReportesScreen> {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.textMuted.withOpacity(0.3)),
+        border: Border.all(color: AppColors.textMuted.withValues(alpha: 0.3)),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(

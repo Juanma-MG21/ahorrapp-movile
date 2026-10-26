@@ -311,11 +311,11 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.textPrimary.withOpacity(0.1)),
+        border: Border.all(color: AppColors.textPrimary.withValues(alpha: 0.1)),
         gradient: LinearGradient(
           colors: [
-            _emerald500.withOpacity(0.2),
-            _emerald500.withOpacity(0.03),
+            _emerald500.withValues(alpha: 0.2),
+            _emerald500.withValues(alpha: 0.03),
           ],
         ),
       ),
@@ -374,8 +374,8 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
   Widget _seccionCategorias() {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.textPrimary.withOpacity(0.04),
-        border: Border.all(color: AppColors.textPrimary.withOpacity(0.1)),
+        color: AppColors.textPrimary.withValues(alpha: 0.04),
+        border: Border.all(color: AppColors.textPrimary.withValues(alpha: 0.1)),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -453,8 +453,8 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.textPrimary.withOpacity(0.05),
-            border: Border.all(color: AppColors.textPrimary.withOpacity(0.1)),
+            color: AppColors.textPrimary.withValues(alpha: 0.05),
+            border: Border.all(color: AppColors.textPrimary.withValues(alpha: 0.1)),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
@@ -494,9 +494,9 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.textPrimary.withOpacity(0.04),
+                            color: AppColors.textPrimary.withValues(alpha: 0.04),
                             border: Border.all(
-                              color: AppColors.textPrimary.withOpacity(0.1),
+                              color: AppColors.textPrimary.withValues(alpha: 0.1),
                             ),
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -652,8 +652,8 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.textPrimary.withOpacity(0.04),
-          border: Border.all(color: AppColors.textPrimary.withOpacity(0.1)),
+          color: AppColors.textPrimary.withValues(alpha: 0.04),
+          border: Border.all(color: AppColors.textPrimary.withValues(alpha: 0.1)),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
@@ -703,9 +703,9 @@ class _ModuloCategoriasScreenState extends State<ModuloCategoriasScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: (esGlobal ? _emerald400 : _indigo400).withOpacity(0.15),
+        color: (esGlobal ? _emerald400 : _indigo400).withValues(alpha: 0.15),
         border: Border.all(
-          color: (esGlobal ? _emerald400 : _indigo400).withOpacity(0.4),
+          color: (esGlobal ? _emerald400 : _indigo400).withValues(alpha: 0.4),
         ),
         borderRadius: BorderRadius.circular(20),
       ),

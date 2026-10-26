@@ -7,7 +7,7 @@ import 'auth_service.dart';
 
 class GastosService {
   @visibleForTesting
-  static ApiClient client = ApiClient();
+  static ApiClient client = const ApiClient();
 
   static Future<int> crearGasto(GastoModel gasto) async {
     final token = await AuthService.instance.getToken();

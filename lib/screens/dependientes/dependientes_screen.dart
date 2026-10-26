@@ -238,13 +238,13 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.textPrimary.withOpacity(0.1)),
+          border: Border.all(color: AppColors.textPrimary.withValues(alpha: 0.1)),
           gradient: LinearGradient(
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
             colors: [
-              AppCategoryColors.almuerzo.withOpacity(0.35),
-              AppCategoryColors.almuerzo.withOpacity(0.04),
+              AppCategoryColors.almuerzo.withValues(alpha: 0.35),
+              AppCategoryColors.almuerzo.withValues(alpha: 0.04),
             ],
           ),
         ),
@@ -314,8 +314,8 @@ class _PanelDependientesScreenState extends State<PanelDependientesScreen> {
           margin: const EdgeInsets.symmetric(horizontal: 16),
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
           decoration: BoxDecoration(
-            color: AppColors.error.withOpacity(0.1),
-            border: Border.all(color: AppColors.error.withOpacity(0.3)),
+            color: AppColors.error.withValues(alpha: 0.1),
+            border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
@@ -381,8 +381,8 @@ class _DependienteCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.textPrimary.withOpacity(0.05),
-        border: Border.all(color: AppColors.textPrimary.withOpacity(0.09)),
+        color: AppColors.textPrimary.withValues(alpha: 0.05),
+        border: Border.all(color: AppColors.textPrimary.withValues(alpha: 0.09)),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -446,8 +446,8 @@ class _DependienteCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.13),
-              border: Border.all(color: color.withOpacity(0.27)),
+              color: color.withValues(alpha: 0.13),
+              border: Border.all(color: color.withValues(alpha: 0.27)),
               borderRadius: BorderRadius.circular(999),
             ),
             child: Text(

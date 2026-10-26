@@ -23,7 +23,7 @@ pw.Page construirPaginaDeudas({
           if (historial == null && estado == null)
             pw.Text(
               'No hay información de deudas disponible.',
-              style: pw.TextStyle(
+              style: const pw.TextStyle(
                 fontSize: 9,
                 color: ReportePdfColors.textMuted,
               ),
@@ -67,7 +67,7 @@ pw.Page construirPaginaDeudas({
               'Abonos en el período '
               '(total pagado: ${formatMonto(historial.totalPagado)}, '
               'cuotas pagadas: ${historial.cuotasPagadas})',
-              style: pw.TextStyle(
+              style: const pw.TextStyle(
                 fontSize: 10,
                 fontWeight: pw.FontWeight.bold,
                 color: ReportePdfColors.textPrimary,
@@ -77,7 +77,7 @@ pw.Page construirPaginaDeudas({
             historial.datos.isEmpty
                 ? pw.Text(
                     'Sin abonos en este período.',
-                    style: pw.TextStyle(
+                    style: const pw.TextStyle(
                       fontSize: 9,
                       color: ReportePdfColors.textMuted,
                     ),
@@ -107,7 +107,7 @@ pw.Page construirPaginaDeudas({
           if (estado != null && estado.datos.isNotEmpty) ...[
             pw.Text(
               'Estado de las deudas',
-              style: pw.TextStyle(
+              style: const pw.TextStyle(
                 fontSize: 10,
                 fontWeight: pw.FontWeight.bold,
                 color: ReportePdfColors.textPrimary,

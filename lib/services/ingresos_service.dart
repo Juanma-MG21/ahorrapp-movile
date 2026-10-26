@@ -6,7 +6,7 @@ import 'auth_service.dart';
 
 class IngresosService {
   @visibleForTesting
-  static ApiClient client = ApiClient();
+  static ApiClient client = const ApiClient();
 
   /// Crea un ingreso nuevo (POST /movimientos).
   /// Devuelve el id generado (id_ingresos) para que la pantalla pueda

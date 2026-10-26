@@ -6,7 +6,7 @@ import 'auth_service.dart';
 
 class ImprevistosService {
   @visibleForTesting
-  static ApiClient client = ApiClient();
+  static ApiClient client = const ApiClient();
 
   /// Crea un nuevo imprevisto (POST /movimientos).
   /// Se registra como una 'Salida' con subtipo 'Imprevisto'.

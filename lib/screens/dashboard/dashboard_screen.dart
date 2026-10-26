@@ -176,7 +176,7 @@ class Skeleton extends StatelessWidget {
       height: h,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        color: AppColors.textPrimary.withOpacity(0.07),
+        color: AppColors.textPrimary.withValues(alpha: 0.07),
       ),
       // Flutter no tiene un equivalente 1:1 de `animation: pulse` en
       // CSS puro; la forma idiomática es envolver esto en un
@@ -211,9 +211,9 @@ class PeriodChip extends StatelessWidget {
       margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
       decoration: BoxDecoration(
-        color: AppColors.textPrimary.withOpacity(0.04),
+        color: AppColors.textPrimary.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.textPrimary.withOpacity(0.07)),
+        border: Border.all(color: AppColors.textPrimary.withValues(alpha: 0.07)),
       ),
       // `Text` es el `<p>`/`<span>` de Flutter. El `style` recibe un
       // `TextStyle`, no un mapa CSS.
@@ -347,8 +347,8 @@ class MobileHeader extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.textPrimary.withOpacity(0.06),
-                        border: Border.all(color: AppColors.textPrimary.withOpacity(0.1)),
+                        color: AppColors.textPrimary.withValues(alpha: 0.06),
+                        border: Border.all(color: AppColors.textPrimary.withValues(alpha: 0.1)),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Text('Dashboard', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
@@ -369,7 +369,7 @@ class MobileHeader extends StatelessWidget {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(color: AppColors.borderLight),
-                              color: AppColors.textPrimary.withOpacity(0.06),
+                              color: AppColors.textPrimary.withValues(alpha: 0.06),
                             ),
                             child: const Icon(Icons.notifications_none, size: 17, color: AppColors.accent),
                           ),
@@ -401,7 +401,7 @@ class MobileHeader extends StatelessWidget {
           height: 1,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Colors.transparent, AppColors.accent.withOpacity(0.3), Colors.transparent],
+              colors: [Colors.transparent, AppColors.accent.withValues(alpha: 0.3), Colors.transparent],
             ),
           ),
         ),
@@ -419,11 +419,11 @@ class WelcomeSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 4),
+    return const Padding(
+      padding: EdgeInsets.fromLTRB(16, 18, 16, 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
+        children: [
           Text('Bienvenido de vuelta', style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
           SizedBox(height: 2),
           Text('Carlos 👋', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary, letterSpacing: -0.5)),
@@ -448,7 +448,7 @@ class StatCard extends StatelessWidget {
       constraints: const BoxConstraints(minHeight: 96),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.textPrimary.withOpacity(0.08)),
+        border: Border.all(color: AppColors.textPrimary.withValues(alpha: 0.08)),
         color: AppColors.surface,
       ),
       child: Row(
@@ -526,8 +526,8 @@ class BolsaWidget extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: AppColors.textPrimary.withOpacity(0.03),
-              border: Border.all(color: AppColors.textPrimary.withOpacity(0.06)),
+              color: AppColors.textPrimary.withValues(alpha: 0.03),
+              border: Border.all(color: AppColors.textPrimary.withValues(alpha: 0.06)),
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Row(
@@ -541,7 +541,7 @@ class BolsaWidget extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: (s.up ? AppColors.success : AppColors.error).withOpacity(0.1),
+                        color: (s.up ? AppColors.success : AppColors.error).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -629,7 +629,7 @@ class BudgetChart extends StatelessWidget {
                       topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                       rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                     ),
-                    gridData: FlGridData(show: true, drawVerticalLine: false, getDrawingHorizontalLine: (v) => FlLine(color: AppColors.textPrimary.withOpacity(0.06), strokeWidth: 1)),
+                    gridData: FlGridData(show: true, drawVerticalLine: false, getDrawingHorizontalLine: (v) => FlLine(color: AppColors.textPrimary.withValues(alpha: 0.06), strokeWidth: 1)),
                     borderData: FlBorderData(show: false),
                   ),
                 ),
@@ -670,7 +670,7 @@ class WeeklyFlowChart extends StatelessWidget {
       barWidth: 2,
       dashArray: dashed ? [5, 4] : null,
       dotData: const FlDotData(show: false),
-      belowBarData: BarAreaData(show: true, color: color.withOpacity(0.15)),
+      belowBarData: BarAreaData(show: true, color: color.withValues(alpha: 0.15)),
     );
   }
 
@@ -711,7 +711,7 @@ class WeeklyFlowChart extends StatelessWidget {
                   topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 ),
-                gridData: FlGridData(show: true, drawVerticalLine: false, getDrawingHorizontalLine: (v) => FlLine(color: AppColors.textPrimary.withOpacity(0.06), strokeWidth: 1)),
+                gridData: FlGridData(show: true, drawVerticalLine: false, getDrawingHorizontalLine: (v) => FlLine(color: AppColors.textPrimary.withValues(alpha: 0.06), strokeWidth: 1)),
                 borderData: FlBorderData(show: false),
               ),
             ),
@@ -763,8 +763,8 @@ class ErrorState extends StatelessWidget {
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.error.withOpacity(0.2)),
-        color: AppColors.error.withOpacity(0.06),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
+        color: AppColors.error.withValues(alpha: 0.06),
       ),
       child: Column(
         children: [
@@ -778,12 +778,12 @@ class ErrorState extends StatelessWidget {
           TextButton(
             onPressed: onRetry,
             style: TextButton.styleFrom(
-              backgroundColor: AppColors.error.withOpacity(0.12),
+              backgroundColor: AppColors.error.withValues(alpha: 0.12),
               foregroundColor: AppColors.error,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
-                side: BorderSide(color: AppColors.error.withOpacity(0.3)),
+                side: BorderSide(color: AppColors.error.withValues(alpha: 0.3)),
               ),
             ),
             child: const Text('Reintentar', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
@@ -842,8 +842,8 @@ class BottomNavBar extends StatelessWidget {
         decoration: BoxDecoration(
           color: const Color(0xB80f172a),
           borderRadius: BorderRadius.circular(32),
-          border: Border.all(color: AppColors.textPrimary.withOpacity(0.14)),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.45), blurRadius: 32, offset: const Offset(0, 8))],
+          border: Border.all(color: AppColors.textPrimary.withValues(alpha: 0.14)),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.45), blurRadius: 32, offset: const Offset(0, 8))],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -855,15 +855,15 @@ class BottomNavBar extends StatelessWidget {
                 constraints: const BoxConstraints(minWidth: 52),
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: isActive ? AppColors.accent.withOpacity(0.15) : Colors.transparent,
+                  color: isActive ? AppColors.accent.withValues(alpha: 0.15) : Colors.transparent,
                   borderRadius: BorderRadius.circular(22),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(item.icon, size: 20, color: isActive ? AppColors.accent : AppColors.textPrimary.withOpacity(0.7)),
+                    Icon(item.icon, size: 20, color: isActive ? AppColors.accent : AppColors.textPrimary.withValues(alpha: 0.7)),
                     const SizedBox(height: 3),
-                    Text(item.label, style: TextStyle(fontSize: 10, fontWeight: isActive ? FontWeight.w700 : FontWeight.w500, color: isActive ? AppColors.accent : AppColors.textPrimary.withOpacity(0.7))),
+                    Text(item.label, style: TextStyle(fontSize: 10, fontWeight: isActive ? FontWeight.w700 : FontWeight.w500, color: isActive ? AppColors.accent : AppColors.textPrimary.withValues(alpha: 0.7))),
                   ],
                 ),
               ),
@@ -933,7 +933,7 @@ class NotificacionPanel extends StatefulWidget {
 //     siguiendo el mismo patrón de ApiClient que usan los demás servicios)
 // y restaura la lógica de carga/marcado como leída aquí.
 class _NotificacionPanelState extends State<NotificacionPanel> {
-  bool _isLoading = false;
+  final bool _isLoading = false;
   final List<dynamic> _notificaciones = const [];
 
   Future<void> _marcarComoLeida(int id) async {
@@ -962,7 +962,7 @@ class _NotificacionPanelState extends State<NotificacionPanel> {
               height: 4,
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: AppColors.textPrimary.withOpacity(0.15),
+                color: AppColors.textPrimary.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1027,12 +1027,12 @@ class _NotificacionPanelState extends State<NotificacionPanel> {
                               ),
                               decoration: BoxDecoration(
                                 color: notif.leida
-                                    ? AppColors.textPrimary.withOpacity(0.04)
-                                    : AppColors.accent.withOpacity(0.1),
+                                    ? AppColors.textPrimary.withValues(alpha: 0.04)
+                                    : AppColors.accent.withValues(alpha: 0.1),
                                 border: Border.all(
                                   color: notif.leida
-                                      ? AppColors.textPrimary.withOpacity(0.07)
-                                      : AppColors.accent.withOpacity(0.3),
+                                      ? AppColors.textPrimary.withValues(alpha: 0.07)
+                                      : AppColors.accent.withValues(alpha: 0.3),
                                 ),
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -1287,7 +1287,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 children: [
                   Column(
                     children: [
-                      MobileHeader(idUsuario: 1),
+                      const MobileHeader(idUsuario: 1),
                       // `Expanded` dentro de una Column hace que este
                       // hijo tome todo el alto restante — necesario
                       // para que el ListView interno pueda scrollear.

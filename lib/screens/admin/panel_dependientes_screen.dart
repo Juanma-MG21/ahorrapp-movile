@@ -4,7 +4,6 @@ import '../../core/theme/design_tokens.dart';
 import '../../core/network/api_client.dart';
 import '../../models/dependiente_admin.dart';
 import '../../services/admin_service.dart';
-import '../cuenta/widgets/seccion_card.dart';
 
 /// Panel de dependientes — equivalente móvil de PanelDependientes.jsx.
 /// Muestra TODOS los dependientes del sistema (de cualquier usuario),
