@@ -1,10 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:local_auth/local_auth.dart';
 import '../core/network/api_client.dart';
+import '../services/notificaciones_service.dart';
 
 class Usuario {
   Usuario({
@@ -233,6 +234,8 @@ class AuthService {
     _memoryToken = token;
     _memoryUser = usuario;
 
+    unawaited(NotificacionesService().inicializar(token));
+
     if (rememberSession) {
       await _storage.write(key: _tokenKey, value: token);
       await _storage.write(key: _userKey, value: jsonEncode(usuario.toJson()));
@@ -335,6 +338,8 @@ class AuthService {
     _memoryUser = usuario;
     await _storage.write(key: _tokenKey, value: token);
     await _storage.write(key: _userKey, value: jsonEncode(usuario.toJson()));
+
+    unawaited(NotificacionesService().inicializar(token));
 
     return usuario;
   }
